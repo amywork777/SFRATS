@@ -4,8 +4,8 @@ export interface FreeItem {
   description: string
   category: string
   location_address?: string
-  location_lat: number
-  location_lng: number
+  location_lat?: number
+  location_lng?: number
   available_from: Date
   available_until: Date | null
   created_at: Date

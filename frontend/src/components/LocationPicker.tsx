@@ -4,19 +4,33 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 interface LocationPickerProps {
-  onChange: (location: { 
-    address: string; 
-    lat: number; 
-    lng: number 
-  }) => void
+  initialAddress?: string;
+  initialCoordinates?: {
+    lat: number;
+    lng: number;
+  };
+  onChange: (location: { address: string; lat: number; lng: number }) => void;
 }
 
-function LocationPicker({ onChange }: LocationPickerProps) {
+function LocationPicker({ initialAddress, initialCoordinates, onChange }: LocationPickerProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [position, setPosition] = useState<[number, number] | null>(null)
-  const [address, setAddress] = useState('')
+  const [position, setPosition] = useState<[number, number] | null>(
+    initialCoordinates ? [initialCoordinates.lat, initialCoordinates.lng] : null
+  )
+  const [address, setAddress] = useState(initialAddress || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isInitialized, setIsInitialized] = useState(false)
+
+  // Only set initial values once
+  useEffect(() => {
+    if (!isInitialized && initialAddress && initialCoordinates) {
+      setPosition([initialCoordinates.lat, initialCoordinates.lng])
+      setAddress(initialAddress)
+      setIsInitialized(true)
+      // Don't call onChange here - it's causing the infinite loop
+    }
+  }, [initialAddress, initialCoordinates, isInitialized])
 
   // Search for address using Nominatim
   const searchAddress = async () => {
@@ -109,9 +123,10 @@ function LocationPicker({ onChange }: LocationPickerProps) {
 
       <div className="h-[300px] rounded-lg overflow-hidden border">
         <MapContainer
-          center={position || [37.7749, -122.4194]} // Default to SF
+          center={position || [37.7749, -122.4194]} // Use position if available, otherwise default to SF
           zoom={13}
           style={{ height: '100%', width: '100%' }}
+          key={position ? `${position[0]}-${position[1]}` : 'default'} // Force re-render when position changes
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

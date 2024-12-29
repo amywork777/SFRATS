@@ -1,24 +1,56 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { categoryEmojis } from './Legend'
 import LocationPicker from './LocationPicker'
 
 interface SubmitFormProps {
-  initialData?: any
-  editMode?: boolean
-  editCode?: string
-  onClose?: () => void
+  initialData?: {
+    title?: string;
+    description?: string;
+    category?: string;
+    location?: {
+      address: string;
+      lat: number | null;
+      lng: number | null;
+    };
+    available_from?: Date;
+    available_until?: Date | null;
+  };
+  editMode?: boolean;
+  editCode?: string;
+  onClose?: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProps) {
+function SubmitForm({ initialData, editMode = false, editCode, onClose }: SubmitFormProps) {
   console.log('SubmitForm props:', { initialData, editMode, editCode })
 
   // Format dates for input fields
-  const formatDateForInput = (date: string | null) => {
+  const formatDateForInput = (date: Date | string | null) => {
     if (!date) return ''
-    return new Date(date).toISOString().slice(0, 16) // Format: "YYYY-MM-DDThh:mm"
+    const d = new Date(date)
+    if (isNaN(d.getTime())) return ''
+    
+    // Convert to local timezone and format for datetime-local input
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16)
   }
+
+  const [title, setTitle] = useState(initialData?.title || '')
+  const [description, setDescription] = useState(initialData?.description || '')
+  const [category, setCategory] = useState(initialData?.category || 'Items')
+  const [location, setLocation] = useState(initialData?.location || { 
+    address: '', 
+    lat: null, 
+    lng: null 
+  })
+  const [availableFrom, setAvailableFrom] = useState<Date>(
+    initialData?.available_from || new Date()
+  )
+  const [availableUntil, setAvailableUntil] = useState<Date | null>(
+    initialData?.available_until || null
+  )
 
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
@@ -27,8 +59,8 @@ function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProp
     location_lat: initialData?.location_lat?.toString() || '',
     location_lng: initialData?.location_lng?.toString() || '',
     location_address: initialData?.location_address || '',
-    available_from: formatDateForInput(initialData?.available_from) || '',
-    available_until: formatDateForInput(initialData?.available_until) || '',
+    available_from: initialData?.available_from ? formatDateForInput(initialData.available_from) : '',
+    available_until: initialData?.available_until ? formatDateForInput(initialData.available_until) : '',
     contact_info: initialData?.contact_info || '',
     url: initialData?.url || '',
     posted_by: initialData?.posted_by || '',
@@ -39,59 +71,63 @@ function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProp
   const [error, setError] = useState('')
   const [submittedData, setSubmittedData] = useState<any>(null)
 
+  // Update form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({
+        ...prev,
+        title: initialData.title || '',
+        description: initialData.description || '',
+        category: initialData.category || 'Items',
+        location_address: initialData.location_address || '',
+        location_lat: initialData.location_lat?.toString() || '',
+        location_lng: initialData.location_lng?.toString() || '',
+        available_from: initialData.available_from ? formatDateForInput(initialData.available_from) : '',
+        available_until: initialData.available_until ? formatDateForInput(initialData.available_until) : '',
+        contact_info: initialData.contact_info || '',
+        url: initialData.url || '',
+        posted_by: initialData.posted_by || ''
+      }))
+    }
+  }, [initialData])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    // Skip edit code validation if in edit mode
-    if (!editMode) {
-      // Basic validation for new submissions
-      if (!formData.title.trim()) {
-        setError('Title is required')
-        return
-      }
-      if (!formData.description.trim()) {
-        setError('Description is required')
-        return
-      }
-      if (!formData.edit_code || formData.edit_code.length < 6) {
-        setError('Please enter an edit code (minimum 6 characters)')
-        return
-      }
-    }
-    
     try {
       const submitData = {
         ...formData,
         location_lat: formData.location_lat ? parseFloat(formData.location_lat) : null,
         location_lng: formData.location_lng ? parseFloat(formData.location_lng) : null,
-        available_from: formData.available_from ? new Date(formData.available_from).toISOString() : null,
-        available_until: formData.available_until ? new Date(formData.available_until).toISOString() : null,
+        available_from: formData.available_from ? 
+          new Date(formData.available_from).toISOString() : null,
+        available_until: formData.available_until ? 
+          new Date(formData.available_until).toISOString() : null,
+        posted_by: formData.posted_by || 'Anonymous',
+        contact_info: formData.contact_info
       }
 
-      const url = editMode 
-        ? `${API_URL}/api/items/${initialData.id}`
-        : `${API_URL}/api/items`
+      console.log('Submitting data:', submitData);
 
-      console.log('Submitting data:', {
-        url,
-        method: editMode ? 'PUT' : 'POST',
-        data: submitData
-      })
+      const url = editMode 
+        ? `${API_URL}/api/items/${initialData?.id}`
+        : `${API_URL}/api/items`
 
       const response = await fetch(url, {
         method: editMode ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(editMode && editCode ? { 'X-Edit-Code': editCode } : {})
         },
         body: JSON.stringify(submitData),
       })
 
       const data = await response.json()
-      console.log('Response:', data)
+      console.log('Server response:', data)
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit')
+        throw new Error(data.error || data.details || 'Failed to submit')
       }
 
       if (!editMode) {
@@ -253,6 +289,15 @@ function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProp
           Location
         </label>
         <LocationPicker
+          initialAddress={initialData?.location_address}
+          initialCoordinates={
+            initialData?.location_lat && initialData?.location_lng
+              ? {
+                  lat: initialData.location_lat,
+                  lng: initialData.location_lng
+                }
+              : undefined
+          }
           onChange={({ address, lat, lng }) => {
             setFormData({
               ...formData,
@@ -273,7 +318,13 @@ function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProp
           <input
             type="datetime-local"
             value={formData.available_from}
-            onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
+            onChange={(e) => {
+              const date = e.target.value
+              setFormData(prev => ({
+                ...prev,
+                available_from: date
+              }))
+            }}
             className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
@@ -284,7 +335,13 @@ function SubmitForm({ initialData, editMode, editCode, onClose }: SubmitFormProp
           <input
             type="datetime-local"
             value={formData.available_until}
-            onChange={(e) => setFormData({ ...formData, available_until: e.target.value })}
+            onChange={(e) => {
+              const date = e.target.value
+              setFormData(prev => ({
+                ...prev,
+                available_until: date
+              }))
+            }}
             className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
           />
         </div>

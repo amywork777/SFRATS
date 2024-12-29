@@ -146,12 +146,24 @@ app.post('/api/items', async (req, res) => {
     const { 
       title,
       description,
-      location_address: location,
-      location_lat: latitude,
-      location_lng: longitude,
+      location_address,
+      location_lat,
+      location_lng,
       url,
-      category
+      category,
+      edit_code,
+      available_from,
+      available_until,
+      posted_by,
+      contact_info
     } = req.body;
+
+    console.log('Received data:', { 
+      ...req.body,
+      available_from,
+      available_until,
+      posted_by
+    });
     
     const result = await pool.query(
       `INSERT INTO free_items (
@@ -161,12 +173,37 @@ app.post('/api/items', async (req, res) => {
         location_lat, 
         location_lng, 
         url, 
-        category
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [title, description, location, latitude, longitude, url, category]
+        category,
+        edit_code,
+        available_from,
+        available_until,
+        posted_by,
+        contact_info
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [
+        title, 
+        description, 
+        location_address, 
+        location_lat, 
+        location_lng, 
+        url, 
+        category,
+        edit_code,
+        available_from ? new Date(available_from) : null,
+        available_until ? new Date(available_until) : null,
+        posted_by || 'Anonymous',
+        contact_info
+      ]
     );
     
-    res.status(201).json(result.rows[0]);
+    // Format dates in response
+    const item = {
+      ...result.rows[0],
+      available_from: result.rows[0].available_from ? new Date(result.rows[0].available_from).toISOString() : null,
+      available_until: result.rows[0].available_until ? new Date(result.rows[0].available_until).toISOString() : null
+    };
+
+    res.status(201).json(item);
   } catch (error) {
     console.error('Error creating item:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -366,4 +403,147 @@ checkDatabaseSetup().then(() => {
 }).catch(error => {
   console.error('Failed to start server:', error)
   process.exit(1)
+}) 
+
+app.put('/api/items/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const editCode = req.headers['x-edit-code']
+
+    console.log('PUT request details:', {
+      id,
+      editCode,
+      headers: req.headers,
+      body: req.body,
+      editCodeType: typeof editCode,
+      editCodeLength: editCode ? editCode.length : 0
+    })
+
+    // Verify edit code
+    const item = await pool.query(
+      'SELECT edit_code FROM free_items WHERE id = $1',
+      [id]
+    )
+    
+    if (!item.rows[0]) {
+      console.log('Item not found:', id)
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    console.log('Edit code details:', {
+      received: {
+        code: editCode,
+        type: typeof editCode,
+        length: editCode ? editCode.length : 0
+      },
+      stored: {
+        code: item.rows[0].edit_code,
+        type: typeof item.rows[0].edit_code,
+        length: item.rows[0].edit_code ? item.rows[0].edit_code.length : 0
+      }
+    })
+
+    if (!editCode || item.rows[0].edit_code !== editCode) {
+      return res.status(403).json({ 
+        error: 'Invalid edit code',
+        details: {
+          received: editCode,
+          stored: item.rows[0].edit_code,
+          match: item.rows[0].edit_code === editCode
+        }
+      })
+    }
+
+    // Update the item
+    const result = await pool.query(
+      `UPDATE free_items 
+       SET title = $1, 
+           description = $2,
+           category = $3,
+           location_address = $4,
+           location_lat = $5,
+           location_lng = $6,
+           available_from = $7,
+           available_until = $8,
+           status = $9,
+           posted_by = $10,
+           contact_info = $11
+       WHERE id = $12 AND edit_code = $13
+       RETURNING *`,
+      [
+        req.body.title,
+        req.body.description,
+        req.body.category,
+        req.body.location_address,
+        req.body.location_lat,
+        req.body.location_lng,
+        req.body.available_from ? new Date(req.body.available_from) : null,
+        req.body.available_until ? new Date(req.body.available_until) : null,
+        req.body.status || 'available',
+        req.body.posted_by || 'Anonymous',
+        req.body.contact_info,
+        id,
+        editCode
+      ]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(403).json({ error: 'Failed to update - invalid edit code' })
+    }
+
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('Error updating item:', error)
+    res.status(500).json({ error: 'Failed to update item' })
+  }
+}) 
+
+// Add this new endpoint
+app.post('/api/items/:id/verify-edit-code', async (req, res) => {
+  try {
+    const { id } = req.params
+    const editCode = req.headers['x-edit-code']
+
+    // Verify edit code
+    const item = await pool.query(
+      'SELECT edit_code FROM free_items WHERE id = $1',
+      [id]
+    )
+    
+    if (!item.rows[0]) {
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    if (!editCode || item.rows[0].edit_code !== editCode) {
+      return res.status(403).json({ error: 'Invalid edit code' })
+    }
+
+    res.json({ valid: true })
+  } catch (error) {
+    console.error('Error verifying edit code:', error)
+    res.status(500).json({ error: 'Failed to verify edit code' })
+  }
+}) 
+
+// Add this route to check edit codes
+app.get('/api/items/:id/check-edit-code', async (req, res) => {
+  try {
+    const { id } = req.params
+    const result = await pool.query(
+      'SELECT id, edit_code FROM free_items WHERE id = $1',
+      [id]
+    )
+    
+    if (!result.rows[0]) {
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    res.json({
+      id: result.rows[0].id,
+      edit_code: result.rows[0].edit_code
+    })
+  } catch (error) {
+    console.error('Error checking edit code:', error)
+    res.status(500).json({ error: 'Failed to check edit code' })
+  }
 }) 

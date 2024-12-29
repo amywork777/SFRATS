@@ -30,6 +30,7 @@ function ListingPage() {
   const [showEditCode, setShowEditCode] = useState(false)
   const [editCode, setEditCode] = useState('')
   const [statusUpdateError, setStatusUpdateError] = useState('')
+  const [editCodeError, setEditCodeError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`http://localhost:3001/api/items/${id}`)
@@ -167,6 +168,36 @@ function ListingPage() {
     } catch (err) {
       console.error('Delete error:', err)
       setStatusUpdateError(err instanceof Error ? err.message : 'Failed to delete item')
+    }
+  }
+
+  const handleEdit = async (code: string) => {
+    try {
+      if (!code) {
+        setEditCodeError('Please enter an edit code')
+        return
+      }
+
+      const response = await fetch(`${API_URL}/api/items/${id}/verify-edit-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Edit-Code': code
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setEditCodeError(data.error || 'Invalid edit code')
+        return
+      }
+
+      // Only navigate if edit code is valid
+      navigate(`/listing/${id}/edit/${code}`)
+    } catch (err) {
+      console.error('Error verifying edit code:', err)
+      setEditCodeError('Failed to verify edit code')
     }
   }
 
@@ -364,10 +395,18 @@ function ListingPage() {
                 <input
                   type="text"
                   value={editCode}
-                  onChange={(e) => setEditCode(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md"
+                  onChange={(e) => {
+                    setEditCode(e.target.value)
+                    setEditCodeError(null) // Clear error when input changes
+                  }}
+                  className={`w-full px-3 py-2 border rounded-md ${
+                    editCodeError ? 'border-red-500' : ''
+                  }`}
                   placeholder="Enter your edit code"
                 />
+                {editCodeError && (
+                  <p className="mt-1 text-sm text-red-600">{editCodeError}</p>
+                )}
               </div>
 
               {statusUpdateError && (
@@ -396,17 +435,7 @@ function ListingPage() {
                   Mark as Gone
                 </button>
                 <button
-                  onClick={() => {
-                    if (!editCode) {
-                      setStatusUpdateError('Please enter your edit code')
-                      return
-                    }
-                    // Store in sessionStorage instead of localStorage
-                    sessionStorage.setItem(`editCode_${listing.id}`, editCode)
-                    // Also store timestamp to handle cleanup
-                    sessionStorage.setItem(`editCodeTimestamp_${listing.id}`, Date.now().toString())
-                    navigate(`/edit/${listing.id}`)
-                  }}
+                  onClick={() => handleEdit(editCode)}
                   className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
                 >
                   Edit Listing
