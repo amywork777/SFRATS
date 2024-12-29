@@ -1,0 +1,65 @@
+INSERT INTO free_items (
+  title,
+  description,
+  location_lat,
+  location_lng,
+  available_from,
+  available_until,
+  time_details,
+  category,
+  contact_info,
+  url,
+  categories
+) VALUES 
+(
+  'Free Furniture - Moving Out',
+  'Desk, chairs, and bookshelf. Good condition. Must pick up',
+  37.7749,
+  -122.4194,
+  '2024-01-01',
+  '2024-01-15',
+  'Available for pickup weekdays after 5pm',
+  'Items',
+  'Message for details',
+  null,
+  ARRAY['Items']
+),
+(
+  'Community Food Pantry',
+  'Free groceries and fresh produce',
+  37.7833,
+  -122.4167,
+  '2024-01-01',
+  '2024-12-31',
+  'Every Tuesday 2-4pm',
+  'Food',
+  'No registration required',
+  'https://example.com/foodpantry',
+  ARRAY['Food']
+),
+(
+  'Free Yoga in the Park',
+  'All levels welcome, bring your own mat',
+  37.7694,
+  -122.4862,
+  '2024-01-01',
+  '2024-12-31',
+  'Every Saturday 10am',
+  'Events',
+  null,
+  'https://example.com/yoga',
+  ARRAY['Events']
+),
+(
+  'Free Bike Repair Workshop',
+  'Learn to fix your bike - tools provided',
+  37.7596,
+  -122.4269,
+  '2024-01-15',
+  '2024-01-15',
+  '1pm - 4pm',
+  'Services',
+  'No registration needed',
+  null,
+  ARRAY['Services']
+); 
