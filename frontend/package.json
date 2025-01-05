@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "CI=false tsc && vite build || vite build",
+    "build": "CI=false GENERATE_SOURCEMAP=false TSC_COMPILE_ON_ERROR=true vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
@@ -21,7 +21,10 @@
     "react-dom": "^18.2.0",
     "react-icons": "^5.4.0",
     "react-leaflet": "^4.2.1",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.1.1",
+    "@supabase/supabase-js": "latest",
+    "axios": "latest",
+    "nominatim-browser": "latest"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.8",
@@ -38,6 +41,7 @@
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.2.2",
-    "vite": "^5.0.8"
+    "vite": "^5.0.8",
+    "@types/axios": "latest"
   }
 }
