@@ -6,17 +6,32 @@ import L from 'leaflet'
 import { DbItem } from '../types/supabase'
 import { categoryColors } from '../utils/constants'
 import { api } from '../services/api'
-import Legend from './Legend'
 import TopBar from './TopBar'
-import { categoryEmojis } from './Legend'
 import InterestButton from './InterestButton'
 import MessageModal from './MessageModal'
 import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
-import { statusColors } from './Legend'
+import { categoryEmojis, statusColors } from '../utils/mapConstants'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
+
+// Add this type at the top of the file
+interface ListingPreviewProps {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  location_address: string;
+  location_lat: number;
+  location_lng: number;
+  available_from: Date;  // Change this from string to Date
+  status: string;
+  images?: string[];
+  showDirections?: boolean;
+  inPopup?: boolean;
+  onViewDetails?: () => void;
+}
 
 // Create custom marker icons for each category
 const createMarkerIcon = (category: string) => {
@@ -104,11 +119,13 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
                 ✕
               </button>
               <ListingPreview 
-                {...item} 
+                {...{
+                  ...item,
+                  available_from: new Date(item.available_from)
+                }}
                 showDirections={true}
                 inPopup={true}
                 onViewDetails={() => {
-                  // Close popup and navigate
                   root.unmount()
                   document.body.removeChild(popupDiv)
                   delete popupRootsRef.current[item.id]
@@ -307,7 +324,6 @@ function Map() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
           <MarkerLayer items={filteredItems} />
-          <Legend />
         </MapContainer>
       </div>
 

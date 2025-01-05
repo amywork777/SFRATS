@@ -1,17 +1,31 @@
 import React, { useState } from 'react'
-import { categoryEmojis } from './Legend'
+import { categoryEmojis } from '../utils/categoryConstants'
 import DateFilter from './Sidebar/DateFilter'
 
 interface SidebarProps {
-  onFiltersChange: (filters: any) => void
-  isMobile?: boolean
+  onFiltersChange: (filters: {
+    search: string;
+    dates: {
+      start: Date | null;
+      end: Date | null;
+    };
+    categories: string[];
+  }) => void;
+  isMobile?: boolean;
 }
 
 function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<{
+    search: string;
+    dates: {
+      start: Date | null;
+      end: Date | null;
+    };
+    categories: string[];
+  }>({
     search: '',
     dates: { start: null, end: null },
-    categories: [] as string[]
+    categories: []
   })
 
   const handleCategoryToggle = (category: string) => {
