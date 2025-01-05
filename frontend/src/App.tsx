@@ -14,14 +14,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <TopBar 
-        onSubmitClick={() => {
-          window.location.href = '/submit/new'
-        }} 
-        onHomeClick={() => {
-          window.location.href = '/'
-        }}
-      />
+      <TopBar />
       <div className="flex-1">
         <Routes>
           {/* Home route */}

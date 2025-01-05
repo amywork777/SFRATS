@@ -13,18 +13,24 @@ interface SubmitFormProps {
   onClose?: () => void;
 }
 
+interface FormData {
+  location_lat: number;
+  location_lng: number;
+  // ... other fields
+}
+
 function SubmitForm({ initialData, editMode = false, editCode, onClose }: SubmitFormProps) {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
+    location_lat: 0,
+    location_lng: 0,
     title: initialData?.title || '',
     description: initialData?.description || '',
     category: initialData?.category || 'Items',
     location_address: initialData?.location_address || '',
-    location_lat: initialData?.location_lat || null,
-    location_lng: initialData?.location_lng || null,
     available_from: initialData?.available_from || new Date().toISOString(),
     available_until: initialData?.available_until || null,
     url: initialData?.url || '',
