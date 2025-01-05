@@ -11,6 +11,7 @@ CREATE TYPE item_category AS ENUM (
 DROP TYPE IF EXISTS item_status CASCADE;
 CREATE TYPE item_status AS ENUM (
   'available',
+  'pending',
   'gone'
 );
 
@@ -163,3 +164,20 @@ INSERT INTO free_items (
   NOW() + INTERVAL '4 days',
   'available'
 );
+
+-- Add interest_count column if not exists
+ALTER TABLE free_items 
+ADD COLUMN IF NOT EXISTS interest_count INTEGER DEFAULT 0;
+
+-- Make sure the free_items table uses this type
+ALTER TABLE free_items 
+ALTER COLUMN status TYPE item_status 
+USING status::item_status;
+
+-- Add this query to check edit codes
+SELECT id, title, edit_code, LENGTH(edit_code) as code_length 
+FROM free_items 
+ORDER BY id;
+
+-- Verify the item_status type
+SELECT enum_range(NULL::item_status);

@@ -4,9 +4,10 @@ import ListingPage from './pages/ListingPage'
 import TopBar from './components/TopBar'
 import SubmissionsList from './components/SubmissionsList'
 import SubmitForm from './components/SubmitForm'
-import AboutPage from './pages/AboutPage'
-import GuidelinesPage from './pages/GuidelinesPage'
+import About from './pages/About'
+import Guidelines from './pages/Guidelines'
 import EditPage from './pages/EditPage'
+import ManagePage from './pages/ManagePage'
 
 function App() {
   const location = useLocation()
@@ -35,7 +36,7 @@ function App() {
 
           {/* Submit new item route */}
           <Route path="/submit/new" element={
-            <div className="max-w-4xl mx-auto p-4">
+            <div className="max-w-4xl mx-auto p-4 pt-20">
               <h1 className="text-2xl font-bold mb-4">Submit New Listing</h1>
               <SubmitForm />
             </div>
@@ -47,8 +48,9 @@ function App() {
           {/* View listing route */}
           <Route path="/listing/:id" element={<ListingPage />} />
           
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/guidelines" element={<GuidelinesPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/listing/:id/manage" element={<ManagePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

@@ -1,83 +1,89 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import SubmitForm from '../components/SubmitForm'
-import { FreeItem } from '../types'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+import { DbItem } from '../types/supabase'
+import { api } from '../services/api'
 
 function EditPage() {
   const { id, editCode: urlEditCode } = useParams()
   const navigate = useNavigate()
-  const [listing, setListing] = useState<FreeItem | null>(null)
+  const [listing, setListing] = useState<DbItem | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!id || !urlEditCode) {
-      setError('Invalid edit URL')
-      setLoading(false)
-      return
+    const fetchListing = async () => {
+      try {
+        if (!id || !urlEditCode) {
+          throw new Error('Invalid edit URL')
+        }
+
+        // First verify the edit code
+        await api.verifyEditCode(id, urlEditCode)
+
+        // Then fetch the listing
+        const data = await api.getItem(id)
+
+        // Format the data for the form
+        const formattedData = {
+          ...data,
+          edit_code: urlEditCode
+        }
+
+        console.log('Formatted listing data:', formattedData)
+        setListing(formattedData)
+        setError(null)
+      } catch (err) {
+        console.error('Error:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load listing')
+        if (err instanceof Error && err.message === 'Invalid edit code') {
+          setTimeout(() => navigate(`/listing/${id}`), 2000)
+        }
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // First verify the edit code
-    fetch(`${API_URL}/api/items/${id}/verify-edit-code`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Edit-Code': urlEditCode
-      }
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Invalid edit code')
-      return fetch(`${API_URL}/api/items/${id}`)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to fetch listing')
-      return res.json()
-    })
-    .then(data => {
-      // Format dates properly for the form
-      const formattedData = {
-        ...data,
-        id: parseInt(id),
-        edit_code: urlEditCode,
-        // Use the original dates from the database
-        available_from: data.available_from ? new Date(data.available_from) : null,
-        available_until: data.available_until ? new Date(data.available_until) : null,
-        location_address: data.location_address || '',
-        location_lat: parseFloat(data.location_lat) || null,
-        location_lng: parseFloat(data.location_lng) || null
-      }
-      console.log('Formatted listing data:', formattedData)
-      setListing(formattedData)
-      setLoading(false)
-    })
-    .catch(err => {
-      console.error('Error:', err)
-      setError(err.message)
-      setLoading(false)
-      if (err.message === 'Invalid edit code') {
-        setTimeout(() => navigate(`/listing/${id}`), 2000)
-      }
-    })
+    fetchListing()
   }, [id, urlEditCode, navigate])
 
-  if (loading) return <div className="p-4">Loading...</div>
+  if (loading) return (
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
+        <div className="h-32 bg-gray-200 rounded mb-6"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    </div>
+  )
+
   if (error) return (
     <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
         <div className="text-red-700 font-medium mb-2">Error</div>
         <div className="text-red-600">{error}</div>
       </div>
       <button
         onClick={() => navigate(`/listing/${id}`)}
-        className="text-blue-500 hover:underline flex items-center gap-2"
+        className="mt-4 text-blue-500 hover:underline flex items-center gap-2"
       >
         ← Back to Listing
       </button>
     </div>
   )
-  if (!listing) return <div className="p-4">Listing not found</div>
+
+  if (!listing) return (
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="text-gray-600">Listing not found</div>
+      <button
+        onClick={() => navigate(`/listing/${id}`)}
+        className="mt-4 text-blue-500 hover:underline flex items-center gap-2"
+      >
+        ← Back to Listing
+      </button>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto p-4">

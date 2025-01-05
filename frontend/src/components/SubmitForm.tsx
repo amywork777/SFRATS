@@ -1,242 +1,158 @@
-import { useState, useEffect } from 'react'
-import { categoryEmojis } from './Legend'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import LocationPicker from './LocationPicker'
+import { validateEditCode } from '../utils/editCode'
+import { api } from '../services/api'
+import { DbItem } from '../types/supabase'
+import { supabase } from '../utils/supabase'
 
 interface SubmitFormProps {
-  initialData?: {
-    title?: string;
-    description?: string;
-    category?: string;
-    location?: {
-      address: string;
-      lat: number | null;
-      lng: number | null;
-    };
-    available_from?: Date;
-    available_until?: Date | null;
-  };
+  initialData?: Partial<DbItem>;
   editMode?: boolean;
   editCode?: string;
   onClose?: () => void;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-
 function SubmitForm({ initialData, editMode = false, editCode, onClose }: SubmitFormProps) {
-  console.log('SubmitForm props:', { initialData, editMode, editCode })
-
-  // Format dates for input fields
-  const formatDateForInput = (date: Date | string | null) => {
-    if (!date) return ''
-    const d = new Date(date)
-    if (isNaN(d.getTime())) return ''
-    
-    // Convert to local timezone and format for datetime-local input
-    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-      .toISOString()
-      .slice(0, 16)
-  }
-
-  const [title, setTitle] = useState(initialData?.title || '')
-  const [description, setDescription] = useState(initialData?.description || '')
-  const [category, setCategory] = useState(initialData?.category || 'Items')
-  const [location, setLocation] = useState(initialData?.location || { 
-    address: '', 
-    lat: null, 
-    lng: null 
-  })
-  const [availableFrom, setAvailableFrom] = useState<Date>(
-    initialData?.available_from || new Date()
-  )
-  const [availableUntil, setAvailableUntil] = useState<Date | null>(
-    initialData?.available_until || null
-  )
+  const navigate = useNavigate()
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
     category: initialData?.category || 'Items',
-    location_lat: initialData?.location_lat?.toString() || '',
-    location_lng: initialData?.location_lng?.toString() || '',
     location_address: initialData?.location_address || '',
-    available_from: initialData?.available_from ? formatDateForInput(initialData.available_from) : '',
-    available_until: initialData?.available_until ? formatDateForInput(initialData.available_until) : '',
-    contact_info: initialData?.contact_info || '',
+    location_lat: initialData?.location_lat || null,
+    location_lng: initialData?.location_lng || null,
+    available_from: initialData?.available_from || new Date().toISOString(),
+    available_until: initialData?.available_until || null,
     url: initialData?.url || '',
     posted_by: initialData?.posted_by || '',
-    edit_code: editMode ? editCode : '',
+    contact_info: initialData?.contact_info || '',
+    edit_code: editCode || '',
+    status: initialData?.status || 'available'
   })
 
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState('')
-  const [submittedData, setSubmittedData] = useState<any>(null)
+  const [existingImages, setExistingImages] = useState<string[]>(initialData?.images || [])
+  const [images, setImages] = useState<File[]>([])
+  const [uploadProgress, setUploadProgress] = useState(0)
 
-  // Update form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({
-        ...prev,
-        title: initialData.title || '',
-        description: initialData.description || '',
-        category: initialData.category || 'Items',
-        location_address: initialData.location_address || '',
-        location_lat: initialData.location_lat?.toString() || '',
-        location_lng: initialData.location_lng?.toString() || '',
-        available_from: initialData.available_from ? formatDateForInput(initialData.available_from) : '',
-        available_until: initialData.available_until ? formatDateForInput(initialData.available_until) : '',
-        contact_info: initialData.contact_info || '',
-        url: initialData.url || '',
-        posted_by: initialData.posted_by || ''
-      }))
-    }
-  }, [initialData])
+  const handleImageUpload = async (files: FileList) => {
+    const newImages = Array.from(files)
+    setImages(prev => [...prev, ...newImages])
+  }
+
+  const handleRemoveExistingImage = (urlToRemove: string) => {
+    setExistingImages(prev => prev.filter(url => url !== urlToRemove))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
+    setError(null)
+    setSubmitting(true)
 
     try {
+      // Upload new images
+      const newImageUrls = []
+      for (const image of images) {
+        const fileName = `${Date.now()}-${image.name}`
+        const { data, error } = await supabase.storage
+          .from('item-images')
+          .upload(fileName, image, {
+            cacheControl: '3600',
+            upsert: false,
+            onUploadProgress: (progress) => {
+              setUploadProgress((progress.loaded / progress.total) * 100)
+            }
+          })
+
+        if (error) throw error
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('item-images')
+          .getPublicUrl(data.path)
+        
+        newImageUrls.push(publicUrl)
+      }
+
+      // Combine existing and new images
       const submitData = {
         ...formData,
-        location_lat: formData.location_lat ? parseFloat(formData.location_lat) : null,
-        location_lng: formData.location_lng ? parseFloat(formData.location_lng) : null,
-        available_from: formData.available_from ? 
-          new Date(formData.available_from).toISOString() : null,
-        available_until: formData.available_until ? 
-          new Date(formData.available_until).toISOString() : null,
-        posted_by: formData.posted_by || 'Anonymous',
-        contact_info: formData.contact_info
+        images: [...existingImages, ...newImageUrls]
       }
 
-      console.log('Submitting data:', submitData);
+      // Debug logs
+      console.log('Form data:', submitData)
+      console.log('Edit mode:', editMode)
+      console.log('Edit code:', editCode)
 
-      const url = editMode 
-        ? `${API_URL}/api/items/${initialData?.id}`
-        : `${API_URL}/api/items`
-
-      const response = await fetch(url, {
-        method: editMode ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(editMode && editCode ? { 'X-Edit-Code': editCode } : {})
-        },
-        body: JSON.stringify(submitData),
-      })
-
-      const data = await response.json()
-      console.log('Server response:', data)
-
-      if (!response.ok) {
-        throw new Error(data.error || data.details || 'Failed to submit')
+      // Validate form data
+      if (!submitData.title.trim()) {
+        throw new Error('Title is required')
       }
+      if (!submitData.description.trim()) {
+        throw new Error('Description is required')
+      }
+
+      // Location validation
+      if (!submitData.location_lat || !submitData.location_lng || !submitData.location_address) {
+        console.log('Location validation failed:', {
+          lat: submitData.location_lat,
+          lng: submitData.location_lng,
+          address: submitData.location_address
+        })
+        throw new Error('Please select a location by clicking on the map or searching for an address')
+      }
+
+      // Edit code validation - only for new submissions
+      if (!editMode && !submitData.edit_code) {
+        throw new Error('Please enter an edit code')
+      }
+
+      if (!editMode && submitData.edit_code.length < 6) {
+        throw new Error('Edit code must be at least 6 characters')
+      }
+
+      if (!editMode && submitData.edit_code.length > 20) {
+        throw new Error('Edit code must be less than 20 characters')
+      }
+
+      console.log('Submitting data:', submitData)
+
+      let data: DbItem
+      if (editMode && initialData?.id) {
+        // For edit mode, use the editCode from props
+        data = await api.updateItem(
+          initialData.id.toString(),
+          submitData,
+          editCode || ''
+        )
+      } else {
+        // For new submissions, use the edit_code from form
+        data = await api.createItem(submitData)
+      }
+
+      console.log('Submission successful:', data)
 
       if (!editMode) {
-        setSubmittedData(data)
+        navigate('/')
+      } else if (onClose) {
+        onClose()
       }
-      setSubmitted(true)
-      if (onClose) onClose()
     } catch (err) {
-      console.error('Submission error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to submit')
+      console.error('Error submitting form:', err)
+      setError(err instanceof Error ? err.message : 'Failed to submit listing')
+    } finally {
+      setSubmitting(false)
     }
-  }
-
-  if (submitted) {
-    if (editMode) {
-      // For edits, just close the form
-      if (onClose) onClose()
-      return null
-    }
-
-    // For new submissions, show the success message
-    return (
-      <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-green-600 mb-4">
-          Successfully Posted! 🎉
-        </h2>
-        
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-800 mb-2">
-            Your Listing Details
-          </h3>
-          <p className="text-blue-600 mb-4">
-            Your listing is now live! Here's your listing information:
-          </p>
-          <div className="space-y-4">
-            <div>
-              <div className="font-medium text-gray-700">Listing URL:</div>
-              <div className="bg-white p-3 rounded border border-blue-300 font-mono text-sm break-all">
-                {`${window.location.origin}/listing/${submittedData.id}`}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium text-gray-700">Your Private Edit Code:</div>
-              <div className="bg-white p-3 rounded border border-blue-300 font-mono text-lg">
-                {formData.edit_code}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4 text-gray-600">
-          <p>With your edit code, you can:</p>
-          <ul className="list-disc pl-5 space-y-2">
-            <li>Update your listing's status (available/claimed/gone)</li>
-            <li>Remove the listing when it's no longer available</li>
-            <li>Delete the post if needed</li>
-          </ul>
-          <p className="text-sm bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-            <span className="font-semibold">Important:</span> Save your edit code somewhere safe. 
-            You'll need it to make any changes to your listing.
-          </p>
-        </div>
-
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={() => {
-              setSubmitted(false)
-              setFormData({
-                title: '',
-                description: '',
-                category: 'Items',
-                location_lat: '',
-                location_lng: '',
-                location_address: '',
-                available_from: '',
-                available_until: '',
-                contact_info: '',
-                url: '',
-                posted_by: '',
-                edit_code: '',
-              })
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Post Another
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6">Share Something Free</h2>
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Title */}
-      <div className="mb-4">
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
           Title <span className="text-red-500">*</span>
         </label>
@@ -245,87 +161,80 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          placeholder="What are you sharing?"
           required
         />
       </div>
 
       {/* Description */}
-      <div className="mb-4">
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
           Description <span className="text-red-500">*</span>
         </label>
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500 h-32"
-          placeholder="Tell us more about what you're sharing..."
+          className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          rows={4}
           required
         />
       </div>
 
       {/* Category */}
-      <div className="mb-4">
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
           Category <span className="text-red-500">*</span>
         </label>
         <select
           value={formData.category}
-          onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          required
         >
-          {Object.entries(categoryEmojis).map(([category, emoji]) => (
-            <option key={category} value={category}>
-              {emoji} {category}
-            </option>
-          ))}
+          <option value="Items">Items</option>
+          <option value="Food">Food</option>
+          <option value="Events">Events</option>
+          <option value="Services">Services</option>
         </select>
       </div>
 
-      {/* Location */}
-      <div className="mb-4">
+      {/* Location Picker with debug info */}
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
-          Location
+          Location <span className="text-red-500">*</span>
         </label>
         <LocationPicker
-          initialAddress={initialData?.location_address}
-          initialCoordinates={
-            initialData?.location_lat && initialData?.location_lng
-              ? {
-                  lat: initialData.location_lat,
-                  lng: initialData.location_lng
-                }
-              : undefined
-          }
-          onChange={({ address, lat, lng }) => {
+          initialAddress={formData.location_address}
+          initialLat={formData.location_lat}
+          initialLng={formData.location_lng}
+          onLocationSelected={(location) => {
+            console.log('Location selected:', location)
             setFormData({
               ...formData,
-              location_address: address,
-              location_lat: lat.toString(),
-              location_lng: lng.toString()
+              location_address: location.address,
+              location_lat: location.lat,
+              location_lng: location.lng
             })
           }}
         />
+        {/* Debug info */}
+        <div className="mt-2 text-xs text-gray-500">
+          Selected location: {formData.location_address || 'None'}
+          <br />
+          Coordinates: {formData.location_lat}, {formData.location_lng}
+        </div>
       </div>
 
-      {/* Dates */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* Availability */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-gray-700 font-medium mb-2">
-            Available From
+            Available From <span className="text-red-500">*</span>
           </label>
           <input
             type="datetime-local"
-            value={formData.available_from}
-            onChange={(e) => {
-              const date = e.target.value
-              setFormData(prev => ({
-                ...prev,
-                available_from: date
-              }))
-            }}
+            value={formData.available_from.slice(0, 16)}
+            onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
             className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            required
           />
         </div>
         <div>
@@ -334,48 +243,43 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
           </label>
           <input
             type="datetime-local"
-            value={formData.available_until}
-            onChange={(e) => {
-              const date = e.target.value
-              setFormData(prev => ({
-                ...prev,
-                available_until: date
-              }))
-            }}
+            value={formData.available_until?.slice(0, 16) || ''}
+            onChange={(e) => setFormData({ ...formData, available_until: e.target.value || null })}
             className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
       </div>
 
-      {/* Contact Info */}
-      <div className="mb-4">
-        <label className="block text-gray-700 font-medium mb-2">
-          Contact Information
-        </label>
-        <textarea
-          value={formData.contact_info}
-          onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
-          className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          placeholder="How should people contact you? (Email, phone, etc.)"
-        />
-      </div>
-
       {/* URL */}
-      <div className="mb-4">
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
-          URL (optional)
+          Additional URL (optional)
         </label>
         <input
           type="url"
           value={formData.url}
           onChange={(e) => setFormData({ ...formData, url: e.target.value })}
           className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          placeholder="Link to more information"
+          placeholder="https://..."
         />
       </div>
 
-      {/* Nickname */}
-      <div className="mb-6">
+      {/* Contact Info */}
+      <div>
+        <label className="block text-gray-700 font-medium mb-2">
+          Contact Information (optional)
+        </label>
+        <input
+          type="text"
+          value={formData.contact_info}
+          onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
+          className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          placeholder="How should people contact you?"
+        />
+      </div>
+
+      {/* Posted By */}
+      <div>
         <label className="block text-gray-700 font-medium mb-2">
           Your Nickname (optional)
         </label>
@@ -390,7 +294,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
 
       {/* Edit Code */}
       {!editMode && (
-        <div className="mb-4">
+        <div>
           <label className="block text-gray-700 font-medium mb-2">
             Private Edit Code <span className="text-red-500">*</span>
           </label>
@@ -410,11 +314,101 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
         </div>
       )}
 
+      {/* Image Upload */}
+      <div>
+        <label className="block text-gray-700 font-medium mb-2">
+          Images (optional)
+        </label>
+        <div className="space-y-4">
+          {/* Existing Images */}
+          {existingImages.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {existingImages.map((url, index) => (
+                  <div key={url} className="relative">
+                    <img
+                      src={url}
+                      alt={`Existing ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingImage(url)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* New Image Upload */}
+          <div>
+            {existingImages.length > 0 && (
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Add New Images</h4>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
+              className="w-full"
+            />
+          </div>
+
+          {/* Upload Progress */}
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full" 
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          )}
+
+          {/* New Image Previews */}
+          {images.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2">New Images</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`New ${index + 1}`}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+          Error: {error}
+        </div>
+      )}
+
       <button
         type="submit"
-        className="w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        disabled={submitting}
+        className={`w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600
+          ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        Submit
+        {submitting ? 'Submitting...' : 'Submit'}
       </button>
     </form>
   )

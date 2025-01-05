@@ -1,42 +1,54 @@
 import { useState } from 'react'
+import { api } from '../services/api'
 
 interface InterestButtonProps {
   itemId: number
-  initialCount?: number
+  initialCount: number
 }
 
-function InterestButton({ itemId, initialCount = 0 }: InterestButtonProps) {
-  const [count, setCount] = useState(initialCount)
-  const [hasLiked, setHasLiked] = useState(false)
+export default function InterestButton({ itemId, initialCount }: InterestButtonProps) {
+  const [interestCount, setInterestCount] = useState(initialCount)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
-  const handleClick = async () => {
+  const handleInterestClick = async () => {
+    if (hasInteracted) return
+    setLoading(true)
+    setError(null)
+
     try {
-      const response = await fetch(`http://localhost:3001/api/items/${itemId}/interest`, {
-        method: 'POST'
-      })
-      
-      if (!response.ok) throw new Error('Failed to update interest')
-      
-      setCount(prev => prev + (hasLiked ? -1 : 1))
-      setHasLiked(!hasLiked)
-    } catch (error) {
-      console.error('Error updating interest:', error)
+      await api.updateInterestCount(itemId.toString())
+      setInterestCount(prev => prev + 1)
+      setHasInteracted(true)
+    } catch (err) {
+      console.error('Error updating interest:', err)
+      setError(err instanceof Error ? err.message : 'Failed to update interest')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <button
-      onClick={handleClick}
-      className={`flex items-center space-x-1 px-3 py-1 rounded-full text-sm ${
-        hasLiked 
-          ? 'bg-blue-100 text-blue-600' 
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-      }`}
+      onClick={handleInterestClick}
+      disabled={loading || hasInteracted}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors
+        ${hasInteracted 
+          ? 'bg-blue-100 text-blue-700' 
+          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+        }
+        ${loading ? 'opacity-50 cursor-not-allowed' : ''}
+      `}
+      title={hasInteracted ? 'Already expressed interest' : 'Express interest'}
     >
-      <span>👋</span>
-      <span>{count}</span>
+      <span className="text-lg">👋</span>
+      <span className="text-sm font-medium">
+        {interestCount} {interestCount === 1 ? 'person' : 'people'} interested
+      </span>
+      {error && (
+        <span className="text-xs text-red-500 ml-2">{error}</span>
+      )}
     </button>
   )
-}
-
-export default InterestButton 
+} 

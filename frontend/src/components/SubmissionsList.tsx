@@ -1,103 +1,82 @@
-import { useState, useEffect } from 'react'
-import { FreeItem } from '../types'
+import { useState } from 'react'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { DbItem } from '../types/supabase'
+import { api } from '../services/api'
 import { format } from 'date-fns'
-import ListingPreview from './ListingPreview'
-import { categoryEmojis } from './Legend'
+import { Link } from 'react-router-dom'
 
-function SubmissionsList() {
-  const [submissions, setSubmissions] = useState<FreeItem[]>([])
+export default function SubmissionsList() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        const response = await fetch('http://localhost:3001/api/items')
-        if (!response.ok) {
-          throw new Error('Failed to fetch submissions')
-        }
-        const data = await response.json()
-        
-        if (data.error) {
-          throw new Error(data.error)
-        }
-
-        setSubmissions(data)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load submissions')
-      } finally {
-        setLoading(false)
-      }
+  const fetchItems = async () => {
+    try {
+      const data = await api.getItems()
+      setItems(data.slice(0, 5))
+    } catch (err) {
+      console.error('Error fetching items:', err)
+    } finally {
+      setLoading(false)
     }
-
-    fetchSubmissions()
-  }, [])
-
-  const openInGoogleMaps = (lat: number, lng: number) => {
-    const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`
-    window.open(mapsUrl, '_blank')
   }
 
-  if (loading) return (
-    <div className="fixed right-0 top-16 h-[calc(100vh-4rem)] w-96 bg-white shadow-lg overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Recent Submissions</h2>
-        <div className="text-gray-500">Loading submissions...</div>
-      </div>
-    </div>
-  )
-
-  if (error) return (
-    <div className="fixed right-0 top-16 h-[calc(100vh-4rem)] w-96 bg-white shadow-lg overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Recent Submissions</h2>
-        <div className="text-red-500">Error: {error}</div>
-      </div>
-    </div>
-  )
+  const togglePanel = () => {
+    if (!isOpen) {
+      fetchItems()
+    }
+    setIsOpen(!isOpen)
+  }
 
   return (
-    <div className="fixed right-0 top-16 h-[calc(100vh-4rem)] w-96 bg-white shadow-lg overflow-y-auto">
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Recent Submissions</h2>
-        <div className="space-y-4">
-          {submissions.length === 0 ? (
-            <p className="text-gray-500">No submissions yet</p>
+    <div className="fixed bottom-0 left-0 md:left-auto right-0 w-full md:w-80">
+      {/* Panel Content - Position above the button when open */}
+      {isOpen && (
+        <div className="bg-white border-t md:border-l shadow-lg max-h-[60vh] overflow-y-auto">
+          {loading ? (
+            <div className="p-4">Loading...</div>
           ) : (
-            submissions.map(item => (
-              <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm">
-                <ListingPreview 
-                  {...item} 
-                  showDirections={false}
-                  showCategory={false}
-                  showTimestamp={false}
-                />
-                <div className="flex items-center justify-between text-xs mt-2">
-                  <div className="flex items-center gap-1 text-gray-500">
-                    <span>{categoryEmojis[item.category as keyof typeof categoryEmojis] || '📍'}</span>
-                    <span>{item.category}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400">
-                      Posted: {format(new Date(item.created_at), 'MMM d')}
+            <div className="divide-y">
+              {items.map(item => (
+                <Link
+                  key={item.id}
+                  to={`/listing/${item.id}`}
+                  className="block p-4 hover:bg-gray-50"
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">
+                      {item.category === 'Food' ? '🍕' :
+                       item.category === 'Events' ? '🎉' :
+                       item.category === 'Services' ? '🔧' : '📦'}
                     </span>
-                    {item.location_lat && item.location_lng && (
-                      <button
-                        onClick={() => openInGoogleMaps(item.location_lat!, item.location_lng!)}
-                        className="text-blue-500 hover:text-blue-600"
-                      >
-                        🗺️ Maps
-                      </button>
-                    )}
+                    <div>
+                      <h3 className="font-medium">{item.title}</h3>
+                      <p className="text-sm text-gray-500">
+                        {format(new Date(item.created_at), 'MMM d, h:mm a')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))
+                </Link>
+              ))}
+            </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Toggle Button - Always at the bottom */}
+      <button
+        onClick={togglePanel}
+        className="flex items-center justify-between w-full px-4 py-3 
+                 bg-white border-t md:border-l shadow-lg hover:bg-gray-50 
+                 transition-colors"
+      >
+        <span className="font-medium">Recent Submissions</span>
+        {isOpen ? (
+          <ChevronDownIcon className="h-5 w-5" />
+        ) : (
+          <ChevronUpIcon className="h-5 w-5" />
+        )}
+      </button>
     </div>
   )
-}
-
-export default SubmissionsList 
+} 

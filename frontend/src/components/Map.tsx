@@ -3,8 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { createRoot, Root } from 'react-dom/client'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { FreeItem } from '../types'
+import { DbItem } from '../types/supabase'
 import { categoryColors } from '../utils/constants'
+import { api } from '../services/api'
 import Legend from './Legend'
 import TopBar from './TopBar'
 import { categoryEmojis } from './Legend'
@@ -15,6 +16,7 @@ import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
 import { statusColors } from './Legend'
 import SubmissionsList from './SubmissionsList'
+import MobileNav from './MobileNav'
 
 // Create custom marker icons for each category
 const createMarkerIcon = (category: string) => {
@@ -27,7 +29,7 @@ const createMarkerIcon = (category: string) => {
 }
 
 // Create a new component for handling markers
-function MarkerLayer({ items }: { items: FreeItem[] }) {
+function MarkerLayer({ items }: { items: DbItem[] }) {
   const map = useMap()
   const popupRootsRef = useRef<{ [key: string]: Root }>({})
   const cleanupFnsRef = useRef<{ [key: string]: () => void }>({})
@@ -180,10 +182,10 @@ function MarkerLayer({ items }: { items: FreeItem[] }) {
 }
 
 function Map() {
-  const [items, setItems] = useState<FreeItem[]>([])
+  const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedItem, setSelectedItem] = useState<FreeItem | null>(null)
+  const [selectedItem, setSelectedItem] = useState<DbItem | null>(null)
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [filters, setFilters] = useState<{
     search: string;
@@ -205,55 +207,16 @@ function Map() {
     try {
       console.log('Fetching items with filters:', filters)
       
-      // Build query params
-      const params = new URLSearchParams()
-      if (filters.search) params.append('search', filters.search)
-      
-      // Add all selected categories
-      filters.categories.forEach(category => {
-        params.append('categories[]', category)
-      })
-      
-      if (filters.dates.start) params.append('startDate', filters.dates.start.toISOString())
-      if (filters.dates.end) params.append('endDate', filters.dates.end.toISOString())
-
-      const response = await fetch(`http://localhost:3001/api/items?${params}`)
-      
-      if (!response.ok) {
-        throw new Error('Network response was not ok')
-      }
-
-      const data = await response.json()
+      // Use the api service instead of direct fetch
+      const data = await api.getItems()
       console.log('Received data:', data)
 
-      // Handle empty array
-      if (!data || !Array.isArray(data)) {
-        console.log('No items found or invalid response format')
-        setItems([])
-        return
-      }
-
-      const processedItems = data.map(item => ({
-        id: item.id,
-        title: item.title || '',
-        description: item.description || '',
-        category: item.category || 'Items',
-        location_lat: parseFloat(item.location_lat) || 0,
-        location_lng: parseFloat(item.location_lng) || 0,
-        location_address: item.location_address || '',
-        available_from: new Date(item.available_from),
-        available_until: item.available_until ? new Date(item.available_until) : null,
-        created_at: new Date(item.created_at),
-        interest_count: parseInt(item.interest_count) || 0,
-        status: item.status || 'available'
-      }))
-
-      console.log('Processed items:', processedItems)
-      setItems(processedItems)
+      // No need to process dates as they're already in the correct format
+      setItems(data)
       setError(null)
     } catch (err) {
       console.error('Error fetching items:', err)
-      setError('Failed to load items')
+      setError(err instanceof Error ? err.message : 'Failed to load items')
       setItems([])
     } finally {
       setLoading(false)
@@ -320,9 +283,19 @@ function Map() {
   if (!items.length) return <div className="p-4">No items found</div>
 
   return (
-    <div className="h-[calc(100vh-4rem)] w-full relative overflow-hidden">
-      <Sidebar onFiltersChange={handleFiltersChange} />
-      <div className="ml-80 h-full">
+    <div className="fixed inset-0 top-16">
+      {/* Mobile Navigation */}
+      <div className="md:hidden">
+        <MobileNav onFiltersChange={handleFiltersChange} />
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar onFiltersChange={handleFiltersChange} />
+      </div>
+
+      {/* Map Container */}
+      <div className="h-full md:ml-80">
         <MapContainer
           center={[37.7749, -122.4194]}
           zoom={13}
@@ -331,24 +304,15 @@ function Map() {
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
           <MarkerLayer items={filteredItems} />
           <Legend />
         </MapContainer>
       </div>
+
+      {/* Recent Submissions Panel */}
       <SubmissionsList />
-      {selectedItem && (
-        <MessageModal
-          isOpen={showMessageModal}
-          onClose={() => {
-            setShowMessageModal(false)
-            setSelectedItem(null)
-          }}
-          itemId={selectedItem.id}
-          itemTitle={selectedItem.title}
-        />
-      )}
     </div>
   )
 }

@@ -144,71 +144,54 @@ app.get('/api/items', async (req, res) => {
 app.post('/api/items', async (req, res) => {
   try {
     const { 
-      title,
-      description,
-      location_address,
+      title, 
+      description, 
+      category,
       location_lat,
       location_lng,
+      location_address,
+      available_from,
+      available_until,
+      contact_info,
       url,
-      category,
-      edit_code,
-      available_from,
-      available_until,
-      posted_by,
-      contact_info
-    } = req.body;
+      edit_code  // Make sure this is required
+    } = req.body
 
-    console.log('Received data:', { 
-      ...req.body,
-      available_from,
-      available_until,
-      posted_by
-    });
-    
+    // Validate edit_code
+    if (!edit_code || edit_code.length < 6) {
+      return res.status(400).json({ 
+        error: 'Edit code is required and must be at least 6 characters' 
+      })
+    }
+
     const result = await pool.query(
       `INSERT INTO free_items (
-        title, 
-        description, 
-        location_address, 
-        location_lat, 
-        location_lng, 
-        url, 
-        category,
-        edit_code,
-        available_from,
-        available_until,
-        posted_by,
-        contact_info
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+        title, description, category, location_lat, location_lng, 
+        location_address, available_from, available_until, 
+        contact_info, url, edit_code, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'available')
+      RETURNING *`,
       [
-        title, 
-        description, 
-        location_address, 
-        location_lat, 
-        location_lng, 
-        url, 
-        category,
-        edit_code,
-        available_from ? new Date(available_from) : null,
-        available_until ? new Date(available_until) : null,
-        posted_by || 'Anonymous',
-        contact_info
+        title, description, category, location_lat, location_lng,
+        location_address, available_from, available_until,
+        contact_info, url, edit_code
       ]
-    );
-    
-    // Format dates in response
-    const item = {
-      ...result.rows[0],
-      available_from: result.rows[0].available_from ? new Date(result.rows[0].available_from).toISOString() : null,
-      available_until: result.rows[0].available_until ? new Date(result.rows[0].available_until).toISOString() : null
-    };
+    )
 
-    res.status(201).json(item);
-  } catch (error) {
-    console.error('Error creating item:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.log('Created listing with edit code:', {
+      id: result.rows[0].id,
+      editCode: edit_code
+    })
+
+    res.status(201).json(result.rows[0])
+  } catch (error: any) {
+    console.error('Error creating listing:', error)
+    res.status(500).json({ 
+      error: 'Failed to create listing',
+      details: error?.message 
+    })
   }
-});
+})
 
 app.get('/', (req: Request, res: Response): void => {
   res.json({ message: 'SF Free Events API' })
@@ -286,7 +269,7 @@ app.post('/api/items/:id/interest', async (req, res) => {
   try {
     const { id } = req.params
     
-    // First get current interest count
+    // First check if item exists
     const getResult = await pool.query(
       'SELECT interest_count FROM free_items WHERE id = $1',
       [id]
@@ -317,7 +300,23 @@ app.get('/api/items/:id', async (req, res) => {
   try {
     const { id } = req.params
     const query = `
-      SELECT * FROM free_items 
+      SELECT 
+        id,
+        title,
+        description,
+        category,
+        location_lat,
+        location_lng,
+        location_address,
+        available_from,
+        available_until,
+        created_at,
+        interest_count,
+        status,
+        url,
+        posted_by,
+        contact_info
+      FROM free_items 
       WHERE id = $1
     `
     const result = await pool.query(query, [id])
@@ -498,39 +497,20 @@ app.put('/api/items/:id', async (req, res) => {
   }
 }) 
 
-// Add this new endpoint
+// Verify edit code endpoint
 app.post('/api/items/:id/verify-edit-code', async (req, res) => {
   try {
     const { id } = req.params
     const editCode = req.headers['x-edit-code']
 
-    // Verify edit code
-    const item = await pool.query(
-      'SELECT edit_code FROM free_items WHERE id = $1',
-      [id]
-    )
-    
-    if (!item.rows[0]) {
-      return res.status(404).json({ error: 'Item not found' })
+    // Admin password check
+    if (editCode === 'shocking') {
+      return res.json({ valid: true })
     }
 
-    if (!editCode || item.rows[0].edit_code !== editCode) {
-      return res.status(403).json({ error: 'Invalid edit code' })
-    }
-
-    res.json({ valid: true })
-  } catch (error) {
-    console.error('Error verifying edit code:', error)
-    res.status(500).json({ error: 'Failed to verify edit code' })
-  }
-}) 
-
-// Add this route to check edit codes
-app.get('/api/items/:id/check-edit-code', async (req, res) => {
-  try {
-    const { id } = req.params
+    // Regular edit code verification
     const result = await pool.query(
-      'SELECT id, edit_code FROM free_items WHERE id = $1',
+      'SELECT edit_code FROM free_items WHERE id = $1',
       [id]
     )
     
@@ -538,12 +518,110 @@ app.get('/api/items/:id/check-edit-code', async (req, res) => {
       return res.status(404).json({ error: 'Item not found' })
     }
 
-    res.json({
-      id: result.rows[0].id,
-      edit_code: result.rows[0].edit_code
+    if (!editCode || result.rows[0].edit_code !== editCode) {
+      return res.status(403).json({ error: 'Invalid edit code' })
+    }
+
+    res.json({ valid: true })
+  } catch (error: any) {
+    console.error('Error verifying edit code:', error)
+    res.status(500).json({ error: 'Failed to verify edit code' })
+  }
+})
+
+// Update status endpoint
+app.put('/api/items/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { status } = req.body
+    const editCode = req.headers['x-edit-code']
+
+    console.log('Status update request:', {
+      id,
+      status,
+      editCode,
+      body: req.body
     })
-  } catch (error) {
-    console.error('Error checking edit code:', error)
-    res.status(500).json({ error: 'Failed to check edit code' })
+
+    // Check for admin access first
+    if (editCode === 'shocking') {
+      // Admin access - update without verification
+      const result = await pool.query(
+        'UPDATE free_items SET status = $1::text::item_status WHERE id = $2 RETURNING *',
+        [status, id]
+      )
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Item not found' })
+      }
+
+      console.log('Admin update successful:', result.rows[0])
+      return res.json(result.rows[0])
+    }
+
+    // Regular user access - verify edit code
+    const verifyResult = await pool.query(
+      'SELECT edit_code FROM free_items WHERE id = $1',
+      [id]
+    )
+
+    if (!verifyResult.rows[0]) {
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    if (!editCode || verifyResult.rows[0].edit_code !== editCode) {
+      return res.status(403).json({ error: 'Invalid edit code' })
+    }
+
+    // Update status after verification
+    const result = await pool.query(
+      'UPDATE free_items SET status = $1::text::item_status WHERE id = $2 RETURNING *',
+      [status, id]
+    )
+
+    console.log('Status update successful:', result.rows[0])
+    res.json(result.rows[0])
+  } catch (error: any) {
+    console.error('Error updating status:', error)
+    res.status(500).json({ error: 'Failed to update status' })
+  }
+})
+
+// Delete endpoint
+app.delete('/api/items/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const editCode = req.headers['x-edit-code']
+
+    // For non-admin access, verify edit code
+    if (editCode !== 'shocking') {
+      const verifyResult = await pool.query(
+        'SELECT edit_code FROM free_items WHERE id = $1',
+        [id]
+      )
+
+      if (!verifyResult.rows[0]) {
+        return res.status(404).json({ error: 'Item not found' })
+      }
+
+      if (!editCode || verifyResult.rows[0].edit_code !== editCode) {
+        return res.status(403).json({ error: 'Invalid edit code' })
+      }
+    }
+
+    // Delete the item
+    const result = await pool.query(
+      'DELETE FROM free_items WHERE id = $1 RETURNING *',
+      [id]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Item not found' })
+    }
+
+    res.json({ message: 'Item deleted successfully' })
+  } catch (error: any) {
+    console.error('Error deleting item:', error)
+    res.status(500).json({ error: 'Failed to delete item' })
   }
 }) 

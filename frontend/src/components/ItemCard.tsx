@@ -1,14 +1,9 @@
 import LocationButtons from './LocationButtons'
+import InterestButton from './InterestButton'
+import { FreeItem } from '../types'
 
 interface ItemCardProps {
-  item: {
-    title: string
-    description: string
-    location_lat: number
-    location_lng: number
-    location_address: string
-    // ... other item properties
-  }
+  item: FreeItem
 }
 
 function ItemCard({ item }: ItemCardProps) {
@@ -23,6 +18,13 @@ function ItemCard({ item }: ItemCardProps) {
           lat={item.location_lat}
           lng={item.location_lng}
           address={item.location_address}
+        />
+      </div>
+      
+      <div className="mt-2 flex justify-between items-center">
+        <InterestButton 
+          itemId={item.id} 
+          initialCount={item.interest_count}
         />
       </div>
     </div>
