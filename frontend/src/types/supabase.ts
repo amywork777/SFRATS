@@ -1,19 +1,19 @@
 export interface DbItem {
   id: number;
+  created_at: string;
   title: string;
   description: string;
   category: string;
-  location_address: string;
-  location_lat: number;
-  location_lng: number;
+  location_address?: string;
+  location_lat?: number;
+  location_lng?: number;
   available_from: string;
-  available_until: string | null;
-  created_at: string;
-  interest_count: number;
-  status: 'available' | 'pending' | 'gone';
+  available_until?: string | null;
   url?: string;
-  posted_by?: string;
   contact_info?: string;
+  posted_by?: string;
   edit_code: string;
+  status: 'available' | 'gone' | 'pending';
   images?: string[];
+  interest_count: number;
 } 

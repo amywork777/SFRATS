@@ -78,50 +78,77 @@ export const api = {
     return data as DbItem;
   },
 
-  async updateItem(id: string, updates: Partial<DbItem>, editCode: string) {
+  async updateItem(id: string, editCode: string, updates: Partial<DbItem>, newImages?: File[]) {
     try {
       // First verify the edit code
-      const { data: item } = await supabase
-        .from('items')
-        .select('edit_code')
-        .eq('id', id)
-        .single();
-
-      if (!item) {
-        throw new Error('Item not found');
-      }
-
-      if (item.edit_code !== editCode && editCode !== 'shocking') {
-        throw new Error('Invalid edit code');
-      }
-
-      // Perform update without trying to return the updated row
-      const { error: updateError } = await supabase
-        .from('items')
-        .update(updates)
-        .eq('id', id);
-
-      if (updateError) {
-        console.error('Update error:', updateError);
-        throw new Error(updateError.message);
-      }
-
-      // Fetch the updated item in a separate query
-      const { data: updatedItem, error: fetchError } = await supabase
+      const { data: verifyData, error: verifyError } = await supabase
         .from('items')
         .select('*')
         .eq('id', id)
         .single();
 
+      if (verifyError || !verifyData) {
+        throw new Error('Failed to verify edit code');
+      }
+
+      if (verifyData.edit_code !== editCode && editCode !== 'shocking') {
+        throw new Error('Invalid edit code');
+      }
+
+      // Handle image uploads if any
+      let uploadedImageUrls: string[] = updates.images || verifyData.images || [];
+      
+      if (newImages?.length) {
+        const uploadPromises = newImages.map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${id}/${fileName}`;
+
+          const { error: uploadError, data } = await supabase.storage
+            .from('item-images')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('item-images')
+            .getPublicUrl(filePath);
+
+          return publicUrl;
+        });
+
+        const newUrls = await Promise.all(uploadPromises);
+        uploadedImageUrls = [...uploadedImageUrls, ...newUrls];
+      }
+
+      // Update the item with new data including images
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({
+          ...updates,
+          images: uploadedImageUrls
+        })
+        .eq('id', id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Fetch the updated item
+      const { data: updatedItem, error: fetchError } = await supabase
+        .from('items')
+        .select()
+        .eq('id', id)
+        .single();
+
       if (fetchError || !updatedItem) {
-        console.error('Fetch error:', fetchError);
         throw new Error('Failed to fetch updated item');
       }
 
-      return updatedItem as DbItem;
+      return updatedItem;
     } catch (err) {
-      console.error('Update failed:', err);
-      throw new Error(err instanceof Error ? err.message : 'Failed to update item');
+      console.error('Update error:', err);
+      throw err;
     }
   },
 

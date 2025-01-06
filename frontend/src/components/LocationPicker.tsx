@@ -3,6 +3,16 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+// Create emoji marker icon
+const createMarkerIcon = () => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `<div class="marker-pin">📍</div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40]
+  })
+}
+
 interface LocationPickerProps {
   initialAddress?: string;
   initialLat?: number | null;
@@ -22,6 +32,16 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const mapRef = useRef<L.Map | null>(null)
+
+  // Add effect to handle updates to initial values
+  useEffect(() => {
+    if (initialLat && initialLng) {
+      setPosition([initialLat, initialLng])
+    }
+    if (initialAddress) {
+      setAddress(initialAddress)
+    }
+  }, [initialLat, initialLng, initialAddress])
 
   const getAddressFromCoords = async (lat: number, lng: number) => {
     try {
@@ -124,7 +144,11 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           />
           <MapClickHandler />
           {position && (
-            <Marker position={position} />
+            <Marker 
+              position={position} 
+              icon={createMarkerIcon()}
+              interactive={false}
+            />
           )}
         </MapContainer>
       </div>

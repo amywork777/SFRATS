@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import { useNavigate, useLocation } from 'react-router-dom'
 import DirectionsButton from './DirectionsButton'
 import { useState } from 'react'
+import EditListing from './EditListing'
 
 interface ListingPreviewProps {
   id: number
@@ -20,6 +21,10 @@ interface ListingPreviewProps {
   onViewDetails?: () => void
   showCategory?: boolean
   showTimestamp?: boolean
+  onRefresh?: () => void
+  item?: any
+  edit_code?: string
+  isNewListing?: boolean
 }
 
 function ListingPreview({
@@ -38,10 +43,15 @@ function ListingPreview({
   inPopup = false,
   onViewDetails,
   showCategory = true,
-  showTimestamp = true
+  showTimestamp = true,
+  onRefresh,
+  item,
+  edit_code,
+  isNewListing = false,
 }: ListingPreviewProps) {
   const navigate = !inPopup ? useNavigate() : null
   const [copied, setCopied] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   
   const categoryEmojis: { [key: string]: string } = {
     'Events': '🎉',
@@ -76,58 +86,142 @@ function ListingPreview({
   };
 
   return (
-    <div className="space-y-2.5">
-      {/* Title with category icon */}
-      <div className="flex items-center gap-2">
-        <span>{categoryEmojis[category] || '📍'}</span>
-        <h3 className="font-bold text-lg">{title}</h3>
+    <div className="space-y-2 p-2.5 bg-white rounded-lg transition-shadow max-w-[200px]">
+      {/* Title and Category */}
+      <div className="flex items-start gap-1.5">
+        <span className="text-sm shrink-0">{categoryEmojis[category] || '📍'}</span>
+        <div className="min-w-0 flex-1">
+          <h3 className="font-medium text-[10px] leading-tight truncate">{title}</h3>
+        </div>
       </div>
-      
+
+      {/* Status badge */}
+      {status && (
+        <div className="flex justify-start">
+          <span className={`px-1.5 py-0.5 text-[8px] rounded-full ${statusColors[status]}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        </div>
+      )}
+
       {/* Description */}
       {description && (
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className="text-[8px] text-gray-600 line-clamp-1 px-0.5">
+          {description}
+        </p>
       )}
 
       {/* Location */}
       {location_address && (
-        <div className="flex items-start gap-2 text-sm text-gray-600">
-          <span className="mt-1">📍</span>
-          <span>{location_address}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-[8px]">📍</span>
+          <span className="text-[8px] text-gray-600 truncate">{location_address}</span>
         </div>
       )}
 
-      {/* Available date */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <span>📅</span>
-        <span>Available: {format(new Date(available_from), 'MMM d')}</span>
+      {/* Date */}
+      <div className="flex items-center gap-1">
+        <span className="text-[8px]">📅</span>
+        <span className="text-[8px] text-gray-600">{format(new Date(available_from), 'MMM d')}</span>
       </div>
 
       {/* Action Buttons */}
       {showActions && (
-        <div className="flex gap-2">
+        <div className="flex gap-1 mt-1.5">
           <button
             onClick={handleViewDetails}
-            className="flex-1 bg-blue-500 text-white py-1.5 px-3 rounded
-                     hover:bg-blue-600 transition-colors text-sm font-medium"
+            className="flex-1 bg-blue-500 text-white py-0.5 px-1.5 rounded
+                     hover:bg-blue-600 transition-colors text-[8px] font-medium"
           >
-            View Details
+            <span className="sm:hidden">Details</span>
+            <span className="hidden sm:inline">View Details</span>
           </button>
-          <button
-            onClick={handleShare}
-            className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded 
-                     hover:bg-gray-200 transition-colors text-sm"
-          >
-            {copied ? '✓' : '🔗'}
-          </button>
-          {showDirections && location_lat && location_lng && (
+          
+          <div className="flex gap-1">
             <button
-              onClick={openInGoogleMaps}
-              className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded 
-                       hover:bg-gray-200 transition-colors text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEditModal(true);
+              }}
+              className="p-1 bg-gray-100 text-gray-700 rounded 
+                       hover:bg-gray-200 transition-colors text-[8px]"
+              title="Edit Listing"
             >
-              🗺️
+              ✏️
             </button>
-          )}
+
+            <button
+              onClick={handleShare}
+              className="p-0.5 bg-gray-100 text-gray-700 rounded 
+                       hover:bg-gray-200 transition-colors text-[8px]"
+              title="Share listing"
+            >
+              {copied ? '✓' : '🔗'}
+            </button>
+
+            {showDirections && location_lat && location_lng && (
+              <button
+                onClick={openInGoogleMaps}
+                className="p-0.5 bg-gray-100 text-gray-700 rounded 
+                         hover:bg-gray-200 transition-colors text-[8px]"
+                title="Open in Google Maps"
+              >
+                🗺️
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-[100]">
+          <EditListing
+            item={{
+              ...item,
+              id,
+              title,
+              description,
+              category,
+              location_address: location_address || '',
+              location_lat: location_lat || 0,
+              location_lng: location_lng || 0,
+              available_from,
+              available_until,
+              created_at,
+              status: item?.status || 'available',
+              edit_code: item?.edit_code || '',
+              contact_info: item?.contact_info || '',
+              url: item?.url || '',
+              images: item?.images || [],
+              interest_count: item?.interest_count || 0
+            }}
+            onClose={() => setShowEditModal(false)}
+            onSave={() => {
+              onRefresh?.();
+              setShowEditModal(false);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Show edit code for new listings */}
+      {isNewListing && edit_code && (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="font-medium text-yellow-800">Save this edit code to modify your listing later:</p>
+          <div className="mt-2 p-2 bg-white border border-yellow-300 rounded flex justify-between items-center">
+            <code className="font-mono text-lg">{edit_code}</code>
+            <button
+              onClick={async () => {
+                await navigator.clipboard.writeText(edit_code)
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              }}
+              className="text-yellow-600 hover:text-yellow-800"
+            >
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+          </div>
         </div>
       )}
     </div>

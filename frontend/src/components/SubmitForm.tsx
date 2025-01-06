@@ -5,6 +5,7 @@ import { validateEditCode } from '../utils/editCode'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import { supabase } from '../utils/supabase'
+import ListingPreview from './ListingPreview'
 
 interface SubmitFormProps {
   initialData?: Partial<DbItem>;
@@ -23,6 +24,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [submittedItem, setSubmittedItem] = useState<DbItem | null>(null)
 
   const [formData, setFormData] = useState<FormData>({
     location_lat: 0,
@@ -147,12 +149,57 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
       } else if (onClose) {
         onClose()
       }
+
+      setSubmittedItem(data)
+      // Clear form data
+      setFormData({
+        location_lat: 0,
+        location_lng: 0,
+        title: '',
+        description: '',
+        category: 'Items',
+        location_address: '',
+        available_from: new Date().toISOString(),
+        available_until: null,
+        url: '',
+        posted_by: '',
+        contact_info: '',
+        edit_code: '',
+        status: 'available'
+      })
     } catch (err) {
       console.error('Error submitting form:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit listing')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Show success message with edit code after submission
+  if (submittedItem) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-green-600 mb-2">✓ Listing Created Successfully!</h2>
+          <p className="text-gray-600">Your listing has been posted.</p>
+        </div>
+
+        <ListingPreview
+          {...submittedItem}
+          isNewListing={true}
+          showDirections={false}
+        />
+
+        <div className="mt-6">
+          <button
+            onClick={() => setSubmittedItem(null)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Create Another Listing
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

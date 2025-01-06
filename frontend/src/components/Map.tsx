@@ -15,6 +15,7 @@ import ListingPreview from './ListingPreview'
 import { categoryEmojis, statusColors } from '../utils/mapConstants'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
+import Filters from './Filters'
 
 // Add this type at the top of the file
 interface ListingPreviewProps {
@@ -219,6 +220,7 @@ function Map() {
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
   const popupRootsRef = useRef<{ [key: string]: Root }>({})
+  const [showFilters, setShowFilters] = useState(false)
 
   const fetchItems = useCallback(async () => {
     try {
@@ -253,24 +255,29 @@ function Map() {
   }
 
   const filteredItems = items.filter(item => {
-    // Apply search filter
+    // Filter out expired events
+    const now = new Date()
+    const eventDate = new Date(item.available_from)
+    const eventEndDate = item.available_until ? new Date(item.available_until) : null
+    
+    if (eventEndDate && eventEndDate < now) {
+      return false // Filter out if end date has passed
+    }
+    
+    // Apply existing filters
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false
     }
 
-    // Apply category filter
     if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
       return false
     }
 
-    // Apply date filter
     if (filters.dates.start) {
-      const itemDate = new Date(item.available_from)
-      if (itemDate.getTime() < filters.dates.start.getTime()) return false
+      if (eventDate.getTime() < filters.dates.start.getTime()) return false
     }
     if (filters.dates.end) {
-      const itemDate = new Date(item.available_from)
-      if (itemDate.getTime() > filters.dates.end.getTime()) return false
+      if (eventDate.getTime() > filters.dates.end.getTime()) return false
     }
 
     return true
@@ -294,6 +301,14 @@ function Map() {
       popupAnchor: [0, -40]
     })
   }
+
+  const handleCategoryToggle = (category: string) => {
+    handleFiltersChange({
+      categories: filters.categories.includes(category)
+        ? filters.categories.filter(c => c !== category)
+        : [...filters.categories, category]
+    });
+  };
 
   if (loading) return <div className="p-4">Loading items...</div>
   if (error) return <div className="p-4 text-red-500">Error: {error}</div>
@@ -329,6 +344,23 @@ function Map() {
 
       {/* Recent Submissions Panel */}
       <SubmissionsList />
+
+      {/* Filters Component */}
+      <Filters
+        searchQuery={filters.search}
+        setSearchQuery={(value) => handleFiltersChange({ search: value })}
+        selectedCategories={filters.categories}
+        toggleCategory={handleCategoryToggle}
+        dateRange={filters.dates}
+        handleStartDateChange={(e) => handleFiltersChange({ 
+          dates: { ...filters.dates, start: new Date(e.target.value) } 
+        })}
+        handleEndDateChange={(e) => handleFiltersChange({ 
+          dates: { ...filters.dates, end: new Date(e.target.value) } 
+        })}
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+      />
     </div>
   )
 }

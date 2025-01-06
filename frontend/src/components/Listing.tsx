@@ -4,13 +4,28 @@ import { DbItem } from '../types/supabase'
 import { format } from 'date-fns'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useState, useEffect } from 'react'
+import EditListing from './EditListing'
+import { api } from '../services/api'
 
 interface ListingProps {
   listing: DbItem;
   onRefresh?: () => void;
 }
 
-export default function Listing({ listing, onRefresh }: ListingProps) {
+export default function Listing({ listing: initialListing, onRefresh }: ListingProps) {
+  const [listing, setListing] = useState(initialListing)
+  
+  const fetchItem = async () => {
+    try {
+      const updatedListing = await api.getItem(listing.id.toString())
+      setListing(updatedListing)
+      onRefresh?.()
+    } catch (err) {
+      console.error('Error fetching item:', err)
+    }
+  }
+
   const categoryEmojis: { [key: string]: string } = {
     'Events': '🎉',
     'Food': '🍕',
@@ -27,6 +42,8 @@ export default function Listing({ listing, onRefresh }: ListingProps) {
   const formatDate = (date: string | Date) => {
     return format(new Date(date), 'MMM d, yyyy h:mm a')
   }
+
+  const [showEditModal, setShowEditModal] = useState(false);
 
   return (
     <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
@@ -163,6 +180,32 @@ export default function Listing({ listing, onRefresh }: ListingProps) {
             ))}
           </div>
         </div>
+      )}
+
+      <div className="flex gap-2 mt-4">
+        <button
+          onClick={() => setShowEditModal(true)}
+          className="flex-1 bg-green-500 text-white py-2 px-4 rounded
+                    hover:bg-green-600 transition-colors text-sm font-medium
+                    flex items-center justify-center gap-1"
+        >
+          <span>✏️</span>
+          <span>Edit Listing</span>
+        </button>
+        
+        {/* Other action buttons */}
+      </div>
+
+      {showEditModal && (
+        <EditListing
+          item={listing}
+          onClose={() => setShowEditModal(false)}
+          onSave={() => {
+            // Refresh the listing data
+            fetchItem();
+            setShowEditModal(false);
+          }}
+        />
       )}
     </div>
   )
