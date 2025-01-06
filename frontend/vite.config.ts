@@ -10,7 +10,7 @@ export default defineConfig({
     sourcemap: false,
     commonjsOptions: {
       transformMixedEsModules: true,
-      include: [/@supabase\/supabase-js/]
+      include: [/@supabase\/supabase-js/, /nominatim-browser/]
     },
     chunkSizeWarningLimit: 1600,
     target: 'esnext'
@@ -24,11 +24,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js')
+      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js'),
+      'nominatim-browser': path.resolve(__dirname, 'node_modules/nominatim-browser')
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   optimizeDeps: {
-    include: ['@supabase/supabase-js']
+    include: ['@supabase/supabase-js', 'nominatim-browser']
   }
 }) 
