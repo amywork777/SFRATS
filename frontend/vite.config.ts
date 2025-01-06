@@ -10,26 +10,43 @@ export default defineConfig({
     sourcemap: false,
     commonjsOptions: {
       transformMixedEsModules: true,
-      include: [/@supabase\/supabase-js/, /nominatim-browser/]
+      include: [/.*/]
     },
-    chunkSizeWarningLimit: 1600,
-    target: 'esnext'
+    chunkSizeWarningLimit: 2000,
+    target: 'esnext',
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.code === 'CIRCULAR_DEPENDENCY') return
+        if (warning.code === 'THIS_IS_UNDEFINED') return
+        warn(warning)
+      }
+    }
   },
   esbuild: {
-    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+    logOverride: { 'this-is-undefined-in-esm': 'silent' },
+    tsconfigRaw: {
+      compilerOptions: {
+        jsx: 'react-jsx',
+        jsxImportSource: 'react'
+      }
+    }
   },
   server: {
     port: 3000
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js'),
-      'nominatim-browser': path.resolve(__dirname, 'node_modules/nominatim-browser')
+      '@': path.resolve(__dirname, './src')
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   optimizeDeps: {
-    include: ['@supabase/supabase-js', 'nominatim-browser']
+    include: ['@supabase/supabase-js', 'nominatim-browser', 'react', 'react-dom'],
+    esbuildOptions: {
+      target: 'esnext',
+      supported: { 
+        'top-level-await': true 
+      },
+    }
   }
 }) 
