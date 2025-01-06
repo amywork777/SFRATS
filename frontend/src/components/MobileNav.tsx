@@ -74,10 +74,10 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
           onClick={() => setIsOpen(false)} 
         />
 
-        <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-xl max-h-[85vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b px-4 py-3 flex justify-between items-center">
-            <h2 className="text-lg font-medium">Filter Listings</h2>
-            <div className="flex items-center gap-3">
+        <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-xl max-h-[80vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white border-b px-3 py-2 flex justify-between items-center">
+            <h2 className="text-base font-medium">Filter Listings</h2>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   setSelectedCategories([])
@@ -88,15 +88,15 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                     dates: { start: null, end: null }
                   })
                 }}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
               >
                 Clear
               </button>
               <button 
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-gray-100 rounded-full"
               >
-                <XMarkIcon className="h-5 w-5 text-gray-500" />
+                <XMarkIcon className="h-4 w-4 text-gray-500" />
               </button>
             </div>
           </div>
@@ -201,8 +201,15 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               </div>
             </div>
 
-            {/* Spacer div */}
-            <div className="h-20"></div>
+            {/* Done Button */}
+            <div className="pt-2 border-t">
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3 bg-blue-500 text-white rounded-lg text-sm font-medium"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       </div>
