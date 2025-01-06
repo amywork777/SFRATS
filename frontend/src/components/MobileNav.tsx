@@ -205,7 +205,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
             <div className="pt-2 border-t">
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-full py-3 bg-blue-500 text-white rounded-lg text-sm font-medium"
+                className="w-full py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
               >
                 Done
               </button>

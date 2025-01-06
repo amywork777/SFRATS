@@ -9,7 +9,10 @@ const createMarkerIcon = () => {
     className: 'custom-marker',
     html: `<div class="marker-pin">📍</div>`,
     iconSize: [40, 40],
-    iconAnchor: [20, 40]
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+    tooltipAnchor: [0, 0],
+    className: 'custom-marker-no-bg'
   })
 }
 
