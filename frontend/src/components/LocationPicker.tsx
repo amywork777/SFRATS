@@ -134,12 +134,13 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
         <div className="text-red-500 text-sm">{error}</div>
       )}
 
-      <div className="h-[300px] rounded-lg overflow-hidden border">
+      <div className="h-[300px] rounded-lg overflow-hidden border relative z-0">
         <MapContainer
           center={position || [37.7749, -122.4194]}
           zoom={13}
           style={{ height: '100%', width: '100%' }}
           ref={mapRef}
+          className="z-0"
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
