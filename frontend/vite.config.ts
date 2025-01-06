@@ -8,15 +8,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    rollupOptions: {
-      commonjsOptions: {
-        transformMixedEsModules: true
-      },
-      chunkSizeWarningLimit: 1600,
-      target: 'esnext'
-    },
     commonjsOptions: {
-      transformMixedEsModules: true
+      transformMixedEsModules: true,
+      include: [/@supabase\/supabase-js/]
     },
     chunkSizeWarningLimit: 1600,
     target: 'esnext'
@@ -29,7 +23,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      '@supabase/supabase-js': path.resolve(__dirname, 'node_modules/@supabase/supabase-js')
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
