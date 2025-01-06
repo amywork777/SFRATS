@@ -101,7 +101,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
             </div>
           </div>
 
-          <div className="p-4 space-y-6">
+          <div className="p-4 space-y-6 pb-24">
             {/* Search */}
             <div>
               <h3 className="text-sm font-medium mb-2">Search</h3>
