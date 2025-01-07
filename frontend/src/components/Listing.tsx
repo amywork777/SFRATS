@@ -46,7 +46,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
   const [showEditModal, setShowEditModal] = useState(false);
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto">
+    <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto relative">
       {/* Header Section - stack on mobile */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
@@ -95,11 +95,12 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
             </div>
           </div>
           {/* Map */}
-          <div className="md:col-span-2 h-[200px] bg-gray-100 rounded-lg overflow-hidden">
+          <div className="md:col-span-2 h-[200px] bg-gray-100 rounded-lg overflow-hidden relative z-0">
             <MapContainer
               center={[listing.location_lat, listing.location_lng]}
               zoom={15}
               style={{ height: '100%', width: '100%' }}
+              className="z-0"
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -197,16 +198,22 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       </div>
 
       {showEditModal && (
-        <EditListing
-          item={listing}
-          onClose={() => setShowEditModal(false)}
-          onSave={() => {
-            // Refresh the listing data
-            fetchItem();
-            setShowEditModal(false);
-          }}
-        />
+        <div className="fixed inset-0 z-[9999]">
+          <EditListing
+            item={listing}
+            onClose={() => setShowEditModal(false)}
+            onSave={() => {
+              fetchItem();
+              setShowEditModal(false);
+            }}
+          />
+        </div>
       )}
+
+      {/* Footer Spacer */}
+      <div className="h-32 md:h-24">
+        {/* Empty div to create space at bottom */}
+      </div>
     </div>
   )
 } 
