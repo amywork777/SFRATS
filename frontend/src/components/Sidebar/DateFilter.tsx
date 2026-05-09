@@ -11,102 +11,95 @@ function DateFilter({ onChange }: DateFilterProps) {
 
   const handleQuickFilter = (range: string) => {
     setSelectedRange(range)
-    
+
     const now = new Date()
-    let start = null
-    let end = null
+    let start: Date | null = null
+    let end: Date | null = null
 
     switch (range) {
       case 'today':
         start = new Date(now.setHours(0, 0, 0, 0))
         end = new Date(now.setHours(23, 59, 59, 999))
         break
-      case 'week':
-        start = now
-        const weekEnd = new Date(now)
+      case 'week': {
+        start = new Date()
+        const weekEnd = new Date()
         weekEnd.setDate(weekEnd.getDate() + 7)
         end = weekEnd
         break
-      case 'month':
-        start = now
-        const monthEnd = new Date(now)
+      }
+      case 'month': {
+        start = new Date()
+        const monthEnd = new Date()
         monthEnd.setDate(monthEnd.getDate() + 30)
         end = monthEnd
         break
+      }
       default:
         break
     }
 
-    // Update input fields
     setStartDate(start ? start.toISOString().split('T')[0] : '')
     setEndDate(end ? end.toISOString().split('T')[0] : '')
     onChange({ start, end })
   }
 
-  const handleClear = () => {
-    setSelectedRange('all')
-    setStartDate('')
-    setEndDate('')
-    onChange({ start: null, end: null })
-  }
+  const options = [
+    { id: 'all',   label: 'Any time' },
+    { id: 'today', label: 'Today' },
+    { id: 'week',  label: 'Week' },
+    { id: 'month', label: 'Month' },
+  ]
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-medium text-gray-700">Date</h3>
-        <button
-          onClick={handleClear}
-          className="text-sm text-blue-500 hover:text-blue-600"
-        >
-          Clear dates
-        </button>
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'all', label: 'All' },
-          { id: 'today', label: 'Today' },
-          { id: 'week', label: 'Upcoming Week' },
-          { id: 'month', label: 'Upcoming Month' }
-        ].map(option => (
-          <button
-            key={option.id}
-            onClick={() => handleQuickFilter(option.id)}
-            className={`px-3 py-1 rounded-full text-sm
-              ${selectedRange === option.id
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-          >
-            {option.label}
-          </button>
-        ))}
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-1.5">
+        {options.map(option => {
+          const active = selectedRange === option.id
+          return (
+            <button
+              key={option.id}
+              onClick={() => handleQuickFilter(option.id)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition
+                ${active
+                  ? 'bg-stone-900 text-white'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                }`}
+            >
+              {option.label}
+            </button>
+          )
+        })}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         <input
           type="date"
           value={startDate}
-          className="block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
+          aria-label="From"
+          className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm
+                     focus:border-rust-500 focus:ring-2 focus:ring-rust-500/20 outline-none transition"
           onChange={(e) => {
             setStartDate(e.target.value)
+            setSelectedRange('custom')
             onChange({
               start: e.target.value ? new Date(e.target.value) : null,
-              end: endDate ? new Date(endDate) : null
+              end: endDate ? new Date(endDate) : null,
             })
           }}
         />
         <input
           type="date"
           value={endDate}
-          className="block w-full rounded-md border-gray-300 shadow-sm 
-                     focus:border-blue-500 focus:ring-blue-500"
+          aria-label="To"
+          className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm
+                     focus:border-rust-500 focus:ring-2 focus:ring-rust-500/20 outline-none transition"
           onChange={(e) => {
             setEndDate(e.target.value)
+            setSelectedRange('custom')
             onChange({
               start: startDate ? new Date(startDate) : null,
-              end: e.target.value ? new Date(e.target.value) : null
+              end: e.target.value ? new Date(e.target.value) : null,
             })
           }}
         />
@@ -115,4 +108,4 @@ function DateFilter({ onChange }: DateFilterProps) {
   )
 }
 
-export default DateFilter 
+export default DateFilter

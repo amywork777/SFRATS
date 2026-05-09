@@ -15,7 +15,6 @@ import ListingPreview from './ListingPreview'
 import { categoryEmojis, statusColors } from '../utils/mapConstants'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
-import Filters from './Filters'
 
 // Add this type at the top of the file
 interface ListingPreviewProps {
@@ -220,7 +219,6 @@ function Map() {
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
   const popupRootsRef = useRef<{ [key: string]: Root }>({})
-  const [showFilters, setShowFilters] = useState(false)
 
   const fetchItems = useCallback(async () => {
     try {
@@ -310,10 +308,6 @@ function Map() {
     });
   };
 
-  if (loading) return <div className="p-4">Loading items...</div>
-  if (error) return <div className="p-4 text-red-500">Error: {error}</div>
-  if (!items.length) return <div className="p-4">No items found</div>
-
   return (
     <div className="fixed inset-0 top-16">
       {/* Mobile Navigation */}
@@ -327,7 +321,7 @@ function Map() {
       </div>
 
       {/* Map Container */}
-      <div className="h-full md:ml-80">
+      <div className="relative h-full md:ml-80">
         <MapContainer
           center={[37.7749, -122.4194]}
           zoom={13}
@@ -335,32 +329,35 @@ function Map() {
           zoomControl={false}
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            subdomains="abcd"
+            maxZoom={20}
+            detectRetina={true}
           />
           <MarkerLayer items={filteredItems} />
         </MapContainer>
+
+        {/* Status overlay rendered on top of the map */}
+        {(loading || error || !items.length) && (
+          <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-[1000]">
+            <div className="pointer-events-auto bg-white/95 backdrop-blur border border-stone-200 shadow-ring rounded-full px-4 py-1.5 text-sm font-medium">
+              {loading && <span className="text-stone-700">Loading listings…</span>}
+              {!loading && error && (
+                <span className="text-rust-700">Couldn’t load listings: {error}</span>
+              )}
+              {!loading && !error && !items.length && (
+                <span className="text-stone-700">No listings yet — be the first to post one.</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Recent Submissions Panel */}
-      <SubmissionsList />
-
-      {/* Filters Component */}
-      <Filters
-        searchQuery={filters.search}
-        setSearchQuery={(value) => handleFiltersChange({ search: value })}
-        selectedCategories={filters.categories}
-        toggleCategory={handleCategoryToggle}
-        dateRange={filters.dates}
-        handleStartDateChange={(e) => handleFiltersChange({ 
-          dates: { ...filters.dates, start: new Date(e.target.value) } 
-        })}
-        handleEndDateChange={(e) => handleFiltersChange({ 
-          dates: { ...filters.dates, end: new Date(e.target.value) } 
-        })}
-        showFilters={showFilters}
-        setShowFilters={setShowFilters}
-      />
+      {/* Recent Submissions Panel (desktop only) */}
+      <div className="hidden md:block">
+        <SubmissionsList />
+      </div>
     </div>
   )
 }

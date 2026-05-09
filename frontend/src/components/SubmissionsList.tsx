@@ -1,82 +1,78 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
 import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
+import { categoryEmojis } from '../utils/categoryConstants'
 
 export default function SubmissionsList() {
   const [isOpen, setIsOpen] = useState(false)
   const [items, setItems] = useState<DbItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
-  const fetchItems = async () => {
-    try {
-      const data = await api.getItems()
-      setItems(data.slice(0, 5))
-    } catch (err) {
-      console.error('Error fetching items:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const togglePanel = () => {
-    if (!isOpen) {
-      fetchItems()
-    }
-    setIsOpen(!isOpen)
-  }
+  useEffect(() => {
+    if (!isOpen || loaded) return
+    setLoading(true)
+    api.getItems()
+      .then((data) => setItems(data.slice(0, 6)))
+      .catch((err) => console.error('Error fetching items:', err))
+      .finally(() => {
+        setLoading(false)
+        setLoaded(true)
+      })
+  }, [isOpen, loaded])
 
   return (
-    <div className="fixed bottom-0 left-0 md:left-auto right-0 w-full md:w-80">
-      {/* Panel Content - Position above the button when open */}
-      {isOpen && (
-        <div className="bg-white border-t md:border-l shadow-lg max-h-[60vh] overflow-y-auto">
-          {loading ? (
-            <div className="p-4">Loading...</div>
+    <div className="fixed bottom-4 right-4 w-[320px] z-[1000] pointer-events-none">
+      <div className="pointer-events-auto rounded-xl border border-stone-200 bg-white/95 backdrop-blur shadow-ring overflow-hidden">
+        <button
+          onClick={() => setIsOpen(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-rust-500 animate-pulse" />
+            <span className="text-sm font-semibold text-stone-900">Recent submissions</span>
+          </div>
+          {isOpen ? (
+            <ChevronDownIcon className="h-4 w-4 text-stone-500" />
           ) : (
-            <div className="divide-y">
-              {items.map(item => (
-                <Link
-                  key={item.id}
-                  to={`/listing/${item.id}`}
-                  className="block p-4 hover:bg-gray-50"
-                >
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">
-                      {item.category === 'Food' ? '🍕' :
-                       item.category === 'Events' ? '🎉' :
-                       item.category === 'Services' ? '🔧' : '📦'}
-                    </span>
-                    <div>
-                      <h3 className="font-medium">{item.title}</h3>
-                      <p className="text-sm text-gray-500">
-                        {format(new Date(item.created_at), 'MMM d, h:mm a')}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <ChevronUpIcon className="h-4 w-4 text-stone-500" />
           )}
-        </div>
-      )}
+        </button>
 
-      {/* Toggle Button - Always at the bottom */}
-      <button
-        onClick={togglePanel}
-        className="flex items-center justify-between w-full px-4 py-3 
-                 bg-white border-t md:border-l shadow-lg hover:bg-gray-50 
-                 transition-colors"
-      >
-        <span className="font-medium">Recent Submissions</span>
-        {isOpen ? (
-          <ChevronDownIcon className="h-5 w-5" />
-        ) : (
-          <ChevronUpIcon className="h-5 w-5" />
+        {isOpen && (
+          <div className="max-h-[60vh] overflow-y-auto border-t border-stone-200">
+            {loading ? (
+              <div className="p-4 text-sm text-stone-500">Loading…</div>
+            ) : items.length === 0 ? (
+              <div className="p-4 text-sm text-stone-500">No listings yet.</div>
+            ) : (
+              <ul className="divide-y divide-stone-100">
+                {items.map(item => (
+                  <li key={item.id}>
+                    <Link
+                      to={`/listing/${item.id}`}
+                      className="flex items-start gap-3 px-4 py-3 hover:bg-stone-50 transition-colors"
+                    >
+                      <span className="mt-0.5 inline-flex w-8 h-8 items-center justify-center rounded-lg bg-stone-100 text-base shrink-0">
+                        {categoryEmojis[item.category as keyof typeof categoryEmojis] ?? '📍'}
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-semibold text-stone-900 truncate">{item.title}</h3>
+                        <p className="text-xs text-stone-500">
+                          {format(new Date(item.created_at), 'MMM d · h:mm a')}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
-      </button>
+      </div>
     </div>
   )
-} 
+}

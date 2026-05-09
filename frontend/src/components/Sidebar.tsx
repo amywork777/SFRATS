@@ -1,14 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { categoryEmojis } from '../utils/categoryConstants'
 import DateFilter from './Sidebar/DateFilter'
 
 interface SidebarProps {
   onFiltersChange: (filters: {
     search: string;
-    dates: {
-      start: Date | null;
-      end: Date | null;
-    };
+    dates: { start: Date | null; end: Date | null };
     categories: string[];
   }) => void;
   isMobile?: boolean;
@@ -17,10 +14,7 @@ interface SidebarProps {
 function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
   const [filters, setFilters] = useState<{
     search: string;
-    dates: {
-      start: Date | null;
-      end: Date | null;
-    };
+    dates: { start: Date | null; end: Date | null };
     categories: string[];
   }>({
     search: '',
@@ -28,89 +22,97 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
     categories: []
   })
 
+  const update = (next: typeof filters) => {
+    setFilters(next)
+    onFiltersChange(next)
+  }
+
   const handleCategoryToggle = (category: string) => {
     const newCategories = filters.categories.includes(category)
       ? filters.categories.filter(c => c !== category)
       : [...filters.categories, category]
-
-    const newFilters = {
-      ...filters,
-      categories: newCategories
-    }
-    setFilters(newFilters)
-    onFiltersChange(newFilters)
+    update({ ...filters, categories: newCategories })
   }
 
-  const baseStyles = isMobile 
-    ? "w-full text-sm"
-    : "w-80 h-full bg-white shadow-lg fixed left-0 top-16 hidden md:block"
+  const containerClass = isMobile
+    ? 'w-full text-sm'
+    : 'w-80 h-[calc(100vh-4rem)] bg-white border-r border-stone-200 fixed left-0 top-16 hidden md:flex md:flex-col z-[900]'
 
   return (
-    <div className={`${baseStyles} overflow-y-auto`}>
-      <div className={`${isMobile ? 'p-3' : 'p-6'}`}>
-        {/* Search Input */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search free stuff..."
-            className="w-full px-3 py-2 border rounded-lg text-sm"
-            value={filters.search}
-            onChange={(e) => {
-              const newFilters = { ...filters, search: e.target.value }
-              setFilters(newFilters)
-              onFiltersChange(newFilters)
-            }}
-          />
-        </div>
-
-        {/* Date Filter */}
+    <aside className={`${containerClass} overflow-y-auto`}>
+      <div className={isMobile ? 'p-3' : 'p-6'}>
+        {/* Search */}
         <div className="mb-6">
-          <DateFilter
-            onChange={(dates) => {
-              const newFilters = { ...filters, dates }
-              setFilters(newFilters)
-              onFiltersChange(newFilters)
-            }}
-          />
+          <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
+            Search
+          </label>
+          <div className="relative mt-1.5">
+            <input
+              type="text"
+              placeholder="Couches, pizza, plants…"
+              className="w-full pl-9 pr-3 py-2 bg-stone-100 border border-transparent focus:bg-white focus:border-stone-300 rounded-lg text-sm placeholder-stone-400 outline-none transition"
+              value={filters.search}
+              onChange={(e) => update({ ...filters, search: e.target.value })}
+            />
+            <svg
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
+            </svg>
+          </div>
         </div>
 
-        {/* Category Filters */}
-        <div className={`mt-4 ${isMobile ? 'space-y-1' : 'space-y-2'}`}>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className={`${isMobile ? 'text-sm' : 'text-lg'} font-semibold`}>Categories</h3>
+        {/* Categories — chip style */}
+        <div className="mb-6">
+          <div className="flex items-baseline justify-between mb-2.5">
+            <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
+              Categories
+            </label>
             {filters.categories.length > 0 && (
               <button
-                onClick={() => {
-                  const newFilters = { ...filters, categories: [] }
-                  setFilters(newFilters)
-                  onFiltersChange(newFilters)
-                }}
-                className="text-blue-500 text-xs hover:underline"
+                onClick={() => update({ ...filters, categories: [] })}
+                className="text-xs text-rust-600 hover:text-rust-700 font-medium"
               >
-                Clear all
+                Clear
               </button>
             )}
           </div>
-          <div className="space-y-2">
-            {Object.entries(categoryEmojis).map(([category, emoji]) => (
-              <label
-                key={category}
-                className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded-lg"
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.categories.includes(category)}
-                  onChange={() => handleCategoryToggle(category)}
-                  className="rounded text-blue-500 focus:ring-blue-500"
-                />
-                <span className="text-xl">{emoji}</span>
-                <span>{category}</span>
-              </label>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(categoryEmojis).map(([category, emoji]) => {
+              const active = filters.categories.includes(category)
+              return (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryToggle(category)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition
+                    ${active
+                      ? 'bg-rust-500 border-rust-500 text-white shadow-soft'
+                      : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
+                    }`}
+                >
+                  <span className="text-base leading-none">{emoji}</span>
+                  {category}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Date filter */}
+        <div className="pt-4 border-t border-stone-200">
+          <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
+            Date
+          </label>
+          <div className="mt-1.5">
+            <DateFilter
+              onChange={(dates) => update({ ...filters, dates })}
+            />
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   )
 }
 
