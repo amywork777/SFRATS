@@ -1,23 +1,37 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import LocationPicker from './LocationPicker'
-import { validateEditCode } from '../utils/editCode'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import { supabase } from '../utils/supabase'
 import ListingPreview from './ListingPreview'
 
 interface SubmitFormProps {
-  initialData?: Partial<DbItem>;
-  editMode?: boolean;
-  editCode?: string;
-  onClose?: () => void;
+  initialData?: Partial<DbItem>
+  editMode?: boolean
+  editCode?: string
+  onClose?: () => void
 }
 
 interface FormData {
-  location_lat: number;
-  location_lng: number;
-  // ... other fields
+  location_lat: number
+  location_lng: number
+  title: string
+  description: string
+  category: string
+  location_address: string
+  available_from: string
+  available_until: string | null
+  url: string
+  posted_by: string
+  contact_info: string
+  edit_code: string
+  status: 'available' | 'gone' | 'pending'
+}
+
+const CATEGORIES = ['Items', 'Food', 'Events', 'Services'] as const
+const categoryEmojis: Record<string, string> = {
+  Items: '📦', Food: '🍕', Events: '🎉', Services: '🔧',
 }
 
 function SubmitForm({ initialData, editMode = false, editCode, onClose }: SubmitFormProps) {
@@ -27,8 +41,8 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
   const [submittedItem, setSubmittedItem] = useState<DbItem | null>(null)
 
   const [formData, setFormData] = useState<FormData>({
-    location_lat: 0,
-    location_lng: 0,
+    location_lat: (initialData as any)?.location_lat ?? 0,
+    location_lng: (initialData as any)?.location_lng ?? 0,
     title: initialData?.title || '',
     description: initialData?.description || '',
     category: initialData?.category || 'Items',
@@ -39,30 +53,22 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
     posted_by: initialData?.posted_by || '',
     contact_info: initialData?.contact_info || '',
     edit_code: editCode || '',
-    status: initialData?.status || 'available'
+    status: (initialData?.status as any) || 'available',
   })
 
   const [existingImages, setExistingImages] = useState<string[]>(initialData?.images || [])
   const [images, setImages] = useState<File[]>([])
   const [uploadProgress, setUploadProgress] = useState(0)
 
-  const handleImageUpload = async (files: FileList) => {
-    const newImages = Array.from(files)
-    setImages(prev => [...prev, ...newImages])
-  }
-
-  const handleRemoveExistingImage = (urlToRemove: string) => {
-    setExistingImages(prev => prev.filter(url => url !== urlToRemove))
-  }
+  const update = <K extends keyof FormData>(key: K, value: FormData[K]) =>
+    setFormData(prev => ({ ...prev, [key]: value }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-
     try {
-      // Upload new images
-      const newImageUrls = []
+      const newImageUrls: string[] = []
       for (const image of images) {
         const fileName = `${Date.now()}-${image.name}`
         const { data, error } = await supabase.storage
@@ -70,103 +76,33 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
           .upload(fileName, image, {
             cacheControl: '3600',
             upsert: false,
-            onUploadProgress: (progress) => {
-              setUploadProgress((progress.loaded / progress.total) * 100)
-            }
-          })
-
+            onUploadProgress: (p: any) => setUploadProgress((p.loaded / p.total) * 100),
+          } as any)
         if (error) throw error
-        
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('item-images')
-          .getPublicUrl(data.path)
-        
+        const { data: { publicUrl } } = supabase.storage.from('item-images').getPublicUrl(data.path)
         newImageUrls.push(publicUrl)
       }
 
-      // Combine existing and new images
-      const submitData = {
-        ...formData,
-        images: [...existingImages, ...newImageUrls]
-      }
+      const submitData = { ...formData, images: [...existingImages, ...newImageUrls] }
 
-      // Debug logs
-      console.log('Form data:', submitData)
-      console.log('Edit mode:', editMode)
-      console.log('Edit code:', editCode)
-
-      // Validate form data
-      if (!submitData.title.trim()) {
-        throw new Error('Title is required')
-      }
-      if (!submitData.description.trim()) {
-        throw new Error('Description is required')
-      }
-
-      // Location validation
-      if (!submitData.location_lat || !submitData.location_lng || !submitData.location_address) {
-        console.log('Location validation failed:', {
-          lat: submitData.location_lat,
-          lng: submitData.location_lng,
-          address: submitData.location_address
-        })
-        throw new Error('Please select a location by clicking on the map or searching for an address')
-      }
-
-      // Edit code validation - only for new submissions
-      if (!editMode && !submitData.edit_code) {
-        throw new Error('Please enter an edit code')
-      }
-
-      if (!editMode && submitData.edit_code.length < 6) {
-        throw new Error('Edit code must be at least 6 characters')
-      }
-
-      if (!editMode && submitData.edit_code.length > 20) {
-        throw new Error('Edit code must be less than 20 characters')
-      }
-
-      console.log('Submitting data:', submitData)
+      if (!submitData.title.trim()) throw new Error('Title is required')
+      if (!submitData.description.trim()) throw new Error('Description is required')
+      if (!submitData.location_lat || !submitData.location_lng || !submitData.location_address)
+        throw new Error('Please pick a location on the map or search for an address')
+      if (!editMode && !submitData.edit_code) throw new Error('Please enter an edit code')
+      if (!editMode && submitData.edit_code.length < 6) throw new Error('Edit code must be at least 6 characters')
+      if (!editMode && submitData.edit_code.length > 20) throw new Error('Edit code must be at most 20 characters')
 
       let data: DbItem
       if (editMode && initialData?.id) {
-        // For edit mode, use the editCode from props
-        data = await api.updateItem(
-          initialData.id.toString(),
-          submitData,
-          editCode || ''
-        )
+        data = await api.updateItem(initialData.id.toString(), editCode || '', submitData as any) as any
       } else {
-        // For new submissions, use the edit_code from form
-        data = await api.createItem(submitData)
+        data = await api.createItem(submitData as any)
       }
 
-      console.log('Submission successful:', data)
-
-      if (!editMode) {
-        navigate('/')
-      } else if (onClose) {
-        onClose()
-      }
-
+      if (!editMode) navigate('/')
+      else if (onClose) onClose()
       setSubmittedItem(data)
-      // Clear form data
-      setFormData({
-        location_lat: 0,
-        location_lng: 0,
-        title: '',
-        description: '',
-        category: 'Items',
-        location_address: '',
-        available_from: new Date().toISOString(),
-        available_until: null,
-        url: '',
-        posted_by: '',
-        contact_info: '',
-        edit_code: '',
-        status: 'available'
-      })
     } catch (err) {
       console.error('Error submitting form:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit listing')
@@ -175,305 +111,282 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
     }
   }
 
-  // Show success message with edit code after submission
+  // Success screen
   if (submittedItem) {
     return (
-      <div className="p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-green-600 mb-2">✓ Listing Created Successfully!</h2>
-          <p className="text-gray-600">Your listing has been posted.</p>
+      <div className="space-y-6">
+        <div>
+          <span className="label text-bridge-600">✓ Posted</span>
+          <h2 className="font-display font-black text-4xl md:text-5xl text-ink leading-[0.95] mt-2">
+            Listing live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+          </h2>
+          <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
+            Save the edit code below if you want to update or remove this listing later.
+          </p>
         </div>
-
-        <ListingPreview
-          {...submittedItem}
-          isNewListing={true}
-          showDirections={false}
-        />
-
-        <div className="mt-6">
-          <button
-            onClick={() => setSubmittedItem(null)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Create Another Listing
-          </button>
+        <div className="rule-thick" />
+        <div className="bg-paper-light border-2 border-ink shadow-stamp p-5">
+          <ListingPreview {...submittedItem} isNewListing showDirections={false} />
         </div>
+        <button
+          onClick={() => setSubmittedItem(null)}
+          className="bg-ink text-paper-light border-2 border-ink shadow-stamp px-5 py-2.5 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+        >
+          Post another
+        </button>
       </div>
     )
   }
 
+  // Tailwind class shortcut for inputs
+  const inputCls =
+    'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
+
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <div className="sticky top-0 bg-white z-10 border-b pb-4 mb-4">
+    <form onSubmit={handleSubmit} className="space-y-7">
+      {/* Title */}
+      <label className="block">
+        <span className="label">Title <span className="text-bridge-600">*</span></span>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => update('title', e.target.value)}
+          className={`mt-1.5 ${inputCls} font-display text-[18px]`}
+          placeholder="Free couch, must take today"
+          required
+        />
+      </label>
+
+      {/* Description */}
+      <label className="block">
+        <span className="label">Description <span className="text-bridge-600">*</span></span>
+        <textarea
+          value={formData.description}
+          onChange={(e) => update('description', e.target.value)}
+          rows={4}
+          className={`mt-1.5 ${inputCls}`}
+          placeholder="Comfy 3-seater, has a small tear on the arm…"
+          required
+        />
+      </label>
+
+      {/* Category — chip selector */}
+      <div>
+        <span className="label">Category <span className="text-bridge-600">*</span></span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {CATEGORIES.map((c, i) => {
+            const active = formData.category === c
+            const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
+            return (
+              <button
+                key={c}
+                type="button"
+                onClick={() => update('category', c)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition ${tilt} ${
+                  active
+                    ? 'bg-bridge-500 text-paper-light shadow-stamp'
+                    : 'bg-paper-light text-ink hover:bg-paper'
+                }`}
+              >
+                <span className="text-[13px] leading-none">{categoryEmojis[c]}</span>
+                {c}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Title <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-
-        {/* Description */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Description <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            rows={4}
-            required
-          />
-        </div>
-
-        {/* Category */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Category <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="Items">Items</option>
-            <option value="Food">Food</option>
-            <option value="Events">Events</option>
-            <option value="Services">Services</option>
-          </select>
-        </div>
-
-        {/* Location Picker with debug info */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Location <span className="text-red-500">*</span>
-          </label>
+      {/* Location */}
+      <div>
+        <span className="label">Where <span className="text-bridge-600">*</span></span>
+        <div className="mt-2">
           <LocationPicker
             initialAddress={formData.location_address}
             initialLat={formData.location_lat}
             initialLng={formData.location_lng}
-            onLocationSelected={(location) => {
-              console.log('Location selected:', location)
-              setFormData({
-                ...formData,
-                location_address: location.address,
-                location_lat: location.lat,
-                location_lng: location.lng
-              })
+            onLocationSelected={(loc) => {
+              update('location_address', loc.address)
+              update('location_lat', loc.lat)
+              update('location_lng', loc.lng)
             }}
           />
-          {/* Debug info */}
-          <div className="mt-2 text-xs text-gray-500">
-            Selected location: {formData.location_address || 'None'}
-            <br />
-            Coordinates: {formData.location_lat}, {formData.location_lng}
-          </div>
         </div>
+        {formData.location_address && (
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-mute">
+            ▸ {formData.location_address}
+          </p>
+        )}
+      </div>
 
-        {/* Availability */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Available From <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="datetime-local"
-              value={formData.available_from.slice(0, 16)}
-              onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Available Until
-            </label>
-            <input
-              type="datetime-local"
-              value={formData.available_until?.slice(0, 16) || ''}
-              onChange={(e) => setFormData({ ...formData, available_until: e.target.value || null })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
+      {/* When */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="label">Available From <span className="text-bridge-600">*</span></span>
+          <input
+            type="datetime-local"
+            value={formData.available_from.slice(0, 16)}
+            onChange={(e) => update('available_from', e.target.value)}
+            className={`mt-1.5 ${inputCls} font-mono`}
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="label">Available Until</span>
+          <input
+            type="datetime-local"
+            value={formData.available_until?.slice(0, 16) || ''}
+            onChange={(e) => update('available_until', e.target.value || null)}
+            className={`mt-1.5 ${inputCls} font-mono`}
+          />
+        </label>
+      </div>
 
-        {/* URL */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Additional URL (optional)
-          </label>
+      {/* URL + Contact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="label">Link (optional)</span>
           <input
             type="url"
             value={formData.url}
-            onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            placeholder="https://..."
+            onChange={(e) => update('url', e.target.value)}
+            className={`mt-1.5 ${inputCls} font-mono`}
+            placeholder="https://…"
           />
-        </div>
-
-        {/* Contact Info */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Contact Information (optional)
-          </label>
+        </label>
+        <label className="block">
+          <span className="label">Contact (optional)</span>
           <input
             type="text"
             value={formData.contact_info}
-            onChange={(e) => setFormData({ ...formData, contact_info: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            placeholder="How should people contact you?"
+            onChange={(e) => update('contact_info', e.target.value)}
+            className={`mt-1.5 ${inputCls}`}
+            placeholder="How should people reach you?"
           />
-        </div>
+        </label>
+      </div>
 
-        {/* Posted By */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Your Nickname (optional)
-          </label>
+      {/* Posted by + Edit code */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="label">Your Nickname (optional)</span>
           <input
             type="text"
             value={formData.posted_by}
-            onChange={(e) => setFormData({ ...formData, posted_by: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            onChange={(e) => update('posted_by', e.target.value)}
+            className={`mt-1.5 ${inputCls}`}
             placeholder="Anonymous"
           />
-        </div>
-
-        {/* Edit Code */}
+        </label>
         {!editMode && (
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Private Edit Code <span className="text-red-500">*</span>
-            </label>
+          <label className="block">
+            <span className="label">Edit Code <span className="text-bridge-600">*</span></span>
             <input
               type="text"
               value={formData.edit_code}
-              onChange={(e) => setFormData({ ...formData, edit_code: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Choose a private code to edit your listing later"
+              onChange={(e) => update('edit_code', e.target.value)}
+              className={`mt-1.5 ${inputCls} font-mono`}
+              placeholder="6–20 chars; you'll need this to edit"
               required
               minLength={6}
               maxLength={20}
             />
-            <p className="mt-1 text-sm text-gray-500">
-              Choose a memorable code (6-20 characters) that you'll use to edit or remove your listing later
-            </p>
+          </label>
+        )}
+      </div>
+
+      {/* Images */}
+      <div>
+        <span className="label">Photos (optional)</span>
+
+        {existingImages.length > 0 && (
+          <div className="mt-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute mb-2">Current</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {existingImages.map((url, i) => (
+                <div key={url} className="relative">
+                  <img src={url} alt={`Existing ${i + 1}`} className="w-full h-32 object-cover border-2 border-ink" />
+                  <button
+                    type="button"
+                    onClick={() => setExistingImages(prev => prev.filter(u => u !== url))}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border-2 border-ink font-mono text-[12px] flex items-center justify-center"
+                    aria-label="Remove image"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Image Upload */}
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Images (optional)
+        <div className="mt-3">
+          <label className="block w-full cursor-pointer border-2 border-dashed border-ink/40 hover:border-ink py-4 px-3 text-center bg-paper-light transition-colors">
+            <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink">
+              + Add images
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => e.target.files && setImages(prev => [...prev, ...Array.from(e.target.files!)])}
+              className="hidden"
+            />
           </label>
-          <div className="space-y-4">
-            {/* Existing Images */}
-            {existingImages.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Current Images</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {existingImages.map((url, index) => (
-                    <div key={url} className="relative">
-                      <img
-                        src={url}
-                        alt={`Existing ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExistingImage(url)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* New Image Upload */}
-            <div>
-              {existingImages.length > 0 && (
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Add New Images</h4>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => e.target.files && handleImageUpload(e.target.files)}
-                className="w-full"
-              />
-            </div>
-
-            {/* Upload Progress */}
-            {uploadProgress > 0 && uploadProgress < 100 && (
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-blue-600 h-2.5 rounded-full" 
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-            )}
-
-            {/* New Image Previews */}
-            {images.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">New Images</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={URL.createObjectURL(image)}
-                        alt={`New ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setImages(prev => prev.filter((_, i) => i !== index))}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
+
+        {uploadProgress > 0 && uploadProgress < 100 && (
+          <div className="mt-2 w-full h-2 bg-paper-dark border border-ink">
+            <div className="h-full bg-bridge-500" style={{ width: `${uploadProgress}%` }} />
+          </div>
+        )}
+
+        {images.length > 0 && (
+          <div className="mt-3">
+            <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute mb-2">New</div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {images.map((image, i) => (
+                <div key={i} className="relative">
+                  <img src={URL.createObjectURL(image)} alt={`New ${i + 1}`} className="w-full h-32 object-cover border-2 border-ink" />
+                  <button
+                    type="button"
+                    onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border-2 border-ink font-mono text-[12px] flex items-center justify-center"
+                    aria-label="Remove image"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {error && (
-        <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
-          Error: {error}
+        <div className="border-2 border-bridge-700 bg-bridge-50 p-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ Error · </span>
+          <span className="font-mono text-[12px] text-bridge-700">{error}</span>
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className={`w-full py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600
-          ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-      >
-        {submitting ? 'Submitting...' : 'Submit'}
-      </button>
-
-      {/* Mobile Footer Spacer */}
-      <div className="h-32 md:hidden">
-        {/* Empty div to create space at bottom on mobile */}
+      <div className="rule-thick pt-5">
+        <button
+          type="submit"
+          disabled={submitting}
+          className={`w-full bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp py-3 px-4 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold transition-all ${
+            submitting
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)]'
+          }`}
+        >
+          {submitting ? 'Posting…' : editMode ? 'Save Changes' : 'Post Listing'}
+        </button>
       </div>
+
+      {/* Mobile bottom space */}
+      <div className="h-24 md:hidden" />
     </form>
   )
 }
 
-export default SubmitForm 
+export default SubmitForm

@@ -3,27 +3,20 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Create emoji marker icon
-const createMarkerIcon = () => {
-  return L.divIcon({
+const createMarkerIcon = () =>
+  L.divIcon({
     className: 'custom-marker',
     html: `<div class="marker-pin">📍</div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 40],
-    popupAnchor: [0, -40],
-    tooltipAnchor: [0, 0]
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
   })
-}
 
 interface LocationPickerProps {
-  initialAddress?: string;
-  initialLat?: number | null;
-  initialLng?: number | null;
-  onLocationSelected: (location: {
-    address: string;
-    lat: number;
-    lng: number;
-  }) => void;
+  initialAddress?: string
+  initialLat?: number | null
+  initialLng?: number | null
+  onLocationSelected: (location: { address: string; lat: number; lng: number }) => void
 }
 
 function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSelected }: LocationPickerProps) {
@@ -35,32 +28,22 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
   const [error, setError] = useState<string | null>(null)
   const mapRef = useRef<L.Map | null>(null)
 
-  // Add effect to handle updates to initial values
   useEffect(() => {
-    if (initialLat && initialLng) {
-      setPosition([initialLat, initialLng])
-    }
-    if (initialAddress) {
-      setAddress(initialAddress)
-    }
+    if (initialLat && initialLng) setPosition([initialLat, initialLng])
+    if (initialAddress) setAddress(initialAddress)
   }, [initialLat, initialLng, initialAddress])
 
   const getAddressFromCoords = async (lat: number, lng: number) => {
     try {
-      const response = await fetch(
+      const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
       )
-      if (!response.ok) throw new Error('Failed to get address')
-      const data = await response.json()
+      if (!res.ok) throw new Error('Failed to get address')
+      const data = await res.json()
       const newAddress = data.display_name
       setAddress(newAddress)
-      onLocationSelected({
-        address: newAddress,
-        lat,
-        lng
-      })
-    } catch (err) {
-      console.error('Failed to get address:', err)
+      onLocationSelected({ address: newAddress, lat, lng })
+    } catch {
       setError('Failed to get address')
     }
   }
@@ -69,35 +52,25 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(
+      const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchAddress)}&format=json`
       )
-      if (!response.ok) throw new Error('Failed to get coordinates')
-      const data = await response.json()
+      if (!res.ok) throw new Error('Failed to get coordinates')
+      const data = await res.json()
       if (data.length === 0) throw new Error('No results found')
-      
       const { lat, lon: lng } = data[0]
-      const newPosition: [number, number] = [parseFloat(lat), parseFloat(lng)]
-      setPosition(newPosition)
+      const next: [number, number] = [parseFloat(lat), parseFloat(lng)]
+      setPosition(next)
       setAddress(data[0].display_name)
-      onLocationSelected({
-        address: data[0].display_name,
-        lat: parseFloat(lat),
-        lng: parseFloat(lng)
-      })
-      
-      if (mapRef.current) {
-        mapRef.current.setView(newPosition, 13)
-      }
+      onLocationSelected({ address: data[0].display_name, lat: parseFloat(lat), lng: parseFloat(lng) })
+      mapRef.current?.setView(next, 14)
     } catch (err) {
-      console.error('Failed to get coordinates:', err)
       setError(err instanceof Error ? err.message : 'Failed to get coordinates')
     } finally {
       setLoading(false)
     }
   }
 
-  // Map click handler component
   function MapClickHandler() {
     useMapEvents({
       click: async (e) => {
@@ -110,30 +83,30 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="flex gap-2">
         <input
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Enter an address"
-          className="flex-1 px-3 py-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Enter an address…"
+          className="flex-1 bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
         />
         <button
           type="button"
           onClick={() => getCoordsFromAddress(address)}
           disabled={loading || !address}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          {loading ? 'Searching...' : 'Search'}
+          {loading ? 'Searching…' : 'Search'}
         </button>
       </div>
 
       {error && (
-        <div className="text-red-500 text-sm">{error}</div>
+        <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-bridge-700">⚠ {error}</div>
       )}
 
-      <div className="h-[300px] rounded-lg overflow-hidden border relative z-0">
+      <div className="h-[300px] border-2 border-ink overflow-hidden relative z-0">
         <MapContainer
           center={position || [37.7749, -122.4194]}
           zoom={13}
@@ -142,13 +115,15 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           className="z-0"
         >
           <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            attribution='&copy; OSM &copy; CARTO'
+            subdomains="abcd"
+            detectRetina
           />
           <MapClickHandler />
           {position && (
-            <Marker 
-              position={position} 
+            <Marker
+              position={position}
               icon={createMarkerIcon()}
               interactive={false}
             />
@@ -156,11 +131,11 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
         </MapContainer>
       </div>
 
-      <p className="text-sm text-gray-500">
-        Click on the map or search for an address to set the location
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute">
+        ▸ Click on the map or search above to set the location.
       </p>
     </div>
   )
 }
 
-export default LocationPicker 
+export default LocationPicker

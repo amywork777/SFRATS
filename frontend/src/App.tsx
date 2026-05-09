@@ -19,8 +19,14 @@ function App() {
 
           {/* Submit new item route */}
           <Route path="/submit/new" element={
-            <div className="max-w-4xl mx-auto p-4 pt-20">
-              <h1 className="text-2xl font-bold mb-4">Submit New Listing</h1>
+            <div className="max-w-3xl mx-auto px-4 md:px-8 pt-24 pb-16">
+              <div className="mb-8">
+                <span className="label">Post a Find</span>
+                <h1 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-3 tracking-tight">
+                  Share something<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+                </h1>
+                <div className="rule-thick mt-6" />
+              </div>
               <SubmitForm />
             </div>
           } />

@@ -1,150 +1,127 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { api } from '../services/api'
+
+const inputCls =
+  'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
 
 export default function ManagePage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [editCode, setEditCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [showAdminMode, setShowAdminMode] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [editCode, setEditCode] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [showAdminMode, setShowAdminMode] = useState(false)
+  const [adminPassword, setAdminPassword] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const handleAdminLogin = () => {
     if (adminPassword === 'shocking') {
-      setIsAdmin(true);
-      setShowAdminMode(false);
-      setAdminPassword('');
-      setError(null);
+      setIsAdmin(true)
+      setShowAdminMode(false)
+      setAdminPassword('')
+      setError(null)
     } else {
-      setError('Invalid admin password');
+      setError('Invalid admin password')
     }
-  };
+  }
+
+  const callWith = (code: string) => isAdmin ? 'shocking' : code
 
   const handleStatusChange = async (status: string) => {
-    setError(null);
+    setError(null)
     try {
-      await api.updateItem(
-        id!, 
-        { status }, 
-        isAdmin ? 'shocking' : editCode
-      );
-      navigate(`/listing/${id}`);
+      await api.updateItem(id!, callWith(editCode), { status } as any)
+      navigate(`/listing/${id}`)
     } catch (err) {
-      console.error('Status update error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      setError(err instanceof Error ? err.message : 'Failed to update status')
     }
-  };
+  }
 
   const handleDelete = async () => {
-    setError(null);
-    if (!window.confirm('Are you sure you want to delete this listing?')) {
-      return;
-    }
-
+    setError(null)
+    if (!window.confirm('Delete this listing? This can\'t be undone.')) return
     try {
-      await api.deleteItem(
-        id!, 
-        isAdmin ? 'shocking' : editCode
-      );
-      navigate('/');
+      await api.deleteItem(id!, callWith(editCode))
+      navigate('/')
     } catch (err) {
-      console.error('Delete error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete listing');
+      setError(err instanceof Error ? err.message : 'Failed to delete listing')
     }
-  };
+  }
 
   const handleEdit = async () => {
-    setError(null);
+    setError(null)
     try {
-      // Verify edit code first
-      await api.verifyEditCode(
-        id!, 
-        isAdmin ? 'shocking' : editCode
-      );
-
-      // If verification successful, navigate to edit page
-      navigate(`/listing/${id}/edit/${isAdmin ? 'shocking' : editCode}`);
+      await api.verifyEditCode(id!, callWith(editCode))
+      navigate(`/listing/${id}/edit/${callWith(editCode)}`)
     } catch (err) {
-      console.error('Edit verification error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to verify edit code');
+      setError(err instanceof Error ? err.message : 'Failed to verify edit code')
     }
-  };
+  }
+
+  const disabled = !isAdmin && !editCode
 
   return (
-    <div className="max-w-md mx-auto mt-12 p-6 bg-white rounded-lg shadow-lg">
-      <h1 className="text-2xl font-bold mb-6">Manage Listing</h1>
-      
-      <div className="space-y-6">
+    <div className="max-w-md mx-auto pt-24 pb-16 px-4">
+      <div className="bg-paper-light border-2 border-ink shadow-stamp p-6 md:p-7">
+        <div className="mb-6 pb-3 rule-thick">
+          <span className="label">Manage · № {id?.padStart(4, '0')}</span>
+          <h1 className="font-display font-black text-3xl md:text-4xl text-ink mt-1 leading-tight">
+            Listing controls<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+          </h1>
+        </div>
+
         {!showAdminMode ? (
-          <>
-            <div>
-              <label htmlFor="editCode" className="block text-sm font-medium text-gray-700 mb-1">
-                Enter Edit Code
-              </label>
+          <div className="space-y-5">
+            <label className="block">
+              <span className="label">Edit Code</span>
               <input
-                id="editCode"
                 type="text"
                 value={editCode}
                 onChange={(e) => setEditCode(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
-                placeholder="Enter your edit code"
+                className={`mt-1.5 ${inputCls} font-mono`}
+                placeholder="The code you set when you posted"
                 required={!isAdmin}
                 disabled={isAdmin}
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
-            </div>
+            </label>
 
-            <div className="flex justify-between items-center">
-              {!isAdmin && (
+            <div>
+              {!isAdmin ? (
                 <button
                   onClick={() => setShowAdminMode(true)}
-                  className="text-purple-600 hover:text-purple-800 text-sm flex items-center gap-1"
+                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-ink underline underline-offset-4 decoration-1"
                 >
-                  👑 Admin Mode
+                  👑 Admin mode
                 </button>
-              )}
-              {isAdmin && (
-                <span className="text-purple-600 text-sm">👑 Admin Mode Active</span>
+              ) : (
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-bridge-600">
+                  👑 Admin mode active
+                </span>
               )}
             </div>
-          </>
+          </div>
         ) : (
           <div className="space-y-4">
-            <div>
-              <label htmlFor="adminPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                Enter Admin Password
-              </label>
+            <label className="block">
+              <span className="label">Admin Password</span>
               <input
-                id="adminPassword"
                 type="password"
                 value={adminPassword}
                 onChange={(e) => setAdminPassword(e.target.value)}
-                className="w-full px-3 py-2 border rounded-md"
+                className={`mt-1.5 ${inputCls} font-mono`}
                 placeholder="Enter admin password"
               />
-              {error && (
-                <p className="mt-1 text-sm text-red-600">{error}</p>
-              )}
-            </div>
-
+            </label>
             <div className="flex gap-2">
               <button
                 onClick={handleAdminLogin}
-                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200"
+                className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
               >
-                Login as Admin
+                Log in
               </button>
               <button
-                onClick={() => {
-                  setShowAdminMode(false);
-                  setAdminPassword('');
-                  setError(null);
-                }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                onClick={() => { setShowAdminMode(false); setAdminPassword(''); setError(null) }}
+                className="px-4 py-2 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper"
               >
                 Cancel
               </button>
@@ -152,53 +129,55 @@ export default function ManagePage() {
           </div>
         )}
 
-        {/* Listing Options */}
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Listing Options:</h3>
-          <div className="space-y-2">
-            <button
-              onClick={() => handleStatusChange('available')}
-              className="w-full p-3 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg flex items-center justify-center gap-2"
-              disabled={!isAdmin && !editCode}
-            >
-              ✓ Mark as Available
-            </button>
-            
-            <button
-              onClick={() => handleStatusChange('gone')}
-              className="w-full p-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg flex items-center justify-center gap-2"
-              disabled={!isAdmin && !editCode}
-            >
-              ✗ Mark as Gone
-            </button>
-
-            <button
-              onClick={handleEdit}
-              className="w-full p-3 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg flex items-center justify-center gap-2"
-              disabled={!isAdmin && !editCode}
-            >
-              ✏️ Edit Listing
-            </button>
-            
-            <button
-              onClick={handleDelete}
-              className="w-full p-3 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg flex items-center justify-center gap-2"
-              disabled={!isAdmin && !editCode}
-            >
-              🗑 Delete Listing
-            </button>
+        {error && (
+          <div className="mt-5 border-2 border-bridge-700 bg-bridge-50 p-3">
+            <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ </span>
+            <span className="font-mono text-[12px] text-bridge-700">{error}</span>
           </div>
+        )}
+
+        {/* Action buttons */}
+        <div className="mt-6 pt-5 rule-hair space-y-2">
+          <span className="label">Actions</span>
+          <button
+            onClick={() => handleStatusChange('available')}
+            disabled={disabled}
+            className="mt-2 w-full py-3 px-4 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:bg-paper disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ✓ Mark available
+          </button>
+          <button
+            onClick={() => handleStatusChange('gone')}
+            disabled={disabled}
+            className="w-full py-3 px-4 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:bg-paper disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            ✗ Mark gone
+          </button>
+          <button
+            onClick={handleEdit}
+            disabled={disabled}
+            className="w-full py-3 px-4 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            ✏︎ Edit listing
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={disabled}
+            className="w-full py-3 px-4 bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            🗑 Delete listing
+          </button>
         </div>
 
-        <div className="flex justify-end">
+        <div className="mt-5 pt-5 rule-hair">
           <button
             onClick={() => navigate(`/listing/${id}`)}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-ink inline-flex items-center gap-2"
           >
-            Cancel
+            <span aria-hidden>←</span> Back to listing
           </button>
         </div>
       </div>
     </div>
-  );
-} 
+  )
+}

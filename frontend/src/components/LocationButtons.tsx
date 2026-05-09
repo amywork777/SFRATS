@@ -1,5 +1,3 @@
-import { MapPin, Navigation } from 'lucide-react'
-
 interface LocationButtonsProps {
   lat: number
   lng: number
@@ -10,91 +8,72 @@ function LocationButtons({ lat, lng, address }: LocationButtonsProps) {
   const generateMapLinks = (fromLat: number | null, fromLng: number | null) => {
     const destination = `${lat},${lng}`
     const origin = fromLat && fromLng ? `${fromLat},${fromLng}` : ''
-
     return {
       google: `https://www.google.com/maps/dir/?api=1&destination=${destination}${origin ? `&origin=${origin}` : ''}`,
       apple: `maps://?daddr=${destination}${origin ? `&saddr=${origin}` : ''}`,
-      universal: `geo:${destination}?q=${encodeURIComponent(address)}`
+      universal: `geo:${destination}?q=${encodeURIComponent(address)}`,
     }
   }
 
   const handleGetDirections = (useCurrentLocation: boolean = false) => {
-    if (useCurrentLocation && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const links = generateMapLinks(position.coords.latitude, position.coords.longitude)
-          
-          if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-            window.location.href = links.apple
-            setTimeout(() => {
-              window.location.href = links.google
-            }, 500)
-          } else {
-            window.open(links.google, '_blank')
-          }
-        },
-        (error) => {
-          console.error('Error getting location:', error)
-          // Fallback to regular directions without current location
-          const links = generateMapLinks(null, null)
-          window.open(links.google, '_blank')
-        }
-      )
-    } else {
-      const links = generateMapLinks(null, null)
-      if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const openLinks = (links: ReturnType<typeof generateMapLinks>) => {
+      if (isApple) {
         window.location.href = links.apple
-        setTimeout(() => {
-          window.location.href = links.google
-        }, 500)
+        setTimeout(() => { window.location.href = links.google }, 500)
       } else {
         window.open(links.google, '_blank')
       }
     }
+
+    if (useCurrentLocation && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => openLinks(generateMapLinks(position.coords.latitude, position.coords.longitude)),
+        () => openLinks(generateMapLinks(null, null))
+      )
+    } else {
+      openLinks(generateMapLinks(null, null))
+    }
   }
 
+  const links = generateMapLinks(null, null)
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Main Directions Buttons */}
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleGetDirections(false)}
-          className="flex items-center justify-center gap-2 bg-blue-500 
-                     text-white py-2 px-4 rounded-lg hover:bg-blue-600 
-                     transition-colors"
+          className="bg-ink text-paper-light border-2 border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          🧭 Get Directions
+          🧭 Directions
         </button>
         <button
           onClick={() => handleGetDirections(true)}
-          className="flex items-center justify-center gap-2 bg-green-500 
-                     text-white py-2 px-4 rounded-lg hover:bg-green-600 
-                     transition-colors"
+          className="bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          📍 From My Location
+          📍 From me
         </button>
       </div>
 
-      {/* Alternative Map Links */}
-      <div className="flex justify-center gap-4 text-sm text-gray-500">
+      <div className="flex justify-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute">
         <a
-          href={generateMapLinks(null, null).google}
+          href={links.google}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1 hover:text-blue-500"
+          className="hover:text-bridge-600 underline underline-offset-4 decoration-1"
         >
-          📍 Google Maps
+          Google
         </a>
-        <span>|</span>
+        <span aria-hidden>·</span>
         <a
-          href={generateMapLinks(null, null).apple}
-          className="flex items-center gap-1 hover:text-blue-500"
+          href={links.apple}
+          className="hover:text-bridge-600 underline underline-offset-4 decoration-1"
         >
-          📍 Apple Maps
+          Apple
         </a>
       </div>
     </div>
   )
 }
 
-export default LocationButtons 
+export default LocationButtons
