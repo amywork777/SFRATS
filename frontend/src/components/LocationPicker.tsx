@@ -24,7 +24,8 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
   const [position, setPosition] = useState<[number, number] | null>(
     initialLat && initialLng ? [initialLat, initialLng] : null
   )
-  const [loading, setLoading] = useState(false)
+  const [searching, setSearching] = useState(false)
+  const [locating, setLocating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const mapRef = useRef<L.Map | null>(null)
 
@@ -33,42 +34,72 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
     if (initialAddress) setAddress(initialAddress)
   }, [initialLat, initialLng, initialAddress])
 
-  const getAddressFromCoords = async (lat: number, lng: number) => {
+  const reverseGeocode = async (lat: number, lng: number) => {
     try {
       const res = await fetch(
         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
       )
-      if (!res.ok) throw new Error('Failed to get address')
+      if (!res.ok) throw new Error('Failed to look up address')
       const data = await res.json()
       const newAddress = data.display_name
       setAddress(newAddress)
       onLocationSelected({ address: newAddress, lat, lng })
+      return newAddress
     } catch {
-      setError('Failed to get address')
+      // Fall back to coordinates if reverse lookup fails
+      const fallback = `${lat.toFixed(4)}, ${lng.toFixed(4)}`
+      setAddress(fallback)
+      onLocationSelected({ address: fallback, lat, lng })
+      return fallback
     }
   }
 
-  const getCoordsFromAddress = async (searchAddress: string) => {
-    setLoading(true)
+  const searchAddress = async (q: string) => {
+    if (!q.trim()) return
+    setSearching(true)
     setError(null)
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchAddress)}&format=json`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`
       )
-      if (!res.ok) throw new Error('Failed to get coordinates')
+      if (!res.ok) throw new Error('Search failed')
       const data = await res.json()
-      if (data.length === 0) throw new Error('No results found')
-      const { lat, lon: lng } = data[0]
-      const next: [number, number] = [parseFloat(lat), parseFloat(lng)]
+      if (data.length === 0) throw new Error('No results — try a different search.')
+      const { lat, lon } = data[0]
+      const next: [number, number] = [parseFloat(lat), parseFloat(lon)]
       setPosition(next)
       setAddress(data[0].display_name)
-      onLocationSelected({ address: data[0].display_name, lat: parseFloat(lat), lng: parseFloat(lng) })
-      mapRef.current?.setView(next, 14)
+      onLocationSelected({ address: data[0].display_name, lat: parseFloat(lat), lng: parseFloat(lon) })
+      mapRef.current?.setView(next, 15)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to get coordinates')
+      setError(err instanceof Error ? err.message : 'Search failed')
     } finally {
-      setLoading(false)
+      setSearching(false)
     }
+  }
+
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setError('Geolocation isn\'t supported in this browser.')
+      return
+    }
+    setLocating(true)
+    setError(null)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        const next: [number, number] = [lat, lng]
+        setPosition(next)
+        await reverseGeocode(lat, lng)
+        mapRef.current?.setView(next, 15)
+        setLocating(false)
+      },
+      (err) => {
+        setError(err.message || 'Couldn\'t get your location.')
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    )
   }
 
   function MapClickHandler() {
@@ -76,37 +107,55 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
       click: async (e) => {
         const { lat, lng } = e.latlng
         setPosition([lat, lng])
-        await getAddressFromCoords(lat, lng)
+        await reverseGeocode(lat, lng)
       },
     })
     return null
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
+      {/* Search row */}
       <div className="flex gap-2">
         <input
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="Enter an address…"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchAddress(address) } }}
+          placeholder="Search an address or neighborhood…"
           className="flex-1 bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
         />
         <button
           type="button"
-          onClick={() => getCoordsFromAddress(address)}
-          disabled={loading || !address}
+          onClick={() => searchAddress(address)}
+          disabled={searching || !address}
           className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          {loading ? 'Searching…' : 'Search'}
+          {searching ? '…' : 'Find'}
         </button>
+      </div>
+
+      {/* Use my location + helper */}
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={useMyLocation}
+          disabled={locating}
+          className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1 disabled:opacity-50"
+        >
+          {locating ? 'Locating…' : '◎ Use my location'}
+        </button>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
+          ▸ or click the map
+        </span>
       </div>
 
       {error && (
         <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-bridge-700">⚠ {error}</div>
       )}
 
-      <div className="h-[300px] border-2 border-ink overflow-hidden relative z-0">
+      {/* Map */}
+      <div className="h-[260px] border-2 border-ink overflow-hidden relative z-0">
         <MapContainer
           center={position || [37.7749, -122.4194]}
           zoom={13}
@@ -122,18 +171,18 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           />
           <MapClickHandler />
           {position && (
-            <Marker
-              position={position}
-              icon={createMarkerIcon()}
-              interactive={false}
-            />
+            <Marker position={position} icon={createMarkerIcon()} interactive={false} />
           )}
         </MapContainer>
       </div>
 
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute">
-        ▸ Click on the map or search above to set the location.
-      </p>
+      {/* Confirmed address chip */}
+      {position && address && (
+        <div className="bg-paper-light border-2 border-ink p-2.5 flex items-start gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-bridge-600 mt-0.5 shrink-0">Pinned</span>
+          <span className="text-[12px] leading-snug text-ink truncate">{address}</span>
+        </div>
+      )}
     </div>
   )
 }
