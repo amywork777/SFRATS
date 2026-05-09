@@ -6,6 +6,5 @@
   "outputDirectory": "dist",
   "framework": "vite",
   "installCommand": "npm install",
-  "ignoreCommand": "echo 'Skipping checks'",
   "version": 2
 } 
