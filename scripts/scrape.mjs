@@ -18,6 +18,18 @@ const HEADERS = {
 
 const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32 }
 
+// Many sources (Funcheap especially) re-post recurring events once per
+// occurrence — 3x "Pay-What-You-Can Taco Day", 5x "HellaSecret Comedy",
+// etc. We dedupe on the title-after-the-date-prefix so the user sees
+// each event once.
+const normalizeTitle = (t = '') => t
+  .replace(/^\s*(?:[A-Za-z]{3,9},?\s+)?\d{1,2}\/\d{1,2}\/\d{2,4}\s*[:\-–—]?\s*/, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+  .toLowerCase()
+
+let existingTitles = new Set()
+
 const counts = {
   funcheap:   { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
   reddit:     { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
@@ -105,6 +117,12 @@ async function tryInsert(source, row) {
     counts[source].dup++
     return 'dup'
   }
+  // Title-level dedupe across recurring occurrences
+  const normTitle = normalizeTitle(row.title)
+  if (normTitle && existingTitles.has(normTitle)) {
+    counts[source].dup++
+    return 'dup'
+  }
 
   // Geocode if needed
   if ((!row.location_lat || !row.location_lng) && row.location_address) {
@@ -150,6 +168,7 @@ async function tryInsert(source, row) {
   if (res.status === 201) {
     counts[source].inserted++
     totalInserted++
+    if (normTitle) existingTitles.add(normTitle)
     return 'ok'
   }
   if (res.status === 409) {
@@ -369,6 +388,22 @@ async function scrapeEventbrite() {
 // ──────────────── Run all + summary ────────────────
 ;(async () => {
   const t0 = Date.now()
+
+  // Pre-load existing titles for cross-run dedupe (recurring events)
+  try {
+    const res = await fetch(`${REST}?select=title&posted_by=neq.scraper-meta&limit=1000`, { headers: HEADERS })
+    if (res.ok) {
+      const rows = await res.json()
+      for (const r of rows) {
+        const n = normalizeTitle(r.title)
+        if (n) existingTitles.add(n)
+      }
+      console.log(`pre-loaded ${existingTitles.size} existing titles for dedupe`)
+    }
+  } catch (e) {
+    console.error('pre-load failed (continuing):', e.message)
+  }
+
   await scrapeFuncheap()
   await scrapeReddit()
   await scrapeEventbrite()
