@@ -302,9 +302,9 @@ async function scrapeReddit() {
     const kids = data?.data?.children ?? []
     counts.reddit.fetched = kids.length
     const SKIP = ['looking for', 'asking', 'iso ', 'wanted', 'in search of', 'where can i find']
-    const FOOD_RE = /(pizza|food|sandwich|coffee|snack|donut|bagel|brunch|tacos?)/i
-    const EVENT_RE = /(concert|event|show|festival|meetup|fair|market|free entry)/i
-    const SERVICE_RE = /(repair|help|tutor|lesson|haircut|class)/i
+    // Two-bucket categorization: Events = anything time-based you go to;
+    // Items = anything physical you take home (incl. leftover food, books, plants).
+    const EVENT_RE = /(concert|festival|workshop|meetup|class|lesson|tasting|tour|pop-?up|repair caf|panel|open mic|movie night|free entry|free admission|free yoga|free haircut|free clinic|free vaccin)/i
 
     for (const k of kids) {
       if (totalInserted >= PER_RUN_CAP || counts.reddit.inserted >= PER_SOURCE_CAP) break
@@ -315,10 +315,7 @@ async function scrapeReddit() {
       if (SKIP.some(p => lower.includes(p))) continue
       const url = `https://reddit.com${d.permalink}`
       const created = d.created_utc ? new Date(d.created_utc * 1000).toISOString() : null
-      const category =
-        FOOD_RE.test(lower)    ? 'Food' :
-        EVENT_RE.test(lower)   ? 'Events' :
-        SERVICE_RE.test(lower) ? 'Services' : 'Items'
+      const category = EVENT_RE.test(lower) ? 'Events' : 'Items'
       await tryInsert('reddit', {
         title, description: text || null, url, category,
         posted_by: 'reddit', available_from: created,

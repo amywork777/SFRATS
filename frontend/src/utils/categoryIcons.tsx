@@ -1,13 +1,15 @@
-import { Package, Pizza, PartyPopper, Wrench, MapPin, type LucideIcon } from 'lucide-react'
+import { Package, PartyPopper, Pizza, Wrench, MapPin, type LucideIcon } from 'lucide-react'
 
+// Two user-facing categories. Old data uses Food/Services — kept here in
+// the lookup so historical rows still render with a sensible icon.
 const map: Record<string, LucideIcon> = {
   Items:    Package,
-  Food:     Pizza,
   Events:   PartyPopper,
-  Services: Wrench,
+  Food:     Pizza,        // legacy — remapped to Items going forward
+  Services: Wrench,       // legacy — remapped to Events going forward
 }
 
-export const CATEGORY_ORDER = ['Items', 'Food', 'Events', 'Services'] as const
+export const CATEGORY_ORDER = ['Items', 'Events'] as const
 export type Category = typeof CATEGORY_ORDER[number]
 
 interface CategoryIconProps extends React.SVGAttributes<SVGSVGElement> {

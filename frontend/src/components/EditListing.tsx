@@ -208,9 +208,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   className={`mt-1.5 ${inputCls} font-mono`}
                 >
                   <option value="Items">Items</option>
-                  <option value="Food">Food</option>
                   <option value="Events">Events</option>
-                  <option value="Services">Services</option>
                 </select>
               </label>
 
