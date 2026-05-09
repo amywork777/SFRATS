@@ -73,6 +73,16 @@ function inSfBbox(lat, lng) {
   return lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
 }
 
+// Fallback for SF events whose venue can't be precisely geocoded
+// ("Secret Location (SF)", sparse venue names, etc.) — drop a jittered
+// pin near SF center so the listing still appears on the map.
+function jitteredSfCenter() {
+  return {
+    lat: 37.7749 + (Math.random() - 0.5) * 0.036,  // ~±2km
+    lng: -122.4194 + (Math.random() - 0.5) * 0.036,
+  }
+}
+
 async function tryInsert(source, row) {
   if (totalInserted >= PER_RUN_CAP) return 'cap'
   if (counts[source].inserted >= PER_SOURCE_CAP) return 'cap'
@@ -98,6 +108,15 @@ async function tryInsert(source, row) {
   if (row.location_lat && row.location_lng && !inSfBbox(row.location_lat, row.location_lng)) {
     row.location_lat = null
     row.location_lng = null
+  }
+
+  // If we still have no coords after geocoding, fall back to a jittered
+  // SF center so the marker still appears on the map. Better than hiding
+  // the listing entirely.
+  if (!row.location_lat || !row.location_lng) {
+    const c = jitteredSfCenter()
+    row.location_lat = c.lat
+    row.location_lng = c.lng
   }
 
   // POST
