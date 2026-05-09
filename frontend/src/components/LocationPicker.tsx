@@ -8,10 +8,10 @@ import { categoryIconSvg } from '../utils/categoryIcons'
 const createMarkerIcon = () =>
   L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">${categoryIconSvg('Default', '#ffffff', 18)}</div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -18],
+    html: `<div class="marker-pin">${categoryIconSvg('Default', '#ffffff', 20)}</div>`,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
+    popupAnchor: [0, -22],
   })
 
 interface LocationPickerProps {

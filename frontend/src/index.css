@@ -107,12 +107,23 @@
    MARKERS — push-pin / stamp-style for the bulletin board feel
    ===================================================================== */
 
-.custom-marker { background: none; border: none; }
+/* The leaflet-managed icon container — gets sized to iconSize (56×56)
+   and centers the visible pin inside it. The extra padding outside
+   the pin is invisible click area, which means near-misses still
+   register as taps on the marker. */
+.custom-marker {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 
 .marker-pin {
   --pin: #FF4F00;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 32% 32%, #ff8a52 0%, var(--pin) 38%, #b03700 100%);
@@ -126,37 +137,60 @@
     0 2px 0 rgba(24,22,19,0.40),
     0 6px 14px rgba(24, 22, 19, 0.30);
   border: 2px solid #181613;
-  transition: transform 180ms cubic-bezier(.2,.8,.2,1.4), filter 180ms;
-  cursor: pointer;
+  transition: transform 160ms cubic-bezier(.2,.8,.2,1.4), filter 160ms, box-shadow 160ms;
   position: relative;
+  pointer-events: none;  /* clicks bubble to .custom-marker which has the bigger hit area */
 }
 
-/* On touch screens, size up the tap target */
+/* On touch screens, the visible pin grows to make scanning easier */
 @media (pointer: coarse) {
   .marker-pin {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
   }
 }
 
 .marker-pin::after {
-  /* The "shadow on the corkboard" beneath the pin */
+  /* Soft drop shadow under the pin */
   content: '';
   position: absolute;
-  bottom: -10px;
+  bottom: -8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 18px;
-  height: 4px;
-  background: rgba(24, 22, 19, 0.18);
+  width: 22px;
+  height: 5px;
+  background: rgba(24, 22, 19, 0.20);
   border-radius: 50%;
-  filter: blur(2px);
+  filter: blur(2.5px);
   pointer-events: none;
 }
 
-.marker-pin:hover {
-  transform: translateY(-3px) scale(1.07) rotate(-4deg);
-  filter: brightness(1.04);
+.custom-marker:hover .marker-pin {
+  transform: translateY(-2px) scale(1.06);
+  filter: brightness(1.05);
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,0.22),
+    inset 0 2px 0 rgba(255,255,255,0.34),
+    0 3px 0 rgba(24,22,19,0.45),
+    0 10px 22px rgba(24, 22, 19, 0.35);
+}
+
+.custom-marker:active .marker-pin {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 60ms;
+}
+
+/* Keyboard focus ring */
+.custom-marker:focus-visible {
+  outline: none;
+}
+.custom-marker:focus-visible .marker-pin {
+  box-shadow:
+    inset 0 -2px 0 rgba(0,0,0,0.22),
+    inset 0 2px 0 rgba(255,255,255,0.34),
+    0 0 0 4px rgba(255, 79, 0, 0.30),
+    0 0 0 6px rgba(24, 22, 19, 1),
+    0 6px 14px rgba(24, 22, 19, 0.30);
 }
 
 .custom-marker .marker-content {

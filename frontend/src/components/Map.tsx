@@ -37,9 +37,12 @@ interface ListingPreviewProps {
 const createMarkerIcon = (category: string) => {
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">${categoryIconSvg(category, '#ffffff', 18)}</div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    // iconSize is the click target; the visible .marker-pin sits centered
+    // inside it. Padding the click target beyond the visual makes
+    // near-misses still hit, especially on touch devices.
+    html: `<div class="marker-pin">${categoryIconSvg(category, '#ffffff', 20)}</div>`,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
   })
 }
 
