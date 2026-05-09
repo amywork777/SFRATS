@@ -12,7 +12,7 @@ import MessageModal from './MessageModal'
 import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
-import { categoryPinSvg } from '../utils/categoryIcons'
+import { categoryIconSvg } from '../utils/categoryIcons'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 
@@ -35,15 +35,14 @@ interface ListingPreviewProps {
 
 // Create custom marker icons for each category
 const createMarkerIcon = (category: string) => {
-  // The visible teardrop is 40×48. The hit area is 60×64 — the extra
-  // padding around the tip + sides means near-misses still register.
-  // iconAnchor (30, 60) lines the bottom tip up with the actual lat/lng.
+  // 56×56 hit area; the visible orange .marker-pin is centered inside,
+  // so near-misses still register as a tap.
   return L.divIcon({
     className: 'custom-marker',
-    html: categoryPinSvg(category, { height: 48 }),
-    iconSize: [60, 64],
-    iconAnchor: [30, 60],
-    popupAnchor: [0, -52],
+    html: `<div class="marker-pin">${categoryIconSvg(category, '#ffffff', 20)}</div>`,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
+    popupAnchor: [0, -22],
   })
 }
 
