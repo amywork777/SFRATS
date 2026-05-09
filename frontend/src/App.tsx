@@ -10,7 +10,7 @@ import ManagePage from './pages/ManagePage'
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-stone-50">
+    <div className="min-h-screen flex flex-col bg-paper">
       <TopBar />
       <div className="flex-1">
         <Routes>

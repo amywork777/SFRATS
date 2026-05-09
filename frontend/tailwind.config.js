@@ -7,27 +7,48 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['"Space Grotesk"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Display = editorial serif with optical-size variation
+        display: ['"Fraunces"', 'ui-serif', 'Georgia', 'serif'],
+        // Body = warm humanist sans (NOT Inter)
+        sans:    ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        // Mono for labels, dates, civic stamps
+        mono:    ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'monospace'],
       },
       colors: {
-        // SF-themed warm orange ("International Orange" of the Golden Gate)
-        rust: {
-          50:  '#fff5f0',
-          100: '#ffe6d9',
-          200: '#ffc8ad',
-          300: '#ffa37a',
-          400: '#ff7a45',
-          500: '#f25c1f',
-          600: '#d4470f',
-          700: '#a8370c',
-          800: '#7a280a',
-          900: '#4d1906',
+        // Bulletin-board paper palette
+        paper: {
+          DEFAULT: '#f3eee2',  // base cream
+          light:   '#faf6ec',
+          dark:    '#e6dfcd',
+        },
+        ink: {
+          DEFAULT: '#181613',  // not pure black — newsprint ink
+          soft:    '#3a342c',
+          mute:    '#6b6457',
+          fade:    '#9c9382',
+        },
+        // International Orange — the literal Golden Gate Bridge color
+        bridge: {
+          50:  '#fff1ea',
+          100: '#ffd9c2',
+          200: '#ffb38a',
+          300: '#ff8a52',
+          400: '#ff6627',
+          500: '#FF4F00',  // canonical IO
+          600: '#d23d00',
+          700: '#a02e00',
+        },
+        // Used very sparingly as a 2nd ink color (for hover / focus accents)
+        teal: {
+          DEFAULT: '#0F4C5C',
+          soft:    '#2a6776',
         },
       },
       boxShadow: {
-        soft: '0 1px 2px rgba(20, 14, 8, 0.04), 0 4px 16px rgba(20, 14, 8, 0.06)',
-        ring: '0 0 0 1px rgba(20, 14, 8, 0.06), 0 4px 24px rgba(20, 14, 8, 0.08)',
+        // Hard newsprint shadow (no soft Apple-style blur)
+        stamp: '3px 3px 0 0 rgba(24, 22, 19, 1)',
+        pin:   '0 2px 0 rgba(24, 22, 19, 0.5), 0 6px 16px rgba(24, 22, 19, 0.18)',
+        paper: '0 1px 0 rgba(0,0,0,0.04), 0 12px 32px rgba(24, 22, 19, 0.10)',
       },
     },
   },

@@ -321,7 +321,7 @@ function Map() {
       </div>
 
       {/* Map Container */}
-      <div className="relative h-full md:ml-80">
+      <div className="relative h-full md:ml-[320px]">
         <MapContainer
           center={[37.7749, -122.4194]}
           zoom={13}
@@ -330,7 +330,7 @@ function Map() {
         >
           <TileLayer
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            attribution='&copy; OpenStreetMap &copy; CARTO'
             subdomains="abcd"
             maxZoom={20}
             detectRetina={true}
@@ -338,16 +338,27 @@ function Map() {
           <MarkerLayer items={filteredItems} />
         </MapContainer>
 
-        {/* Status overlay rendered on top of the map */}
+        {/* "Counter" stamp — top-left corner of map */}
+        <div className="pointer-events-none absolute top-4 left-4 z-[1000]">
+          <div className="bg-paper-light border-2 border-ink px-3 py-1.5 shadow-stamp -rotate-2">
+            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
+            <div className="font-display font-black text-[28px] leading-none text-ink mt-0.5">
+              {String(filteredItems.length).padStart(3, '0')}
+            </div>
+            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
+          </div>
+        </div>
+
+        {/* Status overlay — looks like a memo posted to the bulletin */}
         {(loading || error || !items.length) && (
           <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-[1000]">
-            <div className="pointer-events-auto bg-white/95 backdrop-blur border border-stone-200 shadow-ring rounded-full px-4 py-1.5 text-sm font-medium">
-              {loading && <span className="text-stone-700">Loading listings…</span>}
+            <div className="pointer-events-auto bg-paper-light border-2 border-ink shadow-stamp px-4 py-2 rotate-[-1deg]">
+              {loading && <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading listings…</span>}
               {!loading && error && (
-                <span className="text-rust-700">Couldn’t load listings: {error}</span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-bridge-700">⚠ Couldn’t load: {error}</span>
               )}
               {!loading && !error && !items.length && (
-                <span className="text-stone-700">No listings yet — be the first to post one.</span>
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first to post.</span>
               )}
             </div>
           </div>

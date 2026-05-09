@@ -19,7 +19,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
   }>({
     search: '',
     dates: { start: null, end: null },
-    categories: []
+    categories: [],
   })
 
   const update = (next: typeof filters) => {
@@ -36,27 +36,28 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
 
   const containerClass = isMobile
     ? 'w-full text-sm'
-    : 'w-80 h-[calc(100vh-4rem)] bg-white border-r border-stone-200 fixed left-0 top-16 hidden md:flex md:flex-col z-[900]'
+    : 'w-[320px] h-[calc(100vh-4rem)] bg-paper-light fixed left-0 top-16 hidden md:flex md:flex-col z-[900] border-r-2 border-ink'
 
   return (
     <aside className={`${containerClass} overflow-y-auto`}>
-      <div className={isMobile ? 'p-3' : 'p-6'}>
-        {/* Search */}
-        <div className="mb-6">
-          <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
-            Search
-          </label>
-          <div className="relative mt-1.5">
+      <div className={isMobile ? 'p-3' : 'px-7 py-6'}>
+        {/* Section: Search */}
+        <div className="mb-7">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="label">§ 01 · Search</span>
+            <span className="font-mono text-[10px] text-ink-fade tracking-widest">find</span>
+          </div>
+          <div className="relative">
             <input
               type="text"
-              placeholder="Couches, pizza, plants…"
-              className="w-full pl-9 pr-3 py-2 bg-stone-100 border border-transparent focus:bg-white focus:border-stone-300 rounded-lg text-sm placeholder-stone-400 outline-none transition"
+              placeholder="couches, pizza, plants…"
+              className="w-full pl-9 pr-3 py-2.5 bg-paper border-2 border-ink font-mono text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
               value={filters.search}
               onChange={(e) => update({ ...filters, search: e.target.value })}
             />
             <svg
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400"
-              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-mute"
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
             >
               <circle cx="11" cy="11" r="7" />
               <path d="M21 21l-4.3-4.3" strokeLinecap="round" />
@@ -64,35 +65,35 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
           </div>
         </div>
 
-        {/* Categories — chip style */}
-        <div className="mb-6">
-          <div className="flex items-baseline justify-between mb-2.5">
-            <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
-              Categories
-            </label>
+        {/* Section: Categories */}
+        <div className="mb-7">
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="label">§ 02 · Filed Under</span>
             {filters.categories.length > 0 && (
               <button
                 onClick={() => update({ ...filters, categories: [] })}
-                className="text-xs text-rust-600 hover:text-rust-700 font-medium"
+                className="font-mono text-[10px] uppercase tracking-widest text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1"
               >
-                Clear
+                clear
               </button>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {Object.entries(categoryEmojis).map(([category, emoji]) => {
+            {Object.entries(categoryEmojis).map(([category, emoji], i) => {
               const active = filters.categories.includes(category)
+              // Slight per-chip rotation for the "stamped by hand" feel
+              const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
               return (
                 <button
                   key={category}
                   onClick={() => handleCategoryToggle(category)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition
+                  className={`group inline-flex items-center gap-1.5 px-3 py-1.5 border-2 font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-all ${tilt}
                     ${active
-                      ? 'bg-rust-500 border-rust-500 text-white shadow-soft'
-                      : 'bg-white border-stone-200 text-stone-700 hover:border-stone-300'
+                      ? 'bg-bridge-500 border-ink text-paper-light shadow-stamp'
+                      : 'bg-paper-light border-ink text-ink hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px]'
                     }`}
                 >
-                  <span className="text-base leading-none">{emoji}</span>
+                  <span className="text-[14px] leading-none">{emoji}</span>
                   {category}
                 </button>
               )
@@ -100,16 +101,19 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
           </div>
         </div>
 
-        {/* Date filter */}
-        <div className="pt-4 border-t border-stone-200">
-          <label className="text-[11px] uppercase tracking-[0.14em] text-stone-500 font-semibold">
-            Date
-          </label>
-          <div className="mt-1.5">
-            <DateFilter
-              onChange={(dates) => update({ ...filters, dates })}
-            />
+        {/* Section: Date */}
+        <div>
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="label">§ 03 · When</span>
           </div>
+          <DateFilter onChange={(dates) => update({ ...filters, dates })} />
+        </div>
+
+        {/* Footer note — adds the editorial flavor */}
+        <div className="mt-10 pt-5 rule-thick">
+          <p className="font-mono text-[10px] leading-relaxed text-ink-fade uppercase tracking-[0.1em]">
+            All listings posted by neighbors. Free means free. Take what you need, leave the rest.
+          </p>
         </div>
       </div>
     </aside>

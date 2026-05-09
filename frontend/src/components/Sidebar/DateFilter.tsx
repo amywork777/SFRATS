@@ -12,15 +12,16 @@ function DateFilter({ onChange }: DateFilterProps) {
   const handleQuickFilter = (range: string) => {
     setSelectedRange(range)
 
-    const now = new Date()
     let start: Date | null = null
     let end: Date | null = null
 
     switch (range) {
-      case 'today':
+      case 'today': {
+        const now = new Date()
         start = new Date(now.setHours(0, 0, 0, 0))
-        end = new Date(now.setHours(23, 59, 59, 999))
+        end   = new Date(now.setHours(23, 59, 59, 999))
         break
+      }
       case 'week': {
         start = new Date()
         const weekEnd = new Date()
@@ -35,8 +36,6 @@ function DateFilter({ onChange }: DateFilterProps) {
         end = monthEnd
         break
       }
-      default:
-        break
     }
 
     setStartDate(start ? start.toISOString().split('T')[0] : '')
@@ -45,25 +44,25 @@ function DateFilter({ onChange }: DateFilterProps) {
   }
 
   const options = [
-    { id: 'all',   label: 'Any time' },
+    { id: 'all',   label: 'Any' },
     { id: 'today', label: 'Today' },
-    { id: 'week',  label: 'Week' },
-    { id: 'month', label: 'Month' },
+    { id: 'week',  label: '7 days' },
+    { id: 'month', label: '30 days' },
   ]
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         {options.map(option => {
           const active = selectedRange === option.id
           return (
             <button
               key={option.id}
               onClick={() => handleQuickFilter(option.id)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition
+              className={`px-2 py-1.5 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.1em] font-semibold transition
                 ${active
-                  ? 'bg-stone-900 text-white'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  ? 'bg-ink text-paper-light'
+                  : 'bg-paper-light text-ink hover:bg-paper'
                 }`}
             >
               {option.label}
@@ -72,37 +71,39 @@ function DateFilter({ onChange }: DateFilterProps) {
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          type="date"
-          value={startDate}
-          aria-label="From"
-          className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm
-                     focus:border-rust-500 focus:ring-2 focus:ring-rust-500/20 outline-none transition"
-          onChange={(e) => {
-            setStartDate(e.target.value)
-            setSelectedRange('custom')
-            onChange({
-              start: e.target.value ? new Date(e.target.value) : null,
-              end: endDate ? new Date(endDate) : null,
-            })
-          }}
-        />
-        <input
-          type="date"
-          value={endDate}
-          aria-label="To"
-          className="w-full rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm
-                     focus:border-rust-500 focus:ring-2 focus:ring-rust-500/20 outline-none transition"
-          onChange={(e) => {
-            setEndDate(e.target.value)
-            setSelectedRange('custom')
-            onChange({
-              start: startDate ? new Date(startDate) : null,
-              end: e.target.value ? new Date(e.target.value) : null,
-            })
-          }}
-        />
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">From</span>
+          <input
+            type="date"
+            value={startDate}
+            className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
+            onChange={(e) => {
+              setStartDate(e.target.value)
+              setSelectedRange('custom')
+              onChange({
+                start: e.target.value ? new Date(e.target.value) : null,
+                end: endDate ? new Date(endDate) : null,
+              })
+            }}
+          />
+        </label>
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">To</span>
+          <input
+            type="date"
+            value={endDate}
+            className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
+            onChange={(e) => {
+              setEndDate(e.target.value)
+              setSelectedRange('custom')
+              onChange({
+                start: startDate ? new Date(startDate) : null,
+                end: e.target.value ? new Date(e.target.value) : null,
+              })
+            }}
+          />
+        </label>
       </div>
     </div>
   )
