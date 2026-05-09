@@ -30,16 +30,26 @@ let totalInserted = 0
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 
+// Decode every kind of HTML entity Funcheap throws at us, including
+// numeric ones like &#8220; (left smart quote), &#8217; (apostrophe),
+// &#8211; (en-dash), and hex variants.
+const NAMED = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
+const decodeEntities = (s = '') =>
+  s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, code) => {
+    if (code[0] === '#') {
+      const cp = code[1] === 'x' || code[1] === 'X'
+        ? parseInt(code.slice(2), 16)
+        : parseInt(code.slice(1), 10)
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : m
+    }
+    return NAMED[code.toLowerCase()] ?? m
+  })
+
 const stripHtml = (s = '') =>
-  s.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-   .replace(/<[^>]*>/g, '')
-   .replace(/&nbsp;/g, ' ')
-   .replace(/&amp;/g, '&')
-   .replace(/&quot;/g, '"')
-   .replace(/&#39;/g, "'")
-   .replace(/&lt;/g, '<')
-   .replace(/&gt;/g, '>')
-   .trim()
+  decodeEntities(
+    s.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+     .replace(/<[^>]*>/g, '')
+  ).trim()
 
 const xmlExtractAll = (xml, tag) => {
   const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'g')
