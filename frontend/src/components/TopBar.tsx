@@ -13,8 +13,8 @@ export default function TopBar() {
     year: 'numeric',
   }).toUpperCase()
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
-    `text-[12px] tracking-[0.14em] uppercase font-mono font-medium transition-colors ${
+  const navLink = (extra = '') => ({ isActive }: { isActive: boolean }) =>
+    `text-[12px] tracking-[0.14em] uppercase font-mono font-medium transition-colors ${extra} ${
       isActive ? 'text-ink' : 'text-ink-mute hover:text-ink'
     }`
 
@@ -44,8 +44,8 @@ export default function TopBar() {
 
         {/* Right side */}
         <nav className="flex items-center gap-4 md:gap-7">
-          <NavLink to="/about"      className={linkClass}>About</NavLink>
-          <NavLink to="/guidelines" className={linkClass + ' hidden sm:inline'}>Guide</NavLink>
+          <NavLink to="/about"      className={navLink()}>About</NavLink>
+          <NavLink to="/guidelines" className={navLink('hidden sm:inline')}>Guide</NavLink>
           <a
             href="https://discord.gg/T7jMh7kEPb"
             target="_blank"
