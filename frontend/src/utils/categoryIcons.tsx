@@ -39,3 +39,31 @@ export function categoryIconSvg(category: string, color = 'currentColor', size =
   const path = RAW_SVG_PATHS[category] ?? RAW_SVG_PATHS.Default
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`
 }
+
+/**
+ * Teardrop map pin with the category icon embedded in the round part.
+ * The SVG viewBox is 40×48 and the bottom tip sits at (20, 48), so the
+ * caller's iconAnchor should point to the tip for proper geo-anchoring.
+ */
+export function categoryPinSvg(
+  category: string,
+  { fill = '#FF4F00', stroke = '#181613', height = 48 } = {}
+): string {
+  const path = RAW_SVG_PATHS[category] ?? RAW_SVG_PATHS.Default
+  const width = Math.round(height * (40 / 48))
+  // Icon positioning math:
+  //   teardrop round part: center (20, 18), usable radius ~13
+  //   icon source viewBox: 24×24, center (12, 12)
+  //   scale 0.7 → 16.8 px icon, sits inside the round part with breathing room
+  //   translate = center − 12*scale = (20 − 8.4, 18 − 8.4) = (11.6, 9.6)
+  return `
+    <svg width="${width}" height="${height}" viewBox="0 0 40 48" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M20 0 C8.95 0 0 8.95 0 20 C0 32 14 42 20 48 C26 42 40 32 40 20 C40 8.95 31.05 0 20 0 Z"
+        fill="${fill}" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+      <g transform="translate(11.6 9.6) scale(0.7)"
+         fill="none" stroke="#ffffff" stroke-width="2.6"
+         stroke-linecap="round" stroke-linejoin="round">${path}</g>
+    </svg>
+  `.trim()
+}

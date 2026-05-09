@@ -107,90 +107,54 @@
    MARKERS — push-pin / stamp-style for the bulletin board feel
    ===================================================================== */
 
-/* The leaflet-managed icon container — gets sized to iconSize (56×56)
-   and centers the visible pin inside it. The extra padding outside
-   the pin is invisible click area, which means near-misses still
-   register as taps on the marker. */
+/* The leaflet icon container is 60×64. The visible teardrop SVG (40×48)
+   sits at the bottom-center, so the SVG's tip aligns with the marker's
+   lat/lng (set via iconAnchor). The extra padding around the SVG is
+   invisible click area — near-misses still register. */
 .custom-marker {
   background: none;
   border: none;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+  padding-bottom: 4px;     /* keeps the tip from being cropped */
   cursor: pointer;
 }
 
-.marker-pin {
-  --pin: #FF4F00;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 32% 32%, #ff8a52 0%, var(--pin) 38%, #b03700 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  box-shadow:
-    inset 0 -2px 0 rgba(0,0,0,0.18),
-    inset 0 2px 0 rgba(255,255,255,0.30),
-    0 2px 0 rgba(24,22,19,0.40),
-    0 6px 14px rgba(24, 22, 19, 0.30);
-  border: 2px solid #181613;
-  transition: transform 160ms cubic-bezier(.2,.8,.2,1.4), filter 160ms, box-shadow 160ms;
-  position: relative;
-  pointer-events: none;  /* clicks bubble to .custom-marker which has the bigger hit area */
-}
-
-/* On touch screens, the visible pin grows to make scanning easier */
-@media (pointer: coarse) {
-  .marker-pin {
-    width: 48px;
-    height: 48px;
-  }
-}
-
-.marker-pin::after {
-  /* Soft drop shadow under the pin */
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 22px;
-  height: 5px;
-  background: rgba(24, 22, 19, 0.20);
-  border-radius: 50%;
-  filter: blur(2.5px);
+.custom-marker > svg {
+  display: block;
   pointer-events: none;
+  filter: drop-shadow(0 3px 4px rgba(24, 22, 19, 0.28));
+  transition: transform 160ms cubic-bezier(.2,.8,.2,1.4), filter 160ms;
+  transform-origin: 50% 100%;  /* scale/lift from the tip, not the center */
 }
 
-.custom-marker:hover .marker-pin {
-  transform: translateY(-2px) scale(1.06);
-  filter: brightness(1.05);
-  box-shadow:
-    inset 0 -2px 0 rgba(0,0,0,0.22),
-    inset 0 2px 0 rgba(255,255,255,0.34),
-    0 3px 0 rgba(24,22,19,0.45),
-    0 10px 22px rgba(24, 22, 19, 0.35);
+@media (pointer: coarse) {
+  .custom-marker > svg {
+    /* On touch screens, scale up the whole pin a bit */
+    transform: scale(1.10);
+  }
+  .custom-marker:active > svg { transform: scale(1.10) translateY(0); }
 }
 
-.custom-marker:active .marker-pin {
-  transform: translateY(0) scale(0.96);
-  transition-duration: 60ms;
+.custom-marker:hover > svg {
+  transform: translateY(-3px) scale(1.06);
+  filter: drop-shadow(0 6px 10px rgba(24, 22, 19, 0.32));
 }
 
-/* Keyboard focus ring */
+.custom-marker:active > svg {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 80ms;
+}
+
 .custom-marker:focus-visible {
   outline: none;
 }
-.custom-marker:focus-visible .marker-pin {
-  box-shadow:
-    inset 0 -2px 0 rgba(0,0,0,0.22),
-    inset 0 2px 0 rgba(255,255,255,0.34),
-    0 0 0 4px rgba(255, 79, 0, 0.30),
-    0 0 0 6px rgba(24, 22, 19, 1),
-    0 6px 14px rgba(24, 22, 19, 0.30);
+.custom-marker:focus-visible > svg {
+  filter:
+    drop-shadow(0 0 0 rgba(255, 79, 0, 0.6))
+    drop-shadow(0 0 4px rgba(255, 79, 0, 0.8))
+    drop-shadow(0 3px 4px rgba(24, 22, 19, 0.28));
 }
 
 .custom-marker .marker-content {

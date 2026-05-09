@@ -57,11 +57,15 @@ const decodeEntities = (s = '') =>
     return NAMED[code.toLowerCase()] ?? m
   })
 
+// IMPORTANT: decode entities FIRST so encoded HTML like &lt;p&gt;...&lt;/p&gt;
+// becomes real tags that we can then strip. Doing it the other way around
+// leaves the encoded tags intact and they re-emerge as text after decoding.
 const stripHtml = (s = '') =>
-  decodeEntities(
-    s.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-     .replace(/<[^>]*>/g, '')
-  ).trim()
+  decodeEntities(s)
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 
 const xmlExtractAll = (xml, tag) => {
   const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'g')

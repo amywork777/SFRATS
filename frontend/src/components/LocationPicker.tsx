@@ -3,15 +3,15 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { LocateFixed, AlertTriangle } from 'lucide-react'
-import { categoryIconSvg } from '../utils/categoryIcons'
+import { categoryPinSvg } from '../utils/categoryIcons'
 
 const createMarkerIcon = () =>
   L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">${categoryIconSvg('Default', '#ffffff', 20)}</div>`,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28],
-    popupAnchor: [0, -22],
+    html: categoryPinSvg('Default', { height: 48 }),
+    iconSize: [60, 64],
+    iconAnchor: [30, 60],
+    popupAnchor: [0, -52],
   })
 
 interface LocationPickerProps {
