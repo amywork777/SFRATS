@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline'
+import { X, SlidersHorizontal, Check } from 'lucide-react'
+import { CATEGORY_ORDER, CategoryIcon } from '../utils/categoryIcons'
 
 interface MobileNavProps {
   onFiltersChange: (filters: any) => void
@@ -12,10 +13,6 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
 
-  const categories = ['Items', 'Food', 'Events', 'Services'] as const
-  const categoryEmojis: Record<string, string> = {
-    Items: '📦', Food: '🍕', Events: '🎉', Services: '🔧',
-  }
   const timeRanges = [
     { id: 'all',   label: 'Any time' },
     { id: 'today', label: 'Today' },
@@ -37,8 +34,8 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     let end: Date | null = null
     const now = new Date()
     if (range === 'today') {
-      start = new Date(now.setHours(0,0,0,0))
-      end   = new Date(now.setHours(23,59,59,999))
+      start = new Date(now.setHours(0, 0, 0, 0))
+      end   = new Date(now.setHours(23, 59, 59, 999))
     } else if (range === 'week')  { start = new Date(); end = new Date(); end.setDate(end.getDate() + 7) }
     else if (range === 'month') { start = new Date(); end = new Date(); end.setDate(end.getDate() + 30) }
     setStartDate(start ? start.toISOString().split('T')[0] : '')
@@ -46,24 +43,31 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     onFiltersChange({ dates: { start, end } })
   }
 
+  const filterCount = selectedCategories.length + (timeRange !== 'all' ? 1 : 0)
+
   return (
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 z-[2000] md:hidden bg-bridge-500 text-paper-light p-3 border-2 border-ink shadow-stamp"
+        className="fixed bottom-5 right-5 z-[2000] md:hidden bg-bridge-500 text-paper-light w-14 h-14 border border-ink shadow-stamp flex items-center justify-center"
         aria-label="Filters"
       >
-        <FunnelIcon className="h-5 w-5" />
+        <SlidersHorizontal size={20} strokeWidth={2.2} />
+        {filterCount > 0 && (
+          <span className="absolute -top-1.5 -right-1.5 bg-ink text-paper-light w-5 h-5 text-[10px] font-mono font-bold flex items-center justify-center border border-paper-light">
+            {filterCount}
+          </span>
+        )}
       </button>
 
       <div className={`
         fixed inset-0 z-[2000] md:hidden transform transition-transform duration-300
-        ${isOpen ? 'translate-y-0' : 'translate-y-full'}
+        ${isOpen ? 'translate-y-0' : 'translate-y-full pointer-events-none'}
       `}>
         <div className="absolute inset-0 bg-ink/40" onClick={() => setIsOpen(false)} />
 
-        <div className="absolute inset-x-0 bottom-0 bg-paper-light border-t-2 border-ink max-h-[85vh] overflow-y-auto">
-          <div className="sticky top-0 bg-paper-light border-b-2 border-ink px-4 py-3 flex justify-between items-center">
+        <div className="absolute inset-x-0 bottom-0 bg-paper-light border-t border-ink max-h-[88vh] overflow-y-auto">
+          <div className="sticky top-0 bg-paper-light border-b border-ink px-4 py-3 flex justify-between items-center">
             <h2 className="font-display font-bold text-[20px] text-ink">Filter</h2>
             <div className="flex items-center gap-2">
               <button
@@ -79,15 +83,15 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-paper transition-colors"
+                className="p-1.5 hover:bg-paper transition-colors"
                 aria-label="Close"
               >
-                <XMarkIcon className="h-4 w-4 text-ink-mute" />
+                <X size={18} strokeWidth={2.2} className="text-ink-mute" />
               </button>
             </div>
           </div>
 
-          <div className="p-5 space-y-7 pb-24">
+          <div className="p-5 space-y-7 pb-28">
             {/* Search */}
             <div>
               <span className="label">§ 01 · Search</span>
@@ -95,7 +99,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                 type="text"
                 placeholder="couches, pizza, plants…"
                 onChange={(e) => onFiltersChange({ search: e.target.value })}
-                className="mt-2 w-full px-3 py-2 bg-paper border-2 border-ink font-mono text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
+                className="mt-2 w-full px-3 py-2.5 bg-paper border border-ink/30 font-mono text-[14px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:border-ink focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
               />
             </div>
 
@@ -103,24 +107,24 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
             <div>
               <span className="label">§ 02 · Filed Under</span>
               <div className="mt-3 grid grid-cols-2 gap-2">
-                {categories.map((category, i) => {
+                {CATEGORY_ORDER.map((category, i) => {
                   const active = selectedCategories.includes(category)
-                  const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
+                  const tilt = ['rotate-[-1deg]', 'rotate-[0.5deg]', 'rotate-[-0.5deg]', 'rotate-[1deg]'][i % 4]
                   return (
                     <button
                       key={category}
                       onClick={() => toggleCategory(category)}
-                      className={`flex items-center justify-between px-3 py-2 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-all ${tilt}
+                      className={`flex items-center justify-between px-3 py-2.5 border border-ink font-mono text-[12px] uppercase tracking-[0.12em] font-semibold transition-all ${tilt}
                         ${active
                           ? 'bg-bridge-500 text-paper-light shadow-stamp'
                           : 'bg-paper-light text-ink hover:bg-paper'
                         }`}
                     >
                       <span className="flex items-center gap-2">
-                        <span className="text-[13px]">{categoryEmojis[category]}</span>
+                        <CategoryIcon category={category} size={16} />
                         {category}
                       </span>
-                      {active && <span>✓</span>}
+                      {active && <Check size={14} strokeWidth={2.5} />}
                     </button>
                   )
                 })}
@@ -137,7 +141,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                     <button
                       key={range.id}
                       onClick={() => handleTimeRangeChange(range.id)}
-                      className={`px-3 py-2 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.1em] font-semibold transition
+                      className={`px-3 py-2.5 border border-ink font-mono text-[12px] uppercase tracking-[0.1em] font-semibold transition
                         ${active ? 'bg-ink text-paper-light' : 'bg-paper-light text-ink hover:bg-paper'}`}
                     >
                       {range.label}
@@ -146,7 +150,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                 })}
               </div>
 
-              <div className="mt-4 pt-4 rule-hair">
+              <div className="mt-4 pt-4 border-t border-ink/15">
                 <div className="grid grid-cols-2 gap-2">
                   <label className="block">
                     <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">From</span>
@@ -157,7 +161,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                         setStartDate(e.target.value); setTimeRange('custom')
                         onFiltersChange({ dates: { start: e.target.value ? new Date(e.target.value) : null, end: endDate ? new Date(endDate) : null } })
                       }}
-                      className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none"
+                      className="w-full bg-paper-light border border-ink/30 px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-ink"
                     />
                   </label>
                   <label className="block">
@@ -169,22 +173,22 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                         setEndDate(e.target.value); setTimeRange('custom')
                         onFiltersChange({ dates: { start: startDate ? new Date(startDate) : null, end: e.target.value ? new Date(e.target.value) : null } })
                       }}
-                      className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none"
+                      className="w-full bg-paper-light border border-ink/30 px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-ink"
                     />
                   </label>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Done */}
-            <div className="rule-thick pt-5">
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-full py-3 bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
-              >
-                Apply
-              </button>
-            </div>
+          {/* Sticky Apply */}
+          <div className="sticky bottom-0 bg-paper-light border-t border-ink p-4">
+            <button
+              onClick={() => setIsOpen(false)}
+              className="w-full py-3 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            >
+              Show {filterCount > 0 ? `(${filterCount} filter${filterCount === 1 ? '' : 's'})` : 'all listings'}
+            </button>
           </div>
         </div>
       </div>

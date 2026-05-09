@@ -4,19 +4,14 @@ import { format } from 'date-fns'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useState } from 'react'
+import { Pencil, ArrowUpRight } from 'lucide-react'
 import EditListing from './EditListing'
 import { api } from '../services/api'
+import { CategoryIcon } from '../utils/categoryIcons'
 
 interface ListingProps {
   listing: DbItem;
   onRefresh?: () => void;
-}
-
-const categoryEmojis: Record<string, string> = {
-  Events: '🎉',
-  Food: '🍕',
-  Items: '📦',
-  Services: '🔧',
 }
 
 export default function Listing({ listing: initialListing, onRefresh }: ListingProps) {
@@ -51,8 +46,8 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       {/* Title block */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-10 h-10 bg-bridge-500 border-2 border-ink text-paper-light text-[18px]">
-            {categoryEmojis[listing.category] ?? '📍'}
+          <span className="inline-flex items-center justify-center w-10 h-10 bg-bridge-500 border border-ink text-paper-light">
+            <CategoryIcon category={listing.category} size={18} />
           </span>
           <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-mute">
             {listing.category}
@@ -96,9 +91,9 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                 href={`https://www.google.com/maps?q=${listing.location_lat},${listing.location_lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-2"
+                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-2"
               >
-                Open in Google Maps ↗
+                Open in Google Maps <ArrowUpRight size={12} strokeWidth={2.5} />
               </a>
             )}
           </div>
@@ -187,9 +182,9 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       <div className="rule-thick pt-5">
         <button
           onClick={() => setShowEditModal(true)}
-          className="inline-flex items-center gap-2 bg-paper-light border-2 border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+          className="inline-flex items-center gap-2 bg-paper-light border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          ✏︎ Edit listing
+          <Pencil size={13} strokeWidth={2.2} /> Edit listing
         </button>
       </div>
 

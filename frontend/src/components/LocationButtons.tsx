@@ -1,3 +1,5 @@
+import { Compass, MapPin } from 'lucide-react'
+
 interface LocationButtonsProps {
   lat: number
   lng: number
@@ -43,34 +45,21 @@ function LocationButtons({ lat, lng, address }: LocationButtonsProps) {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={() => handleGetDirections(false)}
-          className="bg-ink text-paper-light border-2 border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+          className="bg-ink text-paper-light border border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          🧭 Directions
+          <Compass size={14} strokeWidth={2.2} /> Directions
         </button>
         <button
           onClick={() => handleGetDirections(true)}
-          className="bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+          className="bg-bridge-500 text-paper-light border border-ink shadow-stamp px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          📍 From me
+          <MapPin size={14} strokeWidth={2.2} /> From me
         </button>
       </div>
-
       <div className="flex justify-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute">
-        <a
-          href={links.google}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-bridge-600 underline underline-offset-4 decoration-1"
-        >
-          Google
-        </a>
+        <a href={links.google} target="_blank" rel="noopener noreferrer" className="hover:text-bridge-600 underline underline-offset-4 decoration-1">Google</a>
         <span aria-hidden>·</span>
-        <a
-          href={links.apple}
-          className="hover:text-bridge-600 underline underline-offset-4 decoration-1"
-        >
-          Apple
-        </a>
+        <a href={links.apple} className="hover:text-bridge-600 underline underline-offset-4 decoration-1">Apple</a>
       </div>
     </div>
   )

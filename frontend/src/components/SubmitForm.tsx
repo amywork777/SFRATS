@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { customAlphabet } from 'nanoid'
+import { Check, Plus, X, ArrowRight } from 'lucide-react'
 import LocationPicker from './LocationPicker'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import { supabase } from '../utils/supabase'
+import { CATEGORY_ORDER, CategoryIcon } from '../utils/categoryIcons'
 
 interface SubmitFormProps {
   initialData?: Partial<DbItem>
@@ -27,11 +29,6 @@ interface FormData {
   contact_info: string
   edit_code: string
   status: 'available' | 'gone' | 'pending'
-}
-
-const CATEGORIES = ['Items', 'Food', 'Events', 'Services'] as const
-const categoryEmojis: Record<string, string> = {
-  Items: '📦', Food: '🍕', Events: '🎉', Services: '🔧',
 }
 
 const inputCls =
@@ -138,7 +135,9 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
     return (
       <div className="space-y-7">
         <div>
-          <span className="label text-bridge-600">✓ Posted</span>
+          <span className="label text-bridge-600 inline-flex items-center gap-1.5">
+            <Check size={12} strokeWidth={2.5} /> Posted
+          </span>
           <h2 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-2 tracking-tight">
             Listing live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h2>
@@ -176,9 +175,9 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
             onClick={() => navigate('/')}
-            className="bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
           >
-            See it on the map →
+            See it on the map <ArrowRight size={14} strokeWidth={2.5} />
           </button>
           <button
             onClick={() => {
@@ -197,9 +196,9 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
                 edit_code: fresh, status: 'available',
               })
             }}
-            className="bg-paper-light text-ink border-2 border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-paper-light text-ink border border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
           >
-            + Post another
+            <Plus size={14} strokeWidth={2.5} /> Post another
           </button>
         </div>
       </div>
@@ -227,7 +226,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
       <div>
         <span className="label">Type</span>
         <div className="mt-2 flex flex-wrap gap-2">
-          {CATEGORIES.map((c, i) => {
+          {CATEGORY_ORDER.map((c, i) => {
             const active = formData.category === c
             const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
             return (
@@ -235,13 +234,13 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
                 key={c}
                 type="button"
                 onClick={() => update('category', c)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition ${tilt} ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition ${tilt} ${
                   active
                     ? 'bg-bridge-500 text-paper-light shadow-stamp'
                     : 'bg-paper-light text-ink hover:bg-paper'
                 }`}
               >
-                <span className="text-[13px] leading-none">{categoryEmojis[c]}</span>
+                <CategoryIcon category={c} size={14} />
                 {c}
               </button>
             )
@@ -307,19 +306,19 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
                       <button
                         type="button"
                         onClick={() => setExistingImages(prev => prev.filter(u => u !== url))}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border-2 border-ink font-mono text-[12px] flex items-center justify-center"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border border-ink flex items-center justify-center"
                         aria-label="Remove image"
                       >
-                        ✕
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
 
-              <label className="block mt-2 cursor-pointer border-2 border-dashed border-ink/40 hover:border-ink py-3 px-3 text-center bg-paper-light transition-colors">
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink">
-                  + Drop or pick images
+              <label className="block mt-2 cursor-pointer border-2 border-dashed border-ink/40 hover:border-ink py-4 px-3 text-center bg-paper-light transition-colors">
+                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink inline-flex items-center gap-2">
+                  <Plus size={14} strokeWidth={2.5} /> Drop or pick images
                 </span>
                 <input
                   type="file"
@@ -344,10 +343,10 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
                       <button
                         type="button"
                         onClick={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border-2 border-ink font-mono text-[12px] flex items-center justify-center"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-bridge-500 text-paper-light border border-ink flex items-center justify-center"
                         aria-label="Remove image"
                       >
-                        ✕
+                        <X size={12} strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}

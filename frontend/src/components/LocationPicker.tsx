@@ -2,14 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { LocateFixed, AlertTriangle } from 'lucide-react'
+import { categoryIconSvg } from '../utils/categoryIcons'
 
 const createMarkerIcon = () =>
   L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">📍</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
+    html: `<div class="marker-pin">${categoryIconSvg('Default', '#ffffff', 18)}</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18],
   })
 
 interface LocationPickerProps {
@@ -141,21 +143,24 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1 disabled:opacity-50"
         >
-          {locating ? 'Locating…' : '◎ Use my location'}
+          <LocateFixed size={12} strokeWidth={2.2} />
+          {locating ? 'Locating…' : 'Use my location'}
         </button>
         <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
-          ▸ or click the map
+          or click the map
         </span>
       </div>
 
       {error && (
-        <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-bridge-700">⚠ {error}</div>
+        <div className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-bridge-700">
+          <AlertTriangle size={12} strokeWidth={2.2} /> {error}
+        </div>
       )}
 
       {/* Map */}
-      <div className="h-[260px] border-2 border-ink overflow-hidden relative z-0">
+      <div className="h-[260px] border border-ink overflow-hidden relative z-0">
         <MapContainer
           center={position || [37.7749, -122.4194]}
           zoom={13}
@@ -178,7 +183,7 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
 
       {/* Confirmed address chip */}
       {position && address && (
-        <div className="bg-paper-light border-2 border-ink p-2.5 flex items-start gap-2">
+        <div className="bg-paper-light border border-ink p-2.5 flex items-start gap-2">
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-bridge-600 mt-0.5 shrink-0">Pinned</span>
           <span className="text-[12px] leading-snug text-ink truncate">{address}</span>
         </div>

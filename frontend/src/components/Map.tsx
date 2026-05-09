@@ -12,7 +12,7 @@ import MessageModal from './MessageModal'
 import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
-import { categoryEmojis, statusColors } from '../utils/mapConstants'
+import { categoryIconSvg } from '../utils/categoryIcons'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 
@@ -37,9 +37,9 @@ interface ListingPreviewProps {
 const createMarkerIcon = (category: string) => {
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">${categoryEmojis[category as keyof typeof categoryEmojis] || '📍'}</div>`,
-    iconSize: [40, 40],
-    iconAnchor: [20, 20]
+    html: `<div class="marker-pin">${categoryIconSvg(category, '#ffffff', 18)}</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
   })
 }
 
@@ -114,9 +114,10 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
                   document.body.removeChild(popupDiv)
                   delete popupRootsRef.current[item.id]
                 }}
-                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors font-mono text-[14px]"
+                aria-label="Close"
+                className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
               >
-                ✕
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
               <ListingPreview 
                 {...{
@@ -281,35 +282,8 @@ function Map() {
     return true
   })
 
-  const getMarkerIcon = (category: string, status: string = 'available') => {
-    const emoji = categoryEmojis[category as keyof typeof categoryEmojis] || '📍'
-    const color = status === 'claimed' ? '#EAB308' : 
-                 status === 'gone' ? '#6B7280' : 
-                 '#22C55E' // default green for available
-
-    return new L.DivIcon({
-      className: 'custom-marker',
-      html: `
-        <div class="marker-content" style="background-color: ${color}">
-          ${emoji}
-        </div>
-      `,
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40]
-    })
-  }
-
-  const handleCategoryToggle = (category: string) => {
-    handleFiltersChange({
-      categories: filters.categories.includes(category)
-        ? filters.categories.filter(c => c !== category)
-        : [...filters.categories, category]
-    });
-  };
-
   return (
-    <div className="fixed inset-0 top-16">
+    <div className="fixed inset-0 top-14 md:top-16">
       {/* Mobile Navigation */}
       <div className="md:hidden">
         <MobileNav onFiltersChange={handleFiltersChange} />
@@ -321,7 +295,7 @@ function Map() {
       </div>
 
       {/* Map Container */}
-      <div className="relative h-full md:ml-[320px]">
+      <div className="relative h-full md:ml-[300px] lg:ml-[320px]">
         <MapContainer
           center={[37.7749, -122.4194]}
           zoom={13}
@@ -338,27 +312,27 @@ function Map() {
           <MarkerLayer items={filteredItems} />
         </MapContainer>
 
-        {/* "Counter" stamp — top-left corner of map */}
-        <div className="pointer-events-none absolute top-4 left-4 z-[1000]">
-          <div className="bg-paper-light border-2 border-ink px-3 py-1.5 shadow-stamp -rotate-2">
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
-            <div className="font-display font-black text-[28px] leading-none text-ink mt-0.5">
+        {/* "Counter" stamp — smaller on mobile, larger on desktop */}
+        <div className="pointer-events-none absolute top-3 left-3 md:top-4 md:left-4 z-[1000]">
+          <div className="bg-paper-light border border-ink px-2.5 py-1 md:px-3 md:py-1.5 shadow-stamp -rotate-2">
+            <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
+            <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
               {String(filteredItems.length).padStart(3, '0')}
             </div>
-            <div className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
+            <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
           </div>
         </div>
 
-        {/* Status overlay — looks like a memo posted to the bulletin */}
+        {/* Status overlay */}
         {(loading || error || !items.length) && (
-          <div className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-[1000]">
-            <div className="pointer-events-auto bg-paper-light border-2 border-ink shadow-stamp px-4 py-2 rotate-[-1deg]">
-              {loading && <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading listings…</span>}
+          <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
+            <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
+              {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
               {!loading && error && (
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-bridge-700">⚠ Couldn’t load: {error}</span>
+                <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
               )}
               {!loading && !error && !items.length && (
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first to post.</span>
+                <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first.</span>
               )}
             </div>
           </div>

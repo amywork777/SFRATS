@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { Crown, Check, XCircle, Pencil, Trash2, AlertTriangle, ArrowLeft } from 'lucide-react'
 import { api } from '../services/api'
 
 const inputCls =
-  'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
+  'w-full bg-paper-light border border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
 
 export default function ManagePage() {
   const { id } = useParams()
@@ -62,8 +63,8 @@ export default function ManagePage() {
 
   return (
     <div className="max-w-md mx-auto pt-24 pb-16 px-4">
-      <div className="bg-paper-light border-2 border-ink shadow-stamp p-6 md:p-7">
-        <div className="mb-6 pb-3 rule-thick">
+      <div className="bg-paper-light border border-ink shadow-stamp p-6 md:p-7">
+        <div className="mb-6 pb-3 border-b border-ink">
           <span className="label">Manage · № {id?.padStart(4, '0')}</span>
           <h1 className="font-display font-black text-3xl md:text-4xl text-ink mt-1 leading-tight">
             Listing controls<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
@@ -89,13 +90,13 @@ export default function ManagePage() {
               {!isAdmin ? (
                 <button
                   onClick={() => setShowAdminMode(true)}
-                  className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-ink underline underline-offset-4 decoration-1"
+                  className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-ink underline underline-offset-4 decoration-1"
                 >
-                  👑 Admin mode
+                  <Crown size={12} strokeWidth={2.2} /> Admin mode
                 </button>
               ) : (
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-bridge-600">
-                  👑 Admin mode active
+                <span className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-bridge-600">
+                  <Crown size={12} strokeWidth={2.2} /> Admin mode active
                 </span>
               )}
             </div>
@@ -115,13 +116,13 @@ export default function ManagePage() {
             <div className="flex gap-2">
               <button
                 onClick={handleAdminLogin}
-                className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                className="px-4 py-2 bg-ink text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
               >
                 Log in
               </button>
               <button
                 onClick={() => { setShowAdminMode(false); setAdminPassword(''); setError(null) }}
-                className="px-4 py-2 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper"
+                className="px-4 py-2 bg-paper-light text-ink border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper"
               >
                 Cancel
               </button>

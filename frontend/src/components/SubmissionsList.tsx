@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
-import { categoryEmojis } from '../utils/categoryConstants'
+import { CategoryIcon } from '../utils/categoryIcons'
 
 export default function SubmissionsList() {
   const [isOpen, setIsOpen] = useState(false)
@@ -48,9 +48,9 @@ export default function SubmissionsList() {
             )}
           </div>
           {isOpen ? (
-            <ChevronDownIcon className="h-4 w-4 text-ink-mute" />
+            <ChevronDown size={16} strokeWidth={2.2} className="text-ink-mute" />
           ) : (
-            <ChevronUpIcon className="h-4 w-4 text-ink-mute" />
+            <ChevronUp size={16} strokeWidth={2.2} className="text-ink-mute" />
           )}
         </button>
 
@@ -69,10 +69,10 @@ export default function SubmissionsList() {
                       className="flex items-start gap-3 px-4 py-3 hover:bg-paper transition-colors"
                     >
                       <span
-                        className="mt-0.5 inline-flex w-9 h-9 items-center justify-center bg-bridge-500 border-2 border-ink text-paper-light text-base shrink-0"
+                        className="mt-0.5 inline-flex w-9 h-9 items-center justify-center bg-bridge-500 border border-ink text-paper-light shrink-0"
                         aria-hidden
                       >
-                        {categoryEmojis[item.category as keyof typeof categoryEmojis] ?? '📍'}
+                        <CategoryIcon category={item.category} size={16} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-display font-bold text-[15px] leading-tight text-ink truncate">

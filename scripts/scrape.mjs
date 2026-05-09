@@ -1,0 +1,299 @@
+// Weekly SFRATS scraper. Runs in GitHub Actions on Node 20.
+// Pulls free-stuff posts from 3 SF sources, dedupes against the items table,
+// and inserts new rows via Supabase REST.
+
+const SUPABASE_URL = process.env.SUPABASE_URL
+const ANON = process.env.SUPABASE_ANON_KEY
+if (!SUPABASE_URL || !ANON) {
+  console.error('Missing SUPABASE_URL or SUPABASE_ANON_KEY env')
+  process.exit(1)
+}
+
+const REST = `${SUPABASE_URL}/rest/v1/items`
+const HEADERS = {
+  apikey: ANON,
+  Authorization: `Bearer ${ANON}`,
+  'Content-Type': 'application/json',
+}
+
+const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32 }
+
+const counts = {
+  funcheap:   { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
+  reddit:     { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
+  eventbrite: { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
+}
+
+const PER_RUN_CAP = 30
+const PER_SOURCE_CAP = 15
+let totalInserted = 0
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms))
+
+const stripHtml = (s = '') =>
+  s.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+   .replace(/<[^>]*>/g, '')
+   .replace(/&nbsp;/g, ' ')
+   .replace(/&amp;/g, '&')
+   .replace(/&quot;/g, '"')
+   .replace(/&#39;/g, "'")
+   .replace(/&lt;/g, '<')
+   .replace(/&gt;/g, '>')
+   .trim()
+
+const xmlExtractAll = (xml, tag) => {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'g')
+  const out = []
+  let m
+  while ((m = re.exec(xml)) !== null) out.push(m[1])
+  return out
+}
+const xmlExtractFirst = (xml, tag) => xmlExtractAll(xml, tag)[0] ?? ''
+
+const randHex = (n) => Array.from({ length: n }, () => Math.floor(Math.random() * 16).toString(16)).join('')
+
+async function alreadyInDb(url) {
+  const u = `${REST}?url=eq.${encodeURIComponent(url)}&select=id&limit=1`
+  const res = await fetch(u, { headers: HEADERS })
+  if (!res.ok) return false
+  const rows = await res.json()
+  return Array.isArray(rows) && rows.length > 0
+}
+
+async function geocode(address) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', San Francisco, CA')}&format=json&limit=1`
+  const res = await fetch(url, { headers: { 'User-Agent': 'sfrats-scraper/1.0' } })
+  if (!res.ok) return null
+  const data = await res.json()
+  if (!data || data.length === 0) return null
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+}
+
+function inSfBbox(lat, lng) {
+  return lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
+}
+
+async function tryInsert(source, row) {
+  if (totalInserted >= PER_RUN_CAP) return 'cap'
+  if (counts[source].inserted >= PER_SOURCE_CAP) return 'cap'
+
+  if (!row.title || !row.url) {
+    counts[source].error++
+    return 'invalid'
+  }
+  if (await alreadyInDb(row.url)) {
+    counts[source].dup++
+    return 'dup'
+  }
+
+  // Geocode if needed
+  if ((!row.location_lat || !row.location_lng) && row.location_address) {
+    const geo = await geocode(row.location_address)
+    if (geo) {
+      row.location_lat = geo.lat
+      row.location_lng = geo.lng
+    }
+    await sleep(1100) // Nominatim TOS rate limit
+  }
+  if (row.location_lat && row.location_lng && !inSfBbox(row.location_lat, row.location_lng)) {
+    row.location_lat = null
+    row.location_lng = null
+  }
+
+  // POST
+  const res = await fetch(REST, {
+    method: 'POST',
+    headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
+    body: JSON.stringify({
+      title: row.title.slice(0, 255),
+      description: row.description ?? null,
+      category: row.category,
+      location_address: row.location_address ?? null,
+      location_lat: row.location_lat ?? null,
+      location_lng: row.location_lng ?? null,
+      available_from: row.available_from ?? new Date().toISOString(),
+      status: 'available',
+      url: row.url,
+      posted_by: row.posted_by,
+      edit_code: 'scraper-' + randHex(12),
+    }),
+  })
+  if (res.status === 201) {
+    counts[source].inserted++
+    totalInserted++
+    return 'ok'
+  }
+  if (res.status === 409) {
+    counts[source].dup++
+    return 'dup'
+  }
+  counts[source].error++
+  console.error(`[${source}] insert ${res.status}: ${await res.text().catch(() => '')}`)
+  return 'err'
+}
+
+// ──────────────── 1) Funcheap RSS ────────────────
+async function scrapeFuncheap() {
+  console.log('--- Funcheap ---')
+  try {
+    const res = await fetch('https://sf.funcheap.com/feed/', {
+      headers: { 'User-Agent': 'sfrats-scraper/1.0' },
+      redirect: 'follow',
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const xml = await res.text()
+    const items = xmlExtractAll(xml, 'item').slice(0, 20)
+    counts.funcheap.fetched = items.length
+    for (const item of items) {
+      if (totalInserted >= PER_RUN_CAP || counts.funcheap.inserted >= PER_SOURCE_CAP) break
+      const title = stripHtml(xmlExtractFirst(item, 'title'))
+      const link  = stripHtml(xmlExtractFirst(item, 'link'))
+      const pub   = xmlExtractFirst(item, 'pubDate')
+      const desc  = stripHtml(xmlExtractFirst(item, 'content:encoded') || xmlExtractFirst(item, 'description')).slice(0, 240)
+      if (!title || !link) continue
+      await tryInsert('funcheap', {
+        title, description: desc, url: link,
+        category: 'Events', posted_by: 'funcheap',
+        available_from: pub ? new Date(pub).toISOString() : null,
+      })
+    }
+  } catch (e) {
+    console.error('Funcheap error:', e.message)
+    counts.funcheap.error++
+  }
+}
+
+// ──────────────── 2) Reddit r/sanfrancisco JSON ────────────────
+async function scrapeReddit() {
+  console.log('--- Reddit ---')
+  try {
+    const res = await fetch(
+      'https://www.reddit.com/r/sanfrancisco/search.json?q=free&sort=new&restrict_sr=1&limit=25',
+      { headers: { 'User-Agent': 'sfrats-scraper/1.0' } }
+    )
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    const kids = data?.data?.children ?? []
+    counts.reddit.fetched = kids.length
+    const SKIP = ['looking for', 'asking', 'iso ', 'wanted', 'in search of', 'where can i find']
+    const FOOD_RE = /(pizza|food|sandwich|coffee|snack|donut|bagel|brunch|tacos?)/i
+    const EVENT_RE = /(concert|event|show|festival|meetup|fair|market|free entry)/i
+    const SERVICE_RE = /(repair|help|tutor|lesson|haircut|class)/i
+
+    for (const k of kids) {
+      if (totalInserted >= PER_RUN_CAP || counts.reddit.inserted >= PER_SOURCE_CAP) break
+      const d = k.data
+      const title = (d.title || '').slice(0, 255)
+      const text  = (d.selftext || '').slice(0, 400)
+      const lower = (title + ' ' + text).toLowerCase()
+      if (SKIP.some(p => lower.includes(p))) continue
+      const url = `https://reddit.com${d.permalink}`
+      const created = d.created_utc ? new Date(d.created_utc * 1000).toISOString() : null
+      const category =
+        FOOD_RE.test(lower)    ? 'Food' :
+        EVENT_RE.test(lower)   ? 'Events' :
+        SERVICE_RE.test(lower) ? 'Services' : 'Items'
+      await tryInsert('reddit', {
+        title, description: text || null, url, category,
+        posted_by: 'reddit', available_from: created,
+      })
+    }
+  } catch (e) {
+    console.error('Reddit error:', e.message)
+    counts.reddit.error++
+  }
+}
+
+// ──────────────── 3) Eventbrite SF free events HTML ────────────────
+async function scrapeEventbrite() {
+  console.log('--- Eventbrite ---')
+  try {
+    const res = await fetch('https://www.eventbrite.com/d/ca--san-francisco/free--events/', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; sfrats-scraper/1.0)',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const html = await res.text()
+
+    // Pull every application/ld+json block, find @type=Event entries.
+    const ldRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
+    const events = []
+    let m
+    while ((m = ldRe.exec(html)) !== null) {
+      try {
+        const j = JSON.parse(m[1])
+        const candidates = Array.isArray(j) ? j : [j]
+        for (const c of candidates) {
+          if (c?.['@type'] === 'Event' && c.url && c.name) events.push(c)
+          if (c?.['@graph']) {
+            for (const g of c['@graph']) {
+              if (g?.['@type'] === 'Event' && g.url && g.name) events.push(g)
+            }
+          }
+        }
+      } catch { /* tolerate one bad block */ }
+    }
+
+    counts.eventbrite.fetched = events.length
+    for (const ev of events) {
+      if (totalInserted >= PER_RUN_CAP || counts.eventbrite.inserted >= PER_SOURCE_CAP) break
+      const loc = ev.location ?? {}
+      const addr = loc.address ?? {}
+      const address = [loc.name, addr.streetAddress, addr.addressLocality, addr.postalCode]
+        .filter(Boolean).join(', ')
+      await tryInsert('eventbrite', {
+        title: stripHtml(ev.name).slice(0, 255),
+        description: stripHtml(ev.description || '').slice(0, 240) || null,
+        url: ev.url,
+        category: 'Events',
+        posted_by: 'eventbrite',
+        available_from: ev.startDate ? new Date(ev.startDate).toISOString() : null,
+        location_address: address || null,
+        location_lat: addr.latitude ? parseFloat(addr.latitude) : (loc.geo?.latitude  ? parseFloat(loc.geo.latitude)  : null),
+        location_lng: addr.longitude ? parseFloat(addr.longitude) : (loc.geo?.longitude ? parseFloat(loc.geo.longitude) : null),
+      })
+    }
+  } catch (e) {
+    console.error('Eventbrite error:', e.message)
+    counts.eventbrite.error++
+  }
+}
+
+// ──────────────── Run all + summary ────────────────
+;(async () => {
+  const t0 = Date.now()
+  await scrapeFuncheap()
+  await scrapeReddit()
+  await scrapeEventbrite()
+
+  const summary =
+    `=== SFRATS scrape summary ===\n` +
+    Object.entries(counts).map(([s, c]) =>
+      `${s.padEnd(11, ' ')} fetched=${c.fetched} inserted=${c.inserted} dup=${c.dup} nolocation=${c.nolocation} error=${c.error}`
+    ).join('\n') +
+    `\ntotal inserts: ${totalInserted}\n` +
+    `runtime: ${((Date.now() - t0) / 1000).toFixed(1)}s`
+
+  console.log('\n' + summary)
+
+  // Also write a meta row to items so the result is queryable from the app DB
+  await fetch(REST, {
+    method: 'POST',
+    headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
+    body: JSON.stringify({
+      title: '__SCRAPER_RUN__ ' + new Date().toISOString(),
+      description: summary,
+      category: 'Services',
+      status: 'available',
+      posted_by: 'scraper-meta',
+      edit_code: 'scraper-meta-' + randHex(8),
+      url: null,
+    }),
+  }).catch(() => {})
+
+  process.exit(0)
+})()

@@ -1,7 +1,9 @@
 import { format } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
 import EditListing from './EditListing'
+import { CategoryIcon } from '../utils/categoryIcons'
 
 interface ListingPreviewProps {
   id: number
@@ -24,13 +26,6 @@ interface ListingPreviewProps {
   item?: any
   edit_code?: string
   isNewListing?: boolean
-}
-
-const categoryEmojis: Record<string, string> = {
-  Events: '🎉',
-  Food: '🍕',
-  Items: '📦',
-  Services: '🔧',
 }
 
 function ListingPreview({
@@ -81,8 +76,8 @@ function ListingPreview({
       {/* Category stamp + title */}
       <div>
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="inline-flex items-center justify-center w-7 h-7 bg-bridge-500 border-2 border-ink text-paper-light text-[13px]">
-            {categoryEmojis[category] ?? '📍'}
+          <span className="inline-flex items-center justify-center w-7 h-7 bg-bridge-500 border border-ink text-paper-light">
+            <CategoryIcon category={category} size={14} />
           </span>
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
             {category}
@@ -121,31 +116,34 @@ function ListingPreview({
         <div className="flex gap-2 pt-2">
           <button
             onClick={handleViewDetails}
-            className="flex-1 bg-ink text-paper-light px-3 py-1.5 border-2 border-ink font-mono text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-ink text-paper-light px-3 py-1.5 border border-ink font-mono text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
           >
-            Open
+            Open <ArrowRight size={11} strokeWidth={2.5} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }}
-            className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
+            className="px-2 py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
             title="Edit listing"
+            aria-label="Edit listing"
           >
-            ✏︎
+            <Pencil size={13} strokeWidth={2.2} />
           </button>
           <button
             onClick={handleShare}
-            className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
+            className="px-2 py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
             title="Copy link"
+            aria-label="Copy link"
           >
-            {copied ? '✓' : '↗'}
+            {copied ? <Check size={13} strokeWidth={2.5} /> : <Share2 size={13} strokeWidth={2.2} />}
           </button>
           {showDirections && location_lat && location_lng && (
             <button
               onClick={openInGoogleMaps}
-              className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
-              title="Google Maps"
+              className="px-2 py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
+              title="Open in Google Maps"
+              aria-label="Open in Google Maps"
             >
-              ◎
+              <MapIcon size={13} strokeWidth={2.2} />
             </button>
           )}
         </div>
@@ -177,7 +175,7 @@ function ListingPreview({
 
       {/* Edit code reveal for newly-submitted listings */}
       {isNewListing && edit_code && (
-        <div className="mt-2 p-3 bg-paper border-2 border-ink">
+        <div className="mt-2 p-3 bg-paper border border-ink">
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink mb-2">
             Save this edit code
           </p>
@@ -189,9 +187,9 @@ function ListingPreview({
                 setCopied(true)
                 setTimeout(() => setCopied(false), 2000)
               }}
-              className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700"
+              className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 inline-flex items-center gap-1.5"
             >
-              {copied ? '✓ Copied' : 'Copy'}
+              {copied ? <><Check size={11} strokeWidth={2.5}/> Copied</> : 'Copy'}
             </button>
           </div>
         </div>

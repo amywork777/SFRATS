@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Hand } from 'lucide-react'
 import { api } from '../services/api'
 
 interface InterestButtonProps {
@@ -32,7 +33,7 @@ export default function InterestButton({ itemId, initialCount }: InterestButtonP
     <button
       onClick={handleInterestClick}
       disabled={loading || hasInteracted}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-colors
+      className={`inline-flex items-center gap-2 px-3 py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-colors
         ${hasInteracted
           ? 'bg-bridge-500 text-paper-light cursor-default'
           : 'bg-paper-light text-ink hover:bg-paper'
@@ -41,7 +42,7 @@ export default function InterestButton({ itemId, initialCount }: InterestButtonP
       `}
       title={hasInteracted ? 'Already expressed interest' : 'Express interest'}
     >
-      <span className="text-[13px] leading-none">👋</span>
+      <Hand size={13} strokeWidth={2.2} />
       <span>
         {interestCount} {interestCount === 1 ? 'person' : 'people'}
       </span>

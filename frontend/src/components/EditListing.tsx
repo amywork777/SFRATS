@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Lock, X, AlertTriangle, Pencil, Trash2, Save, Plus } from 'lucide-react'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import LocationPicker from './LocationPicker'
@@ -10,7 +11,7 @@ interface EditListingProps {
 }
 
 const inputCls =
-  'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
+  'w-full bg-paper-light border border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
 
 export default function EditListing({ item, onClose, onSave }: EditListingProps) {
   const [editCode, setEditCode] = useState('')
@@ -80,17 +81,19 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
   if (mode === 'verify') {
     return (
       <div className="fixed inset-0 bg-ink/50 flex items-center justify-center p-4 z-[9999]">
-        <div className="bg-paper-light border-2 border-ink shadow-stamp p-6 max-w-md w-full">
-          <div className="mb-5 pb-3 rule-thick">
-            <span className="label">Restricted</span>
+        <div className="bg-paper-light border border-ink shadow-stamp p-6 max-w-md w-full">
+          <div className="mb-5 pb-3 border-b border-ink">
+            <span className="label inline-flex items-center gap-1.5">
+              <Lock size={11} strokeWidth={2.5} /> Restricted
+            </span>
             <h2 className="font-display font-black text-3xl text-ink mt-1 leading-tight">
               Enter your edit code
             </h2>
           </div>
 
           {error && (
-            <div className="border-2 border-bridge-700 bg-bridge-50 p-3 mb-4">
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ </span>
+            <div className="border border-bridge-700 bg-bridge-50 p-3 mb-4 flex items-start gap-2">
+              <AlertTriangle size={14} strokeWidth={2.2} className="text-bridge-700 mt-0.5 shrink-0" />
               <span className="font-mono text-[12px] text-bridge-700">{error}</span>
             </div>
           )}
@@ -113,13 +116,13 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
+                className="px-4 py-2 bg-paper-light text-ink border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                className="px-4 py-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
               >
                 Verify
               </button>
@@ -135,26 +138,28 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="min-h-screen px-4 py-8 flex items-start justify-center">
         <div className="fixed inset-0 bg-ink/50" onClick={onClose} />
-        <div className="relative bg-paper-light border-2 border-ink shadow-stamp p-6 md:p-8 max-w-2xl w-full">
-          <div className="mb-6 pb-3 rule-thick flex items-start justify-between gap-4">
+        <div className="relative bg-paper-light border border-ink shadow-stamp p-6 md:p-8 max-w-2xl w-full">
+          <div className="mb-6 pb-3 border-b border-ink flex items-start justify-between gap-4">
             <div>
-              <span className="label">Editing · № {String(item.id).padStart(4, '0')}</span>
+              <span className="label inline-flex items-center gap-1.5">
+                <Pencil size={11} strokeWidth={2.5} /> Editing · № {String(item.id).padStart(4, '0')}
+              </span>
               <h2 className="font-display font-black text-3xl md:text-4xl text-ink mt-1 leading-tight">
                 Edit listing<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="font-mono text-[18px] text-ink-mute hover:text-ink hover:bg-paper-dark px-2 transition-colors"
+              className="p-1.5 text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
               aria-label="Close"
             >
-              ✕
+              <X size={18} strokeWidth={2.2} />
             </button>
           </div>
 
           {error && (
-            <div className="border-2 border-bridge-700 bg-bridge-50 p-3 mb-5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ </span>
+            <div className="border border-bridge-700 bg-bridge-50 p-3 mb-5 flex items-start gap-2">
+              <AlertTriangle size={14} strokeWidth={2.2} className="text-bridge-700 mt-0.5 shrink-0" />
               <span className="font-mono text-[12px] text-bridge-700">{error}</span>
             </div>
           )}
@@ -279,7 +284,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                 <div className="mt-2 flex flex-wrap gap-2">
                   {formData.images.map((url, i) => (
                     <div key={url} className="relative w-20 h-20">
-                      <img src={url} alt={`#${i + 1}`} className="w-full h-full object-cover border-2 border-ink" />
+                      <img src={url} alt={`#${i + 1}`} className="w-full h-full object-cover border border-ink" />
                     </div>
                   ))}
                 </div>
@@ -289,13 +294,13 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                 <div className="mt-2 flex flex-wrap gap-2">
                   {newImages.map((file, i) => (
                     <div key={i} className="relative w-20 h-20">
-                      <img src={URL.createObjectURL(file)} alt={`new ${i + 1}`} className="w-full h-full object-cover border-2 border-ink" />
+                      <img src={URL.createObjectURL(file)} alt={`new ${i + 1}`} className="w-full h-full object-cover border border-ink" />
                       <button
                         type="button"
                         onClick={() => setNewImages(prev => prev.filter((_, idx) => idx !== i))}
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-bridge-500 text-paper-light border-2 border-ink text-[10px] flex items-center justify-center"
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-bridge-500 text-paper-light border border-ink flex items-center justify-center"
                       >
-                        ✕
+                        <X size={10} strokeWidth={2.5} />
                       </button>
                     </div>
                   ))}
@@ -305,9 +310,9 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-3 w-full py-2 px-3 border-2 border-dashed border-ink/40 hover:border-ink bg-paper-light font-mono text-[11px] uppercase tracking-[0.14em] text-ink transition-colors"
+                className="mt-3 w-full py-2 px-3 border-2 border-dashed border-ink/40 hover:border-ink bg-paper-light font-mono text-[11px] uppercase tracking-[0.14em] text-ink transition-colors inline-flex items-center justify-center gap-2"
               >
-                + Add images
+                <Plus size={13} strokeWidth={2.5} /> Add images
               </button>
               <input
                 ref={fileInputRef}
@@ -319,27 +324,27 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               />
             </div>
 
-            <div className="rule-thick pt-5 flex justify-between items-center gap-2">
+            <div className="border-t border-ink pt-5 flex justify-between items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
               >
-                🗑 Delete
+                <Trash2 size={13} strokeWidth={2.2} /> Delete
               </button>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 bg-paper-light text-ink border-2 border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
+                  className="px-4 py-2 bg-paper-light text-ink border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-ink text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
                 >
-                  Save
+                  <Save size={13} strokeWidth={2.2} /> Save
                 </button>
               </div>
             </div>
