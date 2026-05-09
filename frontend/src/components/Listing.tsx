@@ -1,10 +1,9 @@
-import { MapIcon } from '@heroicons/react/24/outline';
 import InterestButton from './InterestButton'
 import { DbItem } from '../types/supabase'
 import { format } from 'date-fns'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import EditListing from './EditListing'
 import { api } from '../services/api'
 
@@ -13,188 +12,185 @@ interface ListingProps {
   onRefresh?: () => void;
 }
 
+const categoryEmojis: Record<string, string> = {
+  Events: '🎉',
+  Food: '🍕',
+  Items: '📦',
+  Services: '🔧',
+}
+
 export default function Listing({ listing: initialListing, onRefresh }: ListingProps) {
   const [listing, setListing] = useState(initialListing)
-  
+  const [showEditModal, setShowEditModal] = useState(false)
+
   const fetchItem = async () => {
     try {
-      const updatedListing = await api.getItem(listing.id.toString())
-      setListing(updatedListing)
+      const updated = await api.getItem(listing.id.toString())
+      setListing(updated)
       onRefresh?.()
     } catch (err) {
       console.error('Error fetching item:', err)
     }
   }
 
-  const categoryEmojis: { [key: string]: string } = {
-    'Events': '🎉',
-    'Food': '🍕',
-    'Items': '📦',
-    'Services': '🔧'
-  }
+  const formatDate = (date: string | Date) =>
+    format(new Date(date), 'MMM d, yyyy · h:mm a')
 
-  const statusColors = {
-    available: 'bg-green-100 text-green-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    gone: 'bg-gray-100 text-gray-800'
-  }
-
-  const formatDate = (date: string | Date) => {
-    return format(new Date(date), 'MMM d, yyyy h:mm a')
-  }
-
-  const [showEditModal, setShowEditModal] = useState(false);
+  const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-4xl mx-auto relative">
-      {/* Header Section - stack on mobile */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">{categoryEmojis[listing.category]}</span>
-            <h1 className="text-2xl font-bold">{listing.title}</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 rounded-full text-sm ${statusColors[listing.status]}`}>
-              {listing.status.charAt(0).toUpperCase() + listing.status.slice(1)}
-            </span>
-            <span className="text-sm text-gray-500">
-              Posted {formatDate(listing.created_at)}
-            </span>
-          </div>
+    <div className="space-y-8 p-4 md:p-8 max-w-3xl mx-auto relative">
+      {/* Issue line */}
+      <div className="flex items-baseline justify-between">
+        <span className="label">A Listing · № {String(listing.id).padStart(4, '0')}</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
+          posted {formatDate(listing.created_at)}
+        </span>
+      </div>
+
+      {/* Title block */}
+      <header className="space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center justify-center w-10 h-10 bg-bridge-500 border-2 border-ink text-paper-light text-[18px]">
+            {categoryEmojis[listing.category] ?? '📍'}
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-mute">
+            {listing.category}
+          </span>
         </div>
-        <InterestButton 
-          itemId={listing.id} 
-          initialCount={listing.interest_count}
-        />
-      </div>
+        <h1 className="font-display font-black text-4xl md:text-5xl leading-[1.0] tracking-tight text-ink">
+          {listing.title}
+        </h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="stamp text-bridge-600">
+            {statusLabel(listing.status)}
+          </span>
+          <InterestButton
+            itemId={listing.id}
+            initialCount={listing.interest_count}
+          />
+        </div>
+        <div className="rule-thick" />
+      </header>
 
-      {/* Description Section */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <p className="text-gray-700 whitespace-pre-wrap">{listing.description}</p>
-      </div>
+      {/* Description */}
+      {listing.description && (
+        <section>
+          <span className="label">Notes</span>
+          <p className="mt-2 font-display text-[19px] leading-[1.55] text-ink-soft whitespace-pre-wrap">
+            {listing.description}
+          </p>
+        </section>
+      )}
 
-      {/* Location and Map Section */}
-      <div className="space-y-3">
-        <h2 className="font-semibold text-gray-700 flex items-center gap-2">
-          <span>📍</span> Location
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Location Details */}
-          <div className="md:col-span-1">
-            <div className="bg-blue-50 rounded-lg p-4 h-full">
-              <p className="text-sm text-gray-600 mb-3">{listing.location_address}</p>
+      {/* Location */}
+      <section>
+        <span className="label">Where</span>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-1 bg-paper-light border-2 border-ink p-4 space-y-3">
+            <p className="text-[14px] leading-snug text-ink">
+              {listing.location_address || 'No address provided.'}
+            </p>
+            {listing.location_lat && listing.location_lng && (
               <a
                 href={`https://www.google.com/maps?q=${listing.location_lat},${listing.location_lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+                className="inline-block font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-2"
               >
-                🗺️ Open in Google Maps
+                Open in Google Maps ↗
               </a>
+            )}
+          </div>
+          {listing.location_lat && listing.location_lng && (
+            <div className="md:col-span-2 h-[220px] border-2 border-ink overflow-hidden relative z-0">
+              <MapContainer
+                center={[listing.location_lat, listing.location_lng]}
+                zoom={15}
+                style={{ height: '100%', width: '100%' }}
+                className="z-0"
+              >
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; OSM &copy; CARTO'
+                  subdomains="abcd"
+                  detectRetina
+                />
+                <Marker position={[listing.location_lat, listing.location_lng]} />
+              </MapContainer>
             </div>
-          </div>
-          {/* Map */}
-          <div className="md:col-span-2 h-[200px] bg-gray-100 rounded-lg overflow-hidden relative z-0">
-            <MapContainer
-              center={[listing.location_lat, listing.location_lng]}
-              zoom={15}
-              style={{ height: '100%', width: '100%' }}
-              className="z-0"
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-              />
-              <Marker position={[listing.location_lat, listing.location_lng]} />
-            </MapContainer>
-          </div>
+          )}
         </div>
-      </div>
+      </section>
 
-      {/* Other Details Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Availability Section */}
-        <div className="space-y-2">
-          <h2 className="font-semibold text-gray-700 flex items-center gap-2">
-            <span>📅</span> Availability
-          </h2>
-          <div className="bg-blue-50 rounded-lg p-4 space-y-1">
-            <p className="text-sm text-gray-600">
-              Available from: <span className="font-medium">{formatDate(listing.available_from)}</span>
+      {/* Details grid */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="bg-paper-light border-2 border-ink p-4 space-y-1">
+          <span className="label">When</span>
+          <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink mt-1">
+            From&nbsp;&nbsp;{formatDate(listing.available_from)}
+          </p>
+          {listing.available_until && (
+            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink">
+              Until&nbsp;{formatDate(listing.available_until)}
             </p>
-            {listing.available_until && (
-              <p className="text-sm text-gray-600">
-                Available until: <span className="font-medium">{formatDate(listing.available_until)}</span>
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Contact Section */}
-        <div className="space-y-2">
-          <h2 className="font-semibold text-gray-700 flex items-center gap-2">
-            <span>👤</span> Contact Information
-          </h2>
-          <div className="bg-blue-50 rounded-lg p-4 space-y-1">
-            <p className="text-sm text-gray-600">
-              Posted by: <span className="font-medium">{listing.posted_by || 'Anonymous'}</span>
+        <div className="bg-paper-light border-2 border-ink p-4 space-y-1">
+          <span className="label">Posted by</span>
+          <p className="font-display text-[15px] text-ink mt-1">
+            {listing.posted_by || 'Anonymous'}
+          </p>
+          {listing.contact_info && (
+            <p className="font-mono text-[11px] tracking-[0.05em] text-ink-mute">
+              {listing.contact_info}
             </p>
-            {listing.contact_info && (
-              <p className="text-sm text-gray-600">
-                Contact: <span className="font-medium">{listing.contact_info}</span>
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
-        {/* Additional Info Section */}
         {listing.url && (
-          <div className="space-y-2">
-            <h2 className="font-semibold text-gray-700 flex items-center gap-2">
-              <span>🔗</span> Additional Information
-            </h2>
-            <div className="bg-blue-50 rounded-lg p-4">
+          <div className="md:col-span-2 bg-paper-light border-2 border-ink p-4">
+            <span className="label">Link</span>
+            <div className="mt-1">
               <a
                 href={listing.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-700 break-all"
+                className="font-mono text-[12px] text-bridge-600 hover:text-bridge-700 break-all underline underline-offset-4 decoration-2"
               >
                 {listing.url}
               </a>
             </div>
           </div>
         )}
-      </div>
+      </section>
 
+      {/* Images */}
       {listing.images && listing.images.length > 0 && (
-        <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {listing.images.map((url, index) => (
+        <section>
+          <span className="label">Photos</span>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {listing.images.map((url, i) => (
               <img
-                key={index}
+                key={i}
                 src={url}
-                alt={`${listing.title} - Image ${index + 1}`}
-                className="w-full h-64 object-cover rounded-lg"
+                alt={`${listing.title} — ${i + 1}`}
+                className="w-full h-64 object-cover border-2 border-ink"
               />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      <div className="flex gap-2 mt-4">
+      {/* Edit */}
+      <div className="rule-thick pt-5">
         <button
           onClick={() => setShowEditModal(true)}
-          className="flex-1 bg-gray-100 text-gray-600 py-2 px-4 rounded
-                    hover:bg-gray-200 transition-colors text-sm font-medium
-                    flex items-center justify-center gap-1"
+          className="inline-flex items-center gap-2 bg-paper-light border-2 border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          <span>✏️</span>
-          <span>Edit Listing</span>
+          ✏︎ Edit listing
         </button>
-        
-        {/* Other action buttons */}
       </div>
 
       {showEditModal && (
@@ -202,18 +198,12 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
           <EditListing
             item={listing}
             onClose={() => setShowEditModal(false)}
-            onSave={() => {
-              fetchItem();
-              setShowEditModal(false);
-            }}
+            onSave={() => { fetchItem(); setShowEditModal(false) }}
           />
         </div>
       )}
 
-      {/* Footer Spacer */}
-      <div className="h-32 md:h-24">
-        {/* Empty div to create space at bottom */}
-      </div>
+      <div className="h-12" />
     </div>
   )
-} 
+}

@@ -16,7 +16,6 @@ export default function InterestButton({ itemId, initialCount }: InterestButtonP
     if (hasInteracted) return
     setLoading(true)
     setError(null)
-
     try {
       await api.updateInterestCount(itemId.toString())
       setInterestCount(prev => prev + 1)
@@ -33,22 +32,22 @@ export default function InterestButton({ itemId, initialCount }: InterestButtonP
     <button
       onClick={handleInterestClick}
       disabled={loading || hasInteracted}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors
-        ${hasInteracted 
-          ? 'bg-blue-100 text-blue-700' 
-          : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+      className={`inline-flex items-center gap-2 px-3 py-1.5 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-colors
+        ${hasInteracted
+          ? 'bg-bridge-500 text-paper-light cursor-default'
+          : 'bg-paper-light text-ink hover:bg-paper'
         }
         ${loading ? 'opacity-50 cursor-not-allowed' : ''}
       `}
       title={hasInteracted ? 'Already expressed interest' : 'Express interest'}
     >
-      <span className="text-lg">👋</span>
-      <span className="text-sm font-medium">
-        {interestCount} {interestCount === 1 ? 'person' : 'people'} interested
+      <span className="text-[13px] leading-none">👋</span>
+      <span>
+        {interestCount} {interestCount === 1 ? 'person' : 'people'}
       </span>
       {error && (
-        <span className="text-xs text-red-500 ml-2">{error}</span>
+        <span className="ml-2 text-[10px] text-bridge-700 normal-case tracking-normal">{error}</span>
       )}
     </button>
   )
-} 
+}

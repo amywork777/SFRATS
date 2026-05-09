@@ -108,13 +108,13 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
           // Render content
           root.render(
             <div className="relative">
-              <button 
+              <button
                 onClick={() => {
                   root.unmount()
                   document.body.removeChild(popupDiv)
                   delete popupRootsRef.current[item.id]
                 }}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                className="absolute top-1 right-1 w-6 h-6 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors font-mono text-[14px]"
               >
                 ✕
               </button>

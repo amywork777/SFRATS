@@ -9,50 +9,40 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [timeRange, setTimeRange] = useState<string>('all')
-  
-  const categories = ['Items', 'Food', 'Events', 'Services']
-  const categoryEmojis = {
-    'Items': '📦',
-    'Food': '🍕',
-    'Events': '🎉',
-    'Services': '🔧'
-  }
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
+  const categories = ['Items', 'Food', 'Events', 'Services'] as const
+  const categoryEmojis: Record<string, string> = {
+    Items: '📦', Food: '🍕', Events: '🎉', Services: '🔧',
+  }
   const timeRanges = [
-    { id: 'all', label: 'All Time' },
+    { id: 'all',   label: 'Any time' },
     { id: 'today', label: 'Today' },
-    { id: 'week', label: 'This Week' },
-    { id: 'month', label: 'This Month' }
+    { id: 'week',  label: '7 days' },
+    { id: 'month', label: '30 days' },
   ]
 
   const toggleCategory = (category: string) => {
-    const newCategories = selectedCategories.includes(category)
+    const next = selectedCategories.includes(category)
       ? selectedCategories.filter(c => c !== category)
       : [...selectedCategories, category]
-    setSelectedCategories(newCategories)
-    onFiltersChange({ categories: newCategories })
+    setSelectedCategories(next)
+    onFiltersChange({ categories: next })
   }
 
   const handleTimeRangeChange = (range: string) => {
     setTimeRange(range)
-    let start = null
-    let end = null
+    let start: Date | null = null
+    let end: Date | null = null
     const now = new Date()
-
-    switch (range) {
-      case 'today':
-        start = now
-        break
-      case 'week':
-        start = now
-        end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-        break
-      case 'month':
-        start = now
-        end = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-        break
-    }
-
+    if (range === 'today') {
+      start = new Date(now.setHours(0,0,0,0))
+      end   = new Date(now.setHours(23,59,59,999))
+    } else if (range === 'week')  { start = new Date(); end = new Date(); end.setDate(end.getDate() + 7) }
+    else if (range === 'month') { start = new Date(); end = new Date(); end.setDate(end.getDate() + 30) }
+    setStartDate(start ? start.toISOString().split('T')[0] : '')
+    setEndDate(end ? end.toISOString().split('T')[0] : '')
     onFiltersChange({ dates: { start, end } })
   }
 
@@ -60,7 +50,8 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-20 right-4 z-[2000] md:hidden bg-blue-500 text-white p-3 rounded-full shadow-lg"
+        className="fixed bottom-20 right-4 z-[2000] md:hidden bg-bridge-500 text-paper-light p-3 border-2 border-ink shadow-stamp"
+        aria-label="Filters"
       >
         <FunnelIcon className="h-5 w-5" />
       </button>
@@ -69,145 +60,129 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
         fixed inset-0 z-[2000] md:hidden transform transition-transform duration-300
         ${isOpen ? 'translate-y-0' : 'translate-y-full'}
       `}>
-        <div 
-          className="absolute inset-0 bg-black/50" 
-          onClick={() => setIsOpen(false)} 
-        />
+        <div className="absolute inset-0 bg-ink/40" onClick={() => setIsOpen(false)} />
 
-        <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-xl max-h-[80vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white border-b px-3 py-2 flex justify-between items-center">
-            <h2 className="text-base font-medium">Filter Listings</h2>
+        <div className="absolute inset-x-0 bottom-0 bg-paper-light border-t-2 border-ink max-h-[85vh] overflow-y-auto">
+          <div className="sticky top-0 bg-paper-light border-b-2 border-ink px-4 py-3 flex justify-between items-center">
+            <h2 className="font-display font-bold text-[20px] text-ink">Filter</h2>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   setSelectedCategories([])
                   setTimeRange('all')
-                  onFiltersChange({ 
-                    search: '',
-                    categories: [],
-                    dates: { start: null, end: null }
-                  })
+                  setStartDate(''); setEndDate('')
+                  onFiltersChange({ search: '', categories: [], dates: { start: null, end: null } })
                 }}
-                className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1"
+                className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 px-2 py-1"
               >
                 Clear
               </button>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-gray-100 rounded-full"
+                className="p-1 hover:bg-paper transition-colors"
+                aria-label="Close"
               >
-                <XMarkIcon className="h-4 w-4 text-gray-500" />
+                <XMarkIcon className="h-4 w-4 text-ink-mute" />
               </button>
             </div>
           </div>
 
-          <div className="p-4 space-y-6 pb-24">
+          <div className="p-5 space-y-7 pb-24">
             {/* Search */}
             <div>
-              <h3 className="text-sm font-medium mb-2">Search</h3>
+              <span className="label">§ 01 · Search</span>
               <input
                 type="text"
-                placeholder="Search listings..."
+                placeholder="couches, pizza, plants…"
                 onChange={(e) => onFiltersChange({ search: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm"
+                className="mt-2 w-full px-3 py-2 bg-paper border-2 border-ink font-mono text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
               />
             </div>
 
-            {/* Categories with Checkmarks */}
+            {/* Categories */}
             <div>
-              <h3 className="text-sm font-medium mb-2">Categories</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {categories.map(category => (
-                  <button
-                    key={category}
-                    onClick={() => toggleCategory(category)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg border
-                      ${selectedCategories.includes(category)
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 bg-white'
-                      } transition-colors`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{categoryEmojis[category]}</span>
-                      <span className="text-sm">{category}</span>
-                    </div>
-                    {selectedCategories.includes(category) && (
-                      <span className="text-blue-500">✓</span>
-                    )}
-                  </button>
-                ))}
+              <span className="label">§ 02 · Filed Under</span>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {categories.map((category, i) => {
+                  const active = selectedCategories.includes(category)
+                  const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => toggleCategory(category)}
+                      className={`flex items-center justify-between px-3 py-2 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-all ${tilt}
+                        ${active
+                          ? 'bg-bridge-500 text-paper-light shadow-stamp'
+                          : 'bg-paper-light text-ink hover:bg-paper'
+                        }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-[13px]">{categoryEmojis[category]}</span>
+                        {category}
+                      </span>
+                      {active && <span>✓</span>}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Time Range */}
+            {/* Time */}
             <div>
-              <h3 className="text-sm font-medium mb-2">Time Range</h3>
-              <div className="space-y-3">
-                {/* Quick select buttons */}
-                <div className="grid grid-cols-2 gap-2">
-                  {timeRanges.map(range => (
+              <span className="label">§ 03 · When</span>
+              <div className="mt-3 grid grid-cols-2 gap-1.5">
+                {timeRanges.map(range => {
+                  const active = timeRange === range.id
+                  return (
                     <button
                       key={range.id}
                       onClick={() => handleTimeRangeChange(range.id)}
-                      className={`px-3 py-2 rounded-lg border text-sm
-                        ${timeRange === range.id
-                          ? 'border-blue-500 bg-blue-50 text-blue-500'
-                          : 'border-gray-200 bg-white'
-                        } transition-colors`}
+                      className={`px-3 py-2 border-2 border-ink font-mono text-[11px] uppercase tracking-[0.1em] font-semibold transition
+                        ${active ? 'bg-ink text-paper-light' : 'bg-paper-light text-ink hover:bg-paper'}`}
                     >
                       {range.label}
                     </button>
-                  ))}
-                </div>
+                  )
+                })}
+              </div>
 
-                {/* Custom date inputs */}
-                <div className="pt-2 border-t">
-                  <div className="text-xs text-gray-500 mb-2">Custom Range</div>
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="text-xs text-gray-500 mb-1 block">From</label>
-                      <input
-                        type="date"
-                        onChange={(e) => {
-                          setTimeRange('custom')
-                          onFiltersChange({ 
-                            dates: { 
-                              start: new Date(e.target.value),
-                              end: dateRange?.end 
-                            }
-                          })
-                        }}
-                        className="w-full px-3 py-2 border rounded-lg text-sm"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-xs text-gray-500 mb-1 block">To</label>
-                      <input
-                        type="date"
-                        onChange={(e) => {
-                          setTimeRange('custom')
-                          onFiltersChange({ 
-                            dates: { 
-                              start: dateRange?.start,
-                              end: new Date(e.target.value)
-                            }
-                          })
-                        }}
-                        className="w-full px-3 py-2 border rounded-lg text-sm"
-                      />
-                    </div>
-                  </div>
+              <div className="mt-4 pt-4 rule-hair">
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">From</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => {
+                        setStartDate(e.target.value); setTimeRange('custom')
+                        onFiltersChange({ dates: { start: e.target.value ? new Date(e.target.value) : null, end: endDate ? new Date(endDate) : null } })
+                      }}
+                      className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">To</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => {
+                        setEndDate(e.target.value); setTimeRange('custom')
+                        onFiltersChange({ dates: { start: startDate ? new Date(startDate) : null, end: e.target.value ? new Date(e.target.value) : null } })
+                      }}
+                      className="w-full bg-paper-light border-2 border-ink px-2 py-1 font-mono text-[12px] text-ink outline-none"
+                    />
+                  </label>
                 </div>
               </div>
             </div>
 
-            {/* Done Button */}
-            <div className="pt-2 border-t">
+            {/* Done */}
+            <div className="rule-thick pt-5">
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-full py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors"
+                className="w-full py-3 bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
               >
-                Done
+                Apply
               </button>
             </div>
           </div>
@@ -215,4 +190,4 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
       </div>
     </>
   )
-} 
+}

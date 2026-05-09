@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import Listing from '../components/Listing'
 import { DbItem } from '../types/supabase'
@@ -27,69 +26,65 @@ export default function ListingPage() {
     }
   }
 
-  useEffect(() => {
-    fetchListing()
-  }, [id])
+  useEffect(() => { fetchListing() }, [id])
 
   if (loading) return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-6"></div>
-        <div className="h-32 bg-gray-200 rounded mb-6"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
+    <div className="max-w-3xl mx-auto p-8 pt-24">
+      <div className="animate-pulse space-y-4">
+        <div className="h-3 bg-paper-dark w-32" />
+        <div className="h-12 bg-paper-dark w-3/4" />
+        <div className="h-1 bg-ink/30 w-full" />
+        <div className="h-32 bg-paper-dark" />
+        <div className="h-64 bg-paper-dark" />
       </div>
     </div>
   )
 
   if (error) return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="text-red-700 font-medium mb-2">Error</div>
-        <div className="text-red-600">{error}</div>
+    <div className="max-w-3xl mx-auto p-8 pt-24">
+      <div className="border-2 border-bridge-700 bg-bridge-50 p-5">
+        <div className="font-mono text-[10px] uppercase tracking-[0.16em] text-bridge-700 mb-1">Error</div>
+        <div className="font-display text-[18px] text-ink">{error}</div>
       </div>
       <button
         onClick={() => navigate('/')}
-        className="mt-4 text-blue-500 hover:underline flex items-center gap-2"
+        className="mt-6 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600 inline-flex items-center gap-2"
       >
-        ← Back to Map
+        <span aria-hidden>←</span> Back to map
       </button>
     </div>
   )
 
   if (!listing) return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="text-gray-600">Listing not found</div>
+    <div className="max-w-3xl mx-auto p-8 pt-24">
+      <div className="font-display text-[18px] text-ink-mute">Listing not found.</div>
       <button
         onClick={() => navigate('/')}
-        className="mt-4 text-blue-500 hover:underline flex items-center gap-2"
+        className="mt-6 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600 inline-flex items-center gap-2"
       >
-        ← Back to Map
+        <span aria-hidden>←</span> Back to map
       </button>
     </div>
   )
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-4 flex justify-between items-center">
+    <div className="pt-20">
+      <div className="max-w-3xl mx-auto px-4 md:px-8 mb-2 flex justify-between items-center">
         <button
           onClick={() => navigate('/')}
-          className="text-blue-500 hover:underline flex items-center gap-2"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600 inline-flex items-center gap-2"
         >
-          ← Back to Map
+          <span aria-hidden>←</span> Back to map
         </button>
         <Link
           to={`/listing/${id}/manage`}
-          className="text-blue-500 hover:underline"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
         >
-          Manage Listing
+          Manage ↗
         </Link>
       </div>
 
-      <Listing 
-        listing={listing} 
-        onRefresh={fetchListing}
-      />
+      <Listing listing={listing} onRefresh={fetchListing} />
     </div>
   )
-} 
+}

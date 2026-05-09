@@ -1,6 +1,5 @@
 import { format } from 'date-fns'
-import { useNavigate, useLocation } from 'react-router-dom'
-import DirectionsButton from './DirectionsButton'
+import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import EditListing from './EditListing'
 
@@ -27,6 +26,13 @@ interface ListingPreviewProps {
   isNewListing?: boolean
 }
 
+const categoryEmojis: Record<string, string> = {
+  Events: '🎉',
+  Food: '🍕',
+  Items: '📦',
+  Services: '🔧',
+}
+
 function ListingPreview({
   id,
   title,
@@ -36,29 +42,20 @@ function ListingPreview({
   location_lat,
   location_lng,
   available_from,
-  available_until,
-  created_at,
   showDirections = true,
   showActions = true,
   inPopup = false,
   onViewDetails,
-  showCategory = true,
-  showTimestamp = true,
   onRefresh,
   item,
   edit_code,
   isNewListing = false,
+  available_until,
+  created_at,
 }: ListingPreviewProps) {
   const navigate = !inPopup ? useNavigate() : null
   const [copied, setCopied] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
-  
-  const categoryEmojis: { [key: string]: string } = {
-    'Events': '🎉',
-    'Food': '🍕',
-    'Items': '📦',
-    'Services': '🔧'
-  }
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,155 +66,130 @@ function ListingPreview({
   }
 
   const handleViewDetails = () => {
-    if (inPopup && onViewDetails) {
-      onViewDetails()
-    } else if (navigate) {
-      navigate(`/listing/${id}`)
-    }
+    if (inPopup && onViewDetails) onViewDetails()
+    else if (navigate) navigate(`/listing/${id}`)
   }
 
   const openInGoogleMaps = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (!location_lat || !location_lng) return;
-    
-    const mapsUrl = `https://www.google.com/maps?q=${location_lat},${location_lng}`;
-    window.open(mapsUrl, '_blank');
-  };
+    e.stopPropagation()
+    if (!location_lat || !location_lng) return
+    window.open(`https://www.google.com/maps?q=${location_lat},${location_lng}`, '_blank')
+  }
 
   return (
-    <div className="space-y-2 p-2.5 bg-white rounded-lg transition-shadow max-w-[200px]">
-      {/* Title and Category */}
-      <div className="flex items-start gap-1.5">
-        <span className="text-sm shrink-0">{categoryEmojis[category] || '📍'}</span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-medium text-[10px] leading-tight truncate">{title}</h3>
-        </div>
-      </div>
-
-      {/* Status badge */}
-      {status && (
-        <div className="flex justify-start">
-          <span className={`px-1.5 py-0.5 text-[8px] rounded-full ${statusColors[status]}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+    <div className="space-y-3 w-[260px]">
+      {/* Category stamp + title */}
+      <div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="inline-flex items-center justify-center w-7 h-7 bg-bridge-500 border-2 border-ink text-paper-light text-[13px]">
+            {categoryEmojis[category] ?? '📍'}
+          </span>
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
+            {category}
           </span>
         </div>
-      )}
+        <h3 className="font-display font-bold text-[18px] leading-tight text-ink">
+          {title}
+        </h3>
+      </div>
 
       {/* Description */}
       {description && (
-        <p className="text-[8px] text-gray-600 line-clamp-1 px-0.5">
+        <p className="text-[13px] leading-snug text-ink-soft line-clamp-3">
           {description}
         </p>
       )}
 
-      {/* Location */}
-      {location_address && (
-        <div className="flex items-center gap-1">
-          <span className="text-[8px]">📍</span>
-          <span className="text-[8px] text-gray-600 truncate">{location_address}</span>
-        </div>
-      )}
+      <div className="rule-hair" />
 
-      {/* Date */}
-      <div className="flex items-center gap-1">
-        <span className="text-[8px]">📅</span>
-        <span className="text-[8px] text-gray-600">{format(new Date(available_from), 'MMM d')}</span>
+      {/* Metadata */}
+      <div className="space-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-mute">
+        {location_address && (
+          <div className="flex items-start gap-1.5">
+            <span className="text-bridge-500">▸</span>
+            <span className="truncate flex-1">{location_address}</span>
+          </div>
+        )}
+        <div className="flex items-start gap-1.5">
+          <span className="text-bridge-500">▸</span>
+          <span>{format(new Date(available_from), 'MMM d · h:mm a')}</span>
+        </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Actions */}
       {showActions && (
-        <div className="flex gap-1 mt-1.5">
+        <div className="flex gap-2 pt-2">
           <button
             onClick={handleViewDetails}
-            className="flex-1 bg-blue-500 text-white py-0.5 px-1.5 rounded
-                     hover:bg-blue-600 transition-colors text-[8px] font-medium"
+            className="flex-1 bg-ink text-paper-light px-3 py-1.5 border-2 border-ink font-mono text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
           >
-            <span className="sm:hidden">Details</span>
-            <span className="hidden sm:inline">View Details</span>
+            Open
           </button>
-          
-          <div className="flex gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }}
+            className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
+            title="Edit listing"
+          >
+            ✏︎
+          </button>
+          <button
+            onClick={handleShare}
+            className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
+            title="Copy link"
+          >
+            {copied ? '✓' : '↗'}
+          </button>
+          {showDirections && location_lat && location_lng && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowEditModal(true);
-              }}
-              className="p-1 bg-gray-100 text-gray-700 rounded 
-                       hover:bg-gray-200 transition-colors text-[8px]"
-              title="Edit Listing"
+              onClick={openInGoogleMaps}
+              className="px-2 py-1.5 bg-paper-light text-ink border-2 border-ink font-mono text-[10px] hover:bg-paper transition-colors"
+              title="Google Maps"
             >
-              ✏️
+              ◎
             </button>
-
-            <button
-              onClick={handleShare}
-              className="p-0.5 bg-gray-100 text-gray-700 rounded 
-                       hover:bg-gray-200 transition-colors text-[8px]"
-              title="Share listing"
-            >
-              {copied ? '✓' : '🔗'}
-            </button>
-
-            {showDirections && location_lat && location_lng && (
-              <button
-                onClick={openInGoogleMaps}
-                className="p-0.5 bg-gray-100 text-gray-700 rounded 
-                         hover:bg-gray-200 transition-colors text-[8px]"
-                title="Open in Google Maps"
-              >
-                🗺️
-              </button>
-            )}
-          </div>
+          )}
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-[100]">
           <EditListing
             item={{
               ...item,
-              id,
-              title,
-              description,
-              category,
+              id, title, description, category,
               location_address: location_address || '',
               location_lat: location_lat || 0,
               location_lng: location_lng || 0,
-              available_from,
-              available_until,
-              created_at,
+              available_from, available_until, created_at,
               status: item?.status || 'available',
               edit_code: item?.edit_code || '',
               contact_info: item?.contact_info || '',
               url: item?.url || '',
               images: item?.images || [],
-              interest_count: item?.interest_count || 0
+              interest_count: item?.interest_count || 0,
             }}
             onClose={() => setShowEditModal(false)}
-            onSave={() => {
-              onRefresh?.();
-              setShowEditModal(false);
-            }}
+            onSave={() => { onRefresh?.(); setShowEditModal(false) }}
           />
         </div>
       )}
 
-      {/* Show edit code for new listings */}
+      {/* Edit code reveal for newly-submitted listings */}
       {isNewListing && edit_code && (
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="font-medium text-yellow-800">Save this edit code to modify your listing later:</p>
-          <div className="mt-2 p-2 bg-white border border-yellow-300 rounded flex justify-between items-center">
-            <code className="font-mono text-lg">{edit_code}</code>
+        <div className="mt-2 p-3 bg-paper border-2 border-ink">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink mb-2">
+            Save this edit code
+          </p>
+          <div className="flex justify-between items-center bg-paper-light border border-ink p-2">
+            <code className="font-mono text-[14px] text-ink">{edit_code}</code>
             <button
               onClick={async () => {
                 await navigator.clipboard.writeText(edit_code)
                 setCopied(true)
                 setTimeout(() => setCopied(false), 2000)
               }}
-              className="text-yellow-600 hover:text-yellow-800"
+              className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700"
             >
               {copied ? '✓ Copied' : 'Copy'}
             </button>
@@ -228,4 +200,4 @@ function ListingPreview({
   )
 }
 
-export default ListingPreview 
+export default ListingPreview

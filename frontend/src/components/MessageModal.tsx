@@ -16,14 +16,10 @@ function MessageModal({ isOpen, onClose, itemId, itemTitle }: MessageModalProps)
     try {
       const response = await fetch(`http://localhost:3001/api/items/${itemId}/messages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message }),
       })
-      
       if (!response.ok) throw new Error('Failed to send message')
-      
       setMessage('')
       onClose()
       alert('Message sent successfully!')
@@ -34,25 +30,22 @@ function MessageModal({ isOpen, onClose, itemId, itemTitle }: MessageModalProps)
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Message about: ${itemTitle}`}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Re: ${itemTitle}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-            Your Message
-          </label>
+        <label className="block">
+          <span className="label">Your Message</span>
           <textarea
-            id="message"
-            rows={4}
+            rows={5}
             required
-            placeholder="I'm interested in this item..."
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            placeholder="I'm interested in this item…"
+            className="mt-2 block w-full bg-paper-light border-2 border-ink p-3 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
             value={message}
-            onChange={e => setMessage(e.target.value)}
+            onChange={(e) => setMessage(e.target.value)}
           />
-        </div>
+        </label>
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="w-full bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp py-3 px-4 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
           Send Message
         </button>
@@ -61,4 +54,4 @@ function MessageModal({ isOpen, onClose, itemId, itemTitle }: MessageModalProps)
   )
 }
 
-export default MessageModal 
+export default MessageModal
