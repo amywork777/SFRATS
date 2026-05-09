@@ -132,6 +132,59 @@ async function tryInsert(source, row) {
   return 'err'
 }
 
+// Pull every <script type="application/ld+json"> JSON block from a page.
+function extractLdJson(html) {
+  const out = []
+  const re = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
+  let m
+  while ((m = re.exec(html)) !== null) {
+    try {
+      const j = JSON.parse(m[1])
+      const arr = Array.isArray(j) ? j : [j]
+      for (const c of arr) {
+        out.push(c)
+        if (c?.['@graph']) for (const g of c['@graph']) out.push(g)
+      }
+    } catch { /* skip bad block */ }
+  }
+  return out
+}
+
+// Look up an Event's location on its full page (Funcheap embeds structured data per post).
+async function fetchEventLocation(url) {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; sfrats-scraper/1.0)',
+        'Accept-Language': 'en-US,en;q=0.9',
+      },
+      redirect: 'follow',
+    })
+    if (!res.ok) return null
+    const html = await res.text()
+    const ld = extractLdJson(html)
+    const ev = ld.find((c) => c?.['@type'] === 'Event' || (Array.isArray(c?.['@type']) && c['@type'].includes('Event')))
+    if (!ev) return null
+    const loc = ev.location ?? {}
+    const addr = loc.address ?? {}
+    const parts = [
+      loc.name,
+      addr.streetAddress,
+      addr.addressLocality,
+      addr.addressRegion,
+      addr.postalCode,
+    ].filter(Boolean)
+    const address = parts.join(', ') || (typeof loc === 'string' ? loc : null)
+    return {
+      address: address || null,
+      lat: loc.geo?.latitude  ? parseFloat(loc.geo.latitude)  : null,
+      lng: loc.geo?.longitude ? parseFloat(loc.geo.longitude) : null,
+    }
+  } catch {
+    return null
+  }
+}
+
 // ──────────────── 1) Funcheap RSS ────────────────
 async function scrapeFuncheap() {
   console.log('--- Funcheap ---')
@@ -151,10 +204,19 @@ async function scrapeFuncheap() {
       const pub   = xmlExtractFirst(item, 'pubDate')
       const desc  = stripHtml(xmlExtractFirst(item, 'content:encoded') || xmlExtractFirst(item, 'description')).slice(0, 240)
       if (!title || !link) continue
+
+      // Fetch the per-event page to pull structured location data
+      const loc = await fetchEventLocation(link)
+      // Be polite to Funcheap
+      await sleep(300)
+
       await tryInsert('funcheap', {
         title, description: desc, url: link,
         category: 'Events', posted_by: 'funcheap',
         available_from: pub ? new Date(pub).toISOString() : null,
+        location_address: loc?.address ?? null,
+        location_lat:    loc?.lat ?? null,
+        location_lng:    loc?.lng ?? null,
       })
     }
   } catch (e) {
@@ -166,13 +228,25 @@ async function scrapeFuncheap() {
 // ──────────────── 2) Reddit r/sanfrancisco JSON ────────────────
 async function scrapeReddit() {
   console.log('--- Reddit ---')
+  // Reddit gates JSON behind a User-Agent — they want this exact shape.
+  // Try old.reddit.com first (more permissive), then www.
+  const UA = 'web:sfrats-scraper:v1.0 (by /u/amywork777)'
+  const urls = [
+    'https://old.reddit.com/r/sanfrancisco/search.json?q=free&sort=new&restrict_sr=1&limit=25',
+    'https://www.reddit.com/r/sanfrancisco/search.json?q=free&sort=new&restrict_sr=1&limit=25',
+  ]
   try {
-    const res = await fetch(
-      'https://www.reddit.com/r/sanfrancisco/search.json?q=free&sort=new&restrict_sr=1&limit=25',
-      { headers: { 'User-Agent': 'sfrats-scraper/1.0' } }
-    )
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const data = await res.json()
+    let data = null
+    let lastStatus = 0
+    for (const url of urls) {
+      const res = await fetch(url, {
+        headers: { 'User-Agent': UA, 'Accept': 'application/json' },
+        redirect: 'follow',
+      })
+      lastStatus = res.status
+      if (res.ok) { data = await res.json(); break }
+    }
+    if (!data) throw new Error(`HTTP ${lastStatus}`)
     const kids = data?.data?.children ?? []
     counts.reddit.fetched = kids.length
     const SKIP = ['looking for', 'asking', 'iso ', 'wanted', 'in search of', 'where can i find']
