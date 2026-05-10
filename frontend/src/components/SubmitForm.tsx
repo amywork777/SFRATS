@@ -61,7 +61,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
     location_lng: (initialData as any)?.location_lng ?? 0,
     title: initialData?.title || '',
     description: initialData?.description || '',
-    category: initialData?.category || 'Items',
+    category: initialData?.category || 'Events',
     location_address: initialData?.location_address || '',
     available_from: initialData?.available_from || new Date().toISOString(),
     available_until: initialData?.available_until || null,

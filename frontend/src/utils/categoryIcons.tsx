@@ -9,7 +9,7 @@ const map: Record<string, LucideIcon> = {
   Services: Wrench,       // legacy — remapped to Events going forward
 }
 
-export const CATEGORY_ORDER = ['Items', 'Events'] as const
+export const CATEGORY_ORDER = ['Events', 'Items'] as const
 export type Category = typeof CATEGORY_ORDER[number]
 
 interface CategoryIconProps extends React.SVGAttributes<SVGSVGElement> {

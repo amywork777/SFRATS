@@ -207,8 +207,8 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className={`mt-1.5 ${inputCls} font-mono`}
                 >
-                  <option value="Items">Items</option>
                   <option value="Events">Events</option>
+                  <option value="Items">Items</option>
                 </select>
               </label>
 
