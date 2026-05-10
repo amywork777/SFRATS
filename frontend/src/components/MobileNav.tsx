@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { X, SlidersHorizontal, Check } from 'lucide-react'
-import { CATEGORY_ORDER, CategoryIcon } from '../utils/categoryIcons'
+import { CATEGORY_ORDER } from '../utils/categoryIcons'
+
+const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
 interface MobileNavProps {
   onFiltersChange: (filters: any) => void
@@ -121,7 +123,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                         }`}
                     >
                       <span className="flex items-center gap-2">
-                        <CategoryIcon category={category} size={16} />
+                        <span className="text-[16px] leading-none">{CATEGORY_EMOJI[category] ?? '📍'}</span>
                         {category}
                       </span>
                       {active && <Check size={14} strokeWidth={2.5} />}

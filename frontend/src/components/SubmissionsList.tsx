@@ -4,7 +4,7 @@ import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
-import { CategoryIcon } from '../utils/categoryIcons'
+import { inferEmoji } from '../utils/categoryIcons'
 
 export default function SubmissionsList() {
   const [isOpen, setIsOpen] = useState(false)
@@ -69,10 +69,10 @@ export default function SubmissionsList() {
                       className="flex items-start gap-3 px-4 py-3 hover:bg-paper transition-colors"
                     >
                       <span
-                        className="mt-0.5 inline-flex w-9 h-9 items-center justify-center bg-bridge-500 border border-ink text-paper-light shrink-0"
+                        className="mt-0.5 inline-flex w-9 h-9 items-center justify-center bg-paper-light border border-ink/30 text-[18px] shrink-0 leading-none"
                         aria-hidden
                       >
-                        <CategoryIcon category={item.category} size={16} />
+                        {item.emoji || inferEmoji(item.title, item.description, item.category)}
                       </span>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-display font-bold text-[15px] leading-tight text-ink truncate">

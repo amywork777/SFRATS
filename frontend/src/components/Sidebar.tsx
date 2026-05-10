@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { CATEGORY_ORDER, CategoryIcon } from '../utils/categoryIcons'
+import { CATEGORY_ORDER } from '../utils/categoryIcons'
+
+const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 import DateFilter from './Sidebar/DateFilter'
 
 interface SidebarProps {
@@ -91,7 +93,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
                       : 'bg-paper-light text-ink hover:bg-paper'
                     }`}
                 >
-                  <CategoryIcon category={category} size={14} />
+                  <span className="text-[14px] leading-none">{CATEGORY_EMOJI[category] ?? '📍'}</span>
                   {category}
                 </button>
               )

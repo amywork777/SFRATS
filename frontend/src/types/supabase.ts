@@ -16,4 +16,5 @@ export interface DbItem {
   status: 'available' | 'gone' | 'pending';
   images?: string[];
   interest_count: number;
+  emoji?: string;
 } 

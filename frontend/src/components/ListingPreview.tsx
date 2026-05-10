@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
 import EditListing from './EditListing'
-import { CategoryIcon } from '../utils/categoryIcons'
+import { inferEmoji } from '../utils/categoryIcons'
 
 interface ListingPreviewProps {
   id: number
   title: string
   description: string
   category: string
+  emoji?: string | null
   location_address?: string
   location_lat?: number
   location_lng?: number
@@ -33,6 +34,7 @@ function ListingPreview({
   title,
   description,
   category,
+  emoji,
   location_address,
   location_lat,
   location_lng,
@@ -48,6 +50,7 @@ function ListingPreview({
   available_until,
   created_at,
 }: ListingPreviewProps) {
+  const glyph = emoji || inferEmoji(title, description, category)
   const navigate = !inPopup ? useNavigate() : null
   const [copied, setCopied] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -76,8 +79,8 @@ function ListingPreview({
       {/* Category stamp + title */}
       <div>
         <div className="flex items-center gap-2 mb-1.5">
-          <span className="inline-flex items-center justify-center w-7 h-7 bg-bridge-500 border border-ink text-paper-light">
-            <CategoryIcon category={category} size={14} />
+          <span className="inline-flex items-center justify-center w-8 h-8 text-[18px] bg-paper-light border border-ink/30 leading-none">
+            {glyph}
           </span>
           <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
             {category}

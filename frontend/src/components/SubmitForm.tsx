@@ -6,7 +6,9 @@ import LocationPicker from './LocationPicker'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import { supabase } from '../utils/supabase'
-import { CATEGORY_ORDER, CategoryIcon } from '../utils/categoryIcons'
+import { CATEGORY_ORDER } from '../utils/categoryIcons'
+
+const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
 interface SubmitFormProps {
   initialData?: Partial<DbItem>
@@ -240,7 +242,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
                     : 'bg-paper-light text-ink hover:bg-paper'
                 }`}
               >
-                <CategoryIcon category={c} size={14} />
+                <span className="text-[14px] leading-none">{CATEGORY_EMOJI[c] ?? '📍'}</span>
                 {c}
               </button>
             )

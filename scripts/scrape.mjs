@@ -42,6 +42,55 @@ let totalInserted = 0
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 
+// Pick a contextual emoji based on title + description keywords.
+// Mirror of inferEmoji() in frontend/src/utils/categoryIcons.tsx — keep in sync.
+const EMOJI_RULES = [
+  [/\b(pottery|ceram(ic|ist)|clay)\b/i,                                '🏺'],
+  [/\b(market|marketplace|flea\s*market|bazaar|swap\s*meet|vendor)\b/i, '🛒'],
+  [/\b(comedy|standup|stand-?up|open\s*mic|improv|sketch)\b/i,         '😂'],
+  [/\b(vintage|thrift|secondhand|second-?hand|estate\s*sale)\b/i,      '👗'],
+  [/\b(makers?\s*fair|maker\s*market|maker)\b/i,                        '📦'],
+  [/\b(craft|knit(ting)?|sewing|embroidery|crochet|weaving)\b/i,        '✂️'],
+  [/\b(zine|print|risograph|riso|letterpress|silk\s*screen|screen\s*print)\b/i, '🖨️'],
+  [/\b(music|concert|dj|band|jazz|opera|symphony|orchestra|choir|live\s*music|gig)\b/i, '🎵'],
+  [/\b(dance|salsa|tango|disco|rave)\b/i,                               '💃'],
+  [/\b(film|movie|screening|cinema|premiere)\b/i,                       '🎬'],
+  [/\b(art|gallery|painting|sculpt|exhibition|exhibit|opening)\b/i,     '🎨'],
+  [/\b(book|reading|poetry|author|literature|library|zine\s*release)\b/i, '📖'],
+  [/\b(workshop|class|lesson|course|seminar)\b/i,                       '🛠️'],
+  [/\b(repair\s*caf|fix-?it|bike\s*repair)\b/i,                         '🔧'],
+  [/\b(yoga|meditation|qigong|tai\s*chi|breathwork)\b/i,                '🧘'],
+  [/\b(pizza|tacos?|burrito|dim\s*sum|sushi|ramen)\b/i,                 '🍕'],
+  [/\b(brunch|breakfast|lunch|dinner|supper)\b/i,                       '🍳'],
+  [/\b(coffee|caf[eé]|espresso|latte)\b/i,                              '☕'],
+  [/\b(beer|brewery|happy\s*hour|wine|tasting|cocktail)\b/i,            '🍺'],
+  [/\b(food|snack|catering|leftover|free\s*food|free\s*meal)\b/i,       '🍱'],
+  [/\b(party|festival|celebration|fest\b|fiesta|gala|carnival)\b/i,     '🎉'],
+  [/\b(panel|talk|lecture|conference|symposium|keynote)\b/i,            '🎤'],
+  [/\b(tour|walking\s*tour|history\s*walk)\b/i,                         '🚶'],
+  [/\b(bike|biking|cycling|cyclist)\b/i,                                '🚲'],
+  [/\b(haircut|salon|beauty|nail|barber)\b/i,                           '💇'],
+  [/\b(vaccin|flu\s*shot|clinic|health\s*screening|blood\s*drive)\b/i,  '💉'],
+  [/\b(legal|lawyer|attorney|tenant|housing)\b/i,                       '⚖️'],
+  [/\b(furniture|couch|sofa|chair|table|desk|dresser|shelv|bookcase)\b/i, '🛋️'],
+  [/\b(plant|succulent|cactus|monstera|cutting)\b/i,                    '🪴'],
+  [/\b(garden|gardening|compost|seed)\b/i,                              '🌱'],
+  [/\b(books?\s*(for|free)|free\s*books?)\b/i,                          '📚'],
+  [/\b(clothes|clothing|shirt|jacket|dress|shoes)\b/i,                  '👕'],
+  [/\b(electronics?|laptop|monitor|cable|kitchen|appliance)\b/i,        '🔌'],
+  [/\b(curb\s*alert|sidewalk\s*score|free\s*pile|free\s*stuff)\b/i,     '🚮'],
+]
+
+function inferEmoji(title = '', description = '', category = '') {
+  const text = `${title} ${description}`
+  for (const [re, emoji] of EMOJI_RULES) {
+    if (re.test(text)) return emoji
+  }
+  if (category === 'Events') return '📅'
+  if (category === 'Items')  return '📦'
+  return '✿'
+}
+
 // Decode every kind of HTML entity Funcheap throws at us, including
 // numeric ones like &#8220; (left smart quote), &#8217; (apostrophe),
 // &#8211; (en-dash), and hex variants.
@@ -151,24 +200,39 @@ async function tryInsert(source, row) {
     row.location_lng = c.lng
   }
 
-  // POST
-  const res = await fetch(REST, {
+  // POST — tries with emoji first; if the column doesn't exist on the
+  // target schema (e.g. migration not yet applied) we retry without it.
+  const baseBody = {
+    title: row.title.slice(0, 255),
+    description: row.description ?? null,
+    category: row.category,
+    location_address: row.location_address ?? null,
+    location_lat: row.location_lat ?? null,
+    location_lng: row.location_lng ?? null,
+    available_from: row.available_from ?? new Date().toISOString(),
+    status: 'available',
+    url: row.url,
+    posted_by: row.posted_by,
+    edit_code: 'scraper-' + randHex(12),
+  }
+  const withEmoji = { ...baseBody, emoji: inferEmoji(row.title, row.description, row.category) }
+
+  let res = await fetch(REST, {
     method: 'POST',
     headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
-    body: JSON.stringify({
-      title: row.title.slice(0, 255),
-      description: row.description ?? null,
-      category: row.category,
-      location_address: row.location_address ?? null,
-      location_lat: row.location_lat ?? null,
-      location_lng: row.location_lng ?? null,
-      available_from: row.available_from ?? new Date().toISOString(),
-      status: 'available',
-      url: row.url,
-      posted_by: row.posted_by,
-      edit_code: 'scraper-' + randHex(12),
-    }),
+    body: JSON.stringify(withEmoji),
   })
+  if (!res.ok) {
+    const txt = await res.clone().text().catch(() => '')
+    if (/emoji.*column/i.test(txt) || /PGRST204/i.test(txt)) {
+      // Column doesn't exist yet; retry without emoji so the run still completes.
+      res = await fetch(REST, {
+        method: 'POST',
+        headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
+        body: JSON.stringify(baseBody),
+      })
+    }
+  }
   if (res.status === 201) {
     counts[source].inserted++
     totalInserted++

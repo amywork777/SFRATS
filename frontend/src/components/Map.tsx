@@ -12,7 +12,10 @@ import MessageModal from './MessageModal'
 import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
-import { categoryIconSvg } from '../utils/categoryIcons'
+import { inferEmoji, CATEGORY_ORDER } from '../utils/categoryIcons'
+import { DbItem as DbItemRow } from '../types/supabase'
+import ListView from './ListView'
+import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 
@@ -34,12 +37,11 @@ interface ListingPreviewProps {
 }
 
 // Create custom marker icons for each category
-const createMarkerIcon = (category: string) => {
-  // 56×56 hit area; the visible orange .marker-pin is centered inside,
-  // so near-misses still register as a tap.
+const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
+  const glyph = item.emoji || inferEmoji(item.title, item.description ?? null, item.category)
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin">${categoryIconSvg(category, '#ffffff', 20)}</div>`,
+    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span></div>`,
     iconSize: [56, 56],
     iconAnchor: [28, 28],
     popupAnchor: [0, -22],
@@ -69,7 +71,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
     items.forEach(item => {
       if (item.location_lat && item.location_lng) {
         const marker = L.marker([item.location_lat, item.location_lng], {
-          icon: createMarkerIcon(item.category)
+          icon: createMarkerIcon(item)
         })
         
         marker.on('click', () => {
@@ -223,6 +225,7 @@ function Map() {
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
   const popupRootsRef = useRef<{ [key: string]: Root }>({})
+  const [view, setView] = useState<'map' | 'list'>('map')
 
   const fetchItems = useCallback(async () => {
     try {
@@ -297,56 +300,128 @@ function Map() {
         <Sidebar onFiltersChange={handleFiltersChange} />
       </div>
 
-      {/* Map Container */}
-      <div className="relative h-full md:ml-[300px] lg:ml-[320px]">
-        <MapContainer
-          center={[37.7749, -122.4194]}
-          zoom={13}
-          style={{ height: '100%', width: '100%' }}
-          zoomControl={false}
-        >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; OpenStreetMap &copy; CARTO'
-            subdomains="abcd"
-            maxZoom={20}
-            detectRetina={true}
-          />
-          <MarkerLayer items={filteredItems} />
-        </MapContainer>
+      {/* Right column: filter tabs + view-toggle, then either Map or List */}
+      <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
+        {/* Top bar: category tabs (left) + view toggle (right) */}
+        <div className="flex items-center justify-between gap-3 px-3 md:px-5 py-2.5 bg-paper-light border-b border-ink/15 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <FilterTab
+              active={filters.categories.length === 0}
+              onClick={() => handleFiltersChange({ categories: [] })}
+            >
+              All
+            </FilterTab>
+            {CATEGORY_ORDER.map(c => (
+              <FilterTab
+                key={c}
+                active={filters.categories.length === 1 && filters.categories[0] === c}
+                onClick={() => handleFiltersChange({ categories: [c] })}
+              >
+                {c}
+              </FilterTab>
+            ))}
+          </div>
 
-        {/* "Counter" stamp — smaller on mobile, larger on desktop */}
-        <div className="pointer-events-none absolute top-3 left-3 md:top-4 md:left-4 z-[1000]">
-          <div className="bg-paper-light border border-ink px-2.5 py-1 md:px-3 md:py-1.5 shadow-stamp -rotate-2">
-            <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
-            <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
-              {String(filteredItems.length).padStart(3, '0')}
-            </div>
-            <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
+          <div className="flex items-center border border-ink/30 bg-paper">
+            <button
+              onClick={() => setView('map')}
+              aria-pressed={view === 'map'}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+                view === 'map' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
+              }`}
+            >
+              <MapIconLucide size={12} strokeWidth={2.2} />
+              <span className="hidden sm:inline">Map</span>
+            </button>
+            <button
+              onClick={() => setView('list')}
+              aria-pressed={view === 'list'}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+                view === 'list' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
+              }`}
+            >
+              <ListIcon size={12} strokeWidth={2.2} />
+              <span className="hidden sm:inline">List</span>
+            </button>
           </div>
         </div>
 
-        {/* Status overlay */}
-        {(loading || error || !items.length) && (
-          <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
-            <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
-              {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
-              {!loading && error && (
-                <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
-              )}
-              {!loading && !error && !items.length && (
-                <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first.</span>
-              )}
+        {/* The content swaps based on view */}
+        {view === 'map' ? (
+          <div className="relative flex-1 min-h-0">
+            <MapContainer
+              center={[37.7749, -122.4194]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+              zoomControl={false}
+            >
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                attribution='&copy; OpenStreetMap &copy; CARTO'
+                subdomains="abcd"
+                maxZoom={20}
+                detectRetina={true}
+              />
+              <MarkerLayer items={filteredItems} />
+            </MapContainer>
+
+            {/* Counter stamp */}
+            <div className="pointer-events-none absolute top-3 left-3 md:top-4 md:left-4 z-[1000]">
+              <div className="bg-paper-light border border-ink px-2.5 py-1 md:px-3 md:py-1.5 shadow-stamp -rotate-2">
+                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
+                <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
+                  {String(filteredItems.length).padStart(3, '0')}
+                </div>
+                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
+              </div>
             </div>
+
+            {/* Status overlay */}
+            {(loading || error || !items.length) && (
+              <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
+                <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
+                  {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
+                  {!loading && error && (
+                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
+                  )}
+                  {!loading && !error && !items.length && (
+                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first.</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 overflow-y-auto bg-paper">
+            <ListView items={filteredItems} loading={loading} error={error} />
           </div>
         )}
       </div>
 
-      {/* Recent Submissions Panel (desktop only) */}
-      <div className="hidden md:block">
-        <SubmissionsList />
-      </div>
+      {/* Recent Submissions Panel — only relevant in map mode */}
+      {view === 'map' && (
+        <div className="hidden md:block">
+          <SubmissionsList />
+        </div>
+      )}
     </div>
+  )
+}
+
+// Small filter pill used in the top-of-content tab bar
+function FilterTab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
+        active
+          ? 'bg-ink text-paper-light border-ink'
+          : 'bg-paper-light text-ink-mute border-ink/20 hover:text-ink hover:border-ink'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 

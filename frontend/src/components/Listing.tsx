@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Pencil, ArrowUpRight } from 'lucide-react'
 import EditListing from './EditListing'
 import { api } from '../services/api'
-import { CategoryIcon } from '../utils/categoryIcons'
+import { inferEmoji } from '../utils/categoryIcons'
 
 interface ListingProps {
   listing: DbItem;
@@ -46,8 +46,8 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       {/* Title block */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-10 h-10 bg-bridge-500 border border-ink text-paper-light">
-            <CategoryIcon category={listing.category} size={18} />
+          <span className="inline-flex items-center justify-center w-11 h-11 text-[24px] bg-paper border border-ink/30 leading-none">
+            {listing.emoji || inferEmoji(listing.title, listing.description, listing.category)}
           </span>
           <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-mute">
             {listing.category}
