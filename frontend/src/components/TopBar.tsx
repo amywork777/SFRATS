@@ -46,11 +46,12 @@ export default function TopBar() {
         <nav className="flex items-center gap-3 md:gap-7">
           <NavLink to="/about"      className={navLink('hidden sm:inline')}>About</NavLink>
           <NavLink to="/guidelines" className={navLink('hidden md:inline')}>Guide</NavLink>
+          <NavLink to="/agents"     className={navLink('hidden lg:inline')}>For AI</NavLink>
           <a
             href="https://discord.gg/T7jMh7kEPb"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden md:inline text-[12px] tracking-[0.14em] uppercase font-mono font-medium text-ink-mute hover:text-ink transition-colors"
+            className="hidden lg:inline text-[12px] tracking-[0.14em] uppercase font-mono font-medium text-ink-mute hover:text-ink transition-colors"
           >
             Discord
           </a>

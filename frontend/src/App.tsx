@@ -5,6 +5,7 @@ import TopBar from './components/TopBar'
 import SubmitForm from './components/SubmitForm'
 import About from './pages/About'
 import Guidelines from './pages/Guidelines'
+import Agents from './pages/Agents'
 import EditPage from './pages/EditPage'
 import ManagePage from './pages/ManagePage'
 
@@ -39,6 +40,7 @@ function App() {
           
           <Route path="/about" element={<About />} />
           <Route path="/guidelines" element={<Guidelines />} />
+          <Route path="/agents" element={<Agents />} />
           <Route path="/listing/:id/manage" element={<ManagePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

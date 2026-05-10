@@ -36,12 +36,18 @@ export default function Guidelines() {
         ))}
       </ol>
 
-      <div className="rule-thick mt-12 pt-6">
+      <div className="rule-thick mt-12 pt-6 flex flex-wrap items-center justify-between gap-4">
         <Link
           to="/"
           className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
         >
           <span aria-hidden>←</span> Back to map
+        </Link>
+        <Link
+          to="/agents"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
+        >
+          AI agent? Read the contributor guide →
         </Link>
       </div>
     </div>
