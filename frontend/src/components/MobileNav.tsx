@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { X, SlidersHorizontal, Check } from 'lucide-react'
 import { CATEGORY_ORDER } from '../utils/categoryIcons'
+import NearMe from './NearMe'
 
 const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
@@ -14,6 +15,8 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
   const [timeRange, setTimeRange] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [radiusMiles, setRadiusMiles] = useState(2)
 
   const timeRanges = [
     { id: 'all',   label: 'Any time' },
@@ -77,7 +80,9 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                   setSelectedCategories([])
                   setTimeRange('all')
                   setStartDate(''); setEndDate('')
-                  onFiltersChange({ search: '', categories: [], dates: { start: null, end: null } })
+                  setUserLocation(null)
+                  setRadiusMiles(2)
+                  onFiltersChange({ search: '', categories: [], dates: { start: null, end: null }, userLocation: null, radiusMiles: 2 })
                 }}
                 className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 px-2 py-1"
               >
@@ -179,6 +184,22 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                     />
                   </label>
                 </div>
+              </div>
+            </div>
+
+            {/* Near me */}
+            <div>
+              <span className="label">§ 04 · Near me</span>
+              <div className="mt-3">
+                <NearMe
+                  location={userLocation}
+                  radiusMiles={radiusMiles}
+                  onChange={({ location, radiusMiles: r }) => {
+                    setUserLocation(location)
+                    setRadiusMiles(r)
+                    onFiltersChange({ userLocation: location, radiusMiles: r })
+                  }}
+                />
               </div>
             </div>
           </div>

@@ -13,7 +13,8 @@ import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
 import { inferEmoji, CATEGORY_ORDER } from '../utils/categoryIcons'
-import { isActive } from '../utils/listingFilters'
+import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
+import { Circle } from 'react-leaflet'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
@@ -213,15 +214,16 @@ function Map() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [filters, setFilters] = useState<{
     search: string;
-    dates: {
-      start: Date | null;
-      end: Date | null;
-    };
+    dates: { start: Date | null; end: Date | null };
     categories: string[];
+    userLocation: { lat: number; lng: number } | null;
+    radiusMiles: number;
   }>({
     search: '',
     dates: { start: null, end: null },
-    categories: []
+    categories: [],
+    userLocation: null,
+    radiusMiles: 2,
   })
   const mapRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
@@ -275,6 +277,14 @@ function Map() {
     }
     if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
     if (filters.dates.end   && eventDate.getTime() > filters.dates.end.getTime()) return false
+
+    // Radius filter (distance from user-set location)
+    if (filters.userLocation) {
+      const radiusKm = filters.radiusMiles * MILE_KM
+      if (!withinRadius(item, filters.userLocation.lat, filters.userLocation.lng, radiusKm)) {
+        return false
+      }
+    }
 
     return true
   })
@@ -354,6 +364,33 @@ function Map() {
                 detectRetina={true}
               />
               <MarkerLayer items={filteredItems} />
+
+              {/* User location + radius circle */}
+              {filters.userLocation && (
+                <>
+                  <Circle
+                    center={[filters.userLocation.lat, filters.userLocation.lng]}
+                    radius={filters.radiusMiles * MILE_KM * 1000}
+                    pathOptions={{
+                      color: '#2563eb',
+                      weight: 1.5,
+                      fillColor: '#2563eb',
+                      fillOpacity: 0.06,
+                      opacity: 0.7,
+                    }}
+                  />
+                  <Marker
+                    position={[filters.userLocation.lat, filters.userLocation.lng]}
+                    interactive={false}
+                    icon={L.divIcon({
+                      className: 'user-location-marker',
+                      html: '<div class="pulse"></div>',
+                      iconSize: [18, 18],
+                      iconAnchor: [9, 9],
+                    })}
+                  />
+                </>
+              )}
             </MapContainer>
 
             {/* Counter stamp */}

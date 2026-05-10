@@ -1,28 +1,31 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
 import { CATEGORY_ORDER } from '../utils/categoryIcons'
+import DateFilter from './Sidebar/DateFilter'
+import NearMe from './NearMe'
 
 const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
-import DateFilter from './Sidebar/DateFilter'
+
+export interface SidebarFilters {
+  search: string
+  dates: { start: Date | null; end: Date | null }
+  categories: string[]
+  userLocation: { lat: number; lng: number } | null
+  radiusMiles: number
+}
 
 interface SidebarProps {
-  onFiltersChange: (filters: {
-    search: string;
-    dates: { start: Date | null; end: Date | null };
-    categories: string[];
-  }) => void;
-  isMobile?: boolean;
+  onFiltersChange: (filters: SidebarFilters) => void
+  isMobile?: boolean
 }
 
 function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
-  const [filters, setFilters] = useState<{
-    search: string;
-    dates: { start: Date | null; end: Date | null };
-    categories: string[];
-  }>({
+  const [filters, setFilters] = useState<SidebarFilters>({
     search: '',
     dates: { start: null, end: null },
     categories: [],
+    userLocation: null,
+    radiusMiles: 2,
   })
 
   const update = (next: typeof filters) => {
@@ -102,11 +105,25 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         </div>
 
         {/* Section: Date */}
-        <div>
+        <div className="mb-7">
           <div className="flex items-baseline justify-between mb-3">
             <span className="label">§ 03 · When</span>
           </div>
           <DateFilter onChange={(dates) => update({ ...filters, dates })} />
+        </div>
+
+        {/* Section: Near me */}
+        <div>
+          <div className="flex items-baseline justify-between mb-3">
+            <span className="label">§ 04 · Near me</span>
+          </div>
+          <NearMe
+            location={filters.userLocation}
+            radiusMiles={filters.radiusMiles}
+            onChange={({ location, radiusMiles }) =>
+              update({ ...filters, userLocation: location, radiusMiles })
+            }
+          />
         </div>
 
         {/* Footer note */}

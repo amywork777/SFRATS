@@ -3,6 +3,31 @@ import { DbItem } from '../types/supabase'
 const DAY_MS  = 24 * 60 * 60 * 1000
 const ITEM_TTL_DAYS = 30
 
+export const MILE_KM = 1.609344
+
+/** Haversine distance between two lat/lng points, in km. */
+export function distanceKm(
+  aLat: number, aLng: number,
+  bLat: number, bLng: number
+): number {
+  const R = 6371
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const dLat = toRad(bLat - aLat)
+  const dLng = toRad(bLng - aLng)
+  const s = Math.sin(dLat / 2) ** 2
+          + Math.cos(toRad(aLat)) * Math.cos(toRad(bLat)) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(s))
+}
+
+export function withinRadius(
+  item: Pick<DbItem, 'location_lat' | 'location_lng'>,
+  centerLat: number, centerLng: number,
+  radiusKm: number
+): boolean {
+  if (!item.location_lat || !item.location_lng) return false
+  return distanceKm(centerLat, centerLng, item.location_lat, item.location_lng) <= radiusKm
+}
+
 /**
  * Whether a listing should still appear on the map / in lists.
  *
