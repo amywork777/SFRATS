@@ -2,12 +2,24 @@ import InterestButton from './InterestButton'
 import { DbItem } from '../types/supabase'
 import { format } from 'date-fns'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useState } from 'react'
 import { Pencil, ArrowUpRight } from 'lucide-react'
 import EditListing from './EditListing'
 import { api } from '../services/api'
 import { inferEmoji } from '../utils/categoryIcons'
+
+// Vite doesn't auto-bundle Leaflet's default marker assets, so we
+// build our own divIcon with the listing's emoji — matches the main
+// map's marker style.
+const buildEmojiIcon = (glyph: string) =>
+  L.divIcon({
+    className: 'custom-marker',
+    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span></div>`,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28],
+  })
 
 interface ListingProps {
   listing: DbItem;
@@ -111,7 +123,10 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                   subdomains="abcd"
                   detectRetina
                 />
-                <Marker position={[listing.location_lat, listing.location_lng]} />
+                <Marker
+                  position={[listing.location_lat, listing.location_lng]}
+                  icon={buildEmojiIcon(listing.emoji || inferEmoji(listing.title, listing.description, listing.category))}
+                />
               </MapContainer>
             </div>
           )}
