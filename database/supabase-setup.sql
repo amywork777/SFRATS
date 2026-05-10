@@ -92,14 +92,6 @@ create policy "item_images_public_update" on storage.objects
 create policy "item_images_public_delete" on storage.objects
   for delete using (bucket_id = 'item-images');
 
--- ============================================================
--- 5. (Optional) seed a couple of rows so the map has markers
--- ============================================================
-insert into public.items
-  (title, description, category, location_address, location_lat, location_lng,
-   available_from, status, edit_code)
-values
-  ('Free couch (test)',     'Comfy 3-seater, must take today.', 'Items',    'Mission St, San Francisco, CA',  37.7599, -122.4148, now(), 'available', 'demo1'),
-  ('Free pizza @ meetup',   'Leftovers from a tech talk.',      'Food',     'SoMa, San Francisco, CA',         37.7785, -122.3948, now(), 'available', 'demo2'),
-  ('Yard sale',             'Everything must go.',              'Events',   'Noe Valley, San Francisco, CA',   37.7508, -122.4337, now(), 'available', 'demo3')
-on conflict do nothing;
+-- (Demo seed rows used to live here — removed so re-running this
+-- file doesn't repopulate them. Real data flows in from the
+-- weekly GitHub Actions scraper.)
