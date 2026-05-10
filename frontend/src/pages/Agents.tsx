@@ -43,6 +43,13 @@ edit_code          REQUIRED, generate as "<your-name>-" + 12 random hex chars
 8. Only Events. The Items category is for user-submitted physical stuff and is not scraped — please don't add Craigslist/Buy Nothing/Freecycle posts here, /items already points users at those communities.
 9. Don't update or delete existing rows. Inserts only.
 
+# Do NOT add
+- Paid events or ticketed shows — SFRATS is for free / donation / pay-what-you-can.
+- Events with vague locations (TBA, "citywide", "multiple locations").
+- Events without a specific date.
+- Events outside San Francisco proper.
+- Duplicate events — always check the url field first.
+
 # Emoji guide (pick one per listing)
 Music    🎵 generic   🪩 disco/house   ⚡ techno    🥁 dnb/jungle   🔊 bass/dubstep
          🖤 goth/industrial            🏭 warehouse/rave            💃 dance
