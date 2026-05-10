@@ -197,9 +197,9 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       <div className="rule-thick pt-5">
         <button
           onClick={() => setShowEditModal(true)}
-          className="inline-flex items-center gap-2 bg-paper-light border border-ink px-4 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-paper-light border border-ink px-4 py-3 sm:py-2 font-mono text-[12px] sm:text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
         >
-          <Pencil size={13} strokeWidth={2.2} /> Edit listing
+          <Pencil size={14} strokeWidth={2.2} /> Edit listing
         </button>
       </div>
 

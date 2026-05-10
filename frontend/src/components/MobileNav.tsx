@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { X, SlidersHorizontal, Check } from 'lucide-react'
 import { CATEGORY_ORDER } from '../utils/categoryIcons'
 import NearMe from './NearMe'
@@ -54,7 +55,8 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-5 right-5 z-[2000] md:hidden bg-bridge-500 text-paper-light w-14 h-14 border border-ink shadow-stamp flex items-center justify-center"
+        style={{ bottom: 'max(1.25rem, env(safe-area-inset-bottom))' }}
+        className="fixed right-5 z-[2000] md:hidden bg-bridge-500 text-paper-light w-14 h-14 border border-ink shadow-stamp flex items-center justify-center"
         aria-label="Filters"
       >
         <SlidersHorizontal size={20} strokeWidth={2.2} />
@@ -202,10 +204,42 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
                 />
               </div>
             </div>
+
+            {/* Site nav — phones can't see About/For AI from the topbar */}
+            <div>
+              <span className="label">§ 05 · The Field Guide</span>
+              <div className="mt-3 flex flex-col divide-y divide-ink/15 border border-ink/15 bg-paper-light">
+                <Link
+                  to="/about"
+                  onClick={() => setIsOpen(false)}
+                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
+                >
+                  About SF Rats
+                </Link>
+                <Link
+                  to="/agents"
+                  onClick={() => setIsOpen(false)}
+                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
+                >
+                  For AI agents
+                </Link>
+                <a
+                  href="https://discord.gg/T7jMh7kEPb"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
+                >
+                  Discord ↗
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Sticky Apply */}
-          <div className="sticky bottom-0 bg-paper-light border-t border-ink p-4">
+          <div
+            className="sticky bottom-0 bg-paper-light border-t border-ink px-4 pt-4"
+            style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+          >
             <button
               onClick={() => setIsOpen(false)}
               className="w-full py-3 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"

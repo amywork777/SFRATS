@@ -42,9 +42,10 @@ export default function TopBar() {
           </div>
         </Link>
 
-        {/* Nav */}
+        {/* Nav. About lives in MobileNav's footer on phones, so we hide
+            all secondary links here on small screens to keep room for Post. */}
         <nav className="flex items-center gap-3 md:gap-7">
-          <NavLink to="/about"  className={navLink('hidden sm:inline')}>About</NavLink>
+          <NavLink to="/about"  className={navLink('hidden md:inline')}>About</NavLink>
           <NavLink to="/agents" className={navLink('hidden md:inline')}>For AI</NavLink>
           <a
             href="https://discord.gg/T7jMh7kEPb"

@@ -238,6 +238,46 @@
   border: 1px solid rgba(24, 22, 19, 0.4);
 }
 
+/* On phones the floating index-card is awkward — pin it to the
+   bottom as a sheet. Map.tsx tags the popup with data-mobile when
+   the viewport is narrow. */
+@media (max-width: 767px) {
+  [id^="popup-"][data-mobile] {
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 100%;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -4px 0 0 rgba(24, 22, 19, 1);
+    padding: 22px 18px max(18px, env(safe-area-inset-bottom)) 18px !important;
+    animation: sfrats-sheet-up 220ms cubic-bezier(.2,.9,.3,1.1);
+  }
+  /* Replace the slanted "tape" with a centered drag handle */
+  [id^="popup-"][data-mobile]::before {
+    top: 8px;
+    width: 36px;
+    height: 4px;
+    background: rgba(24, 22, 19, 0.30);
+    border: none;
+    border-radius: 2px;
+    transform: translateX(-50%) rotate(0);
+  }
+  /* Let the inner card stretch to the sheet width */
+  [id^="popup-"][data-mobile] .listing-preview-card {
+    width: 100%;
+  }
+}
+
+@keyframes sfrats-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
 /* =====================================================================
    PROSE — for /about and /guidelines pages
    ===================================================================== */

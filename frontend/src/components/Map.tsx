@@ -1,42 +1,19 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap, Circle } from 'react-leaflet'
 import { createRoot, Root } from 'react-dom/client'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { DbItem } from '../types/supabase'
-import { categoryColors } from '../utils/constants'
 import { api } from '../services/api'
-import TopBar from './TopBar'
-import InterestButton from './InterestButton'
-import MessageModal from './MessageModal'
 import Sidebar from './Sidebar'
-import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
 import { inferEmoji, CATEGORY_ORDER } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
-import { Circle } from 'react-leaflet'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
-
-// Add this type at the top of the file
-interface ListingPreviewProps {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  location_address: string;
-  location_lat: number;
-  location_lng: number;
-  available_from: Date;  // Change this from string to Date
-  status: string;
-  images?: string[];
-  showDirections?: boolean;
-  inPopup?: boolean;
-  onViewDetails?: () => void;
-}
 
 // Create custom marker icons for each category
 const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
@@ -90,23 +67,26 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
           popupRootsRef.current = {}
           cleanupFnsRef.current = {}
 
-          // Create popup div
+          // Create popup div. CSS branches on `data-mobile` to make this a
+          // bottom sheet on phones (see [id^="popup-"][data-mobile] in index.css).
+          const isMobile = window.matchMedia('(max-width: 767px)').matches
           const popupDiv = document.createElement('div')
           popupDiv.id = `popup-${item.id}`
           popupDiv.className = 'fixed z-[2000] bg-white rounded-lg shadow-lg p-4'
+          if (isMobile) popupDiv.dataset.mobile = 'true'
           document.body.appendChild(popupDiv)
 
-          // Get marker position relative to viewport
-          const markerPoint = map.latLngToContainerPoint(marker.getLatLng())
           const mapContainer = map.getContainer()
-          const rect = mapContainer.getBoundingClientRect()
-          
-          // Position popup relative to viewport
-          const x = rect.left + markerPoint.x + 20
-          const y = rect.top + markerPoint.y - 20
-          
-          popupDiv.style.left = `${x}px`
-          popupDiv.style.top = `${y}px`
+
+          // Desktop: anchor next to the marker. Mobile: CSS pins to bottom.
+          const placeNearMarker = () => {
+            if (popupDiv.dataset.mobile) return
+            const pt = map.latLngToContainerPoint(marker.getLatLng())
+            const r = mapContainer.getBoundingClientRect()
+            popupDiv.style.left = `${r.left + pt.x + 20}px`
+            popupDiv.style.top  = `${r.top  + pt.y - 20}px`
+          }
+          placeNearMarker()
 
           // Create root and store it
           const root = createRoot(popupDiv)
@@ -122,7 +102,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
                   delete popupRootsRef.current[item.id]
                 }}
                 aria-label="Close"
-                className="absolute top-1 right-1 w-7 h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
+                className="absolute top-1 right-1 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -143,23 +123,14 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
             </div>
           )
 
-          // Update popup position when map moves
-          const updatePosition = () => {
-            const newMarkerPoint = map.latLngToContainerPoint(marker.getLatLng())
-            const newRect = mapContainer.getBoundingClientRect()
-            const newX = newRect.left + newMarkerPoint.x + 20
-            const newY = newRect.top + newMarkerPoint.y - 20
-            popupDiv.style.left = `${newX}px`
-            popupDiv.style.top = `${newY}px`
-          }
+          // Keep desktop popup glued to its marker as the user pans/zooms.
+          // (Mobile bottom sheet doesn't need this — CSS pins it.)
+          map.on('move', placeNearMarker)
+          map.on('zoom', placeNearMarker)
 
-          map.on('move', updatePosition)
-          map.on('zoom', updatePosition)
-
-          // Store cleanup function
           cleanupFnsRef.current[item.id] = () => {
-            map.off('move', updatePosition)
-            map.off('zoom', updatePosition)
+            map.off('move', placeNearMarker)
+            map.off('zoom', placeNearMarker)
           }
         })
 
@@ -210,8 +181,6 @@ function Map() {
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedItem, setSelectedItem] = useState<DbItem | null>(null)
-  const [showMessageModal, setShowMessageModal] = useState(false)
   const [filters, setFilters] = useState<{
     search: string;
     dates: { start: Date | null; end: Date | null };
@@ -225,9 +194,6 @@ function Map() {
     userLocation: null,
     radiusMiles: 2,
   })
-  const mapRef = useRef<L.Map | null>(null)
-  const markersRef = useRef<L.Marker[]>([])
-  const popupRootsRef = useRef<{ [key: string]: Root }>({})
   const [view, setView] = useState<'map' | 'list'>('map')
 
   const fetchItems = useCallback(async () => {
@@ -323,25 +289,27 @@ function Map() {
             ))}
           </div>
 
-          <div className="flex items-center border border-ink/30 bg-paper">
+          <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
               onClick={() => setView('map')}
               aria-pressed={view === 'map'}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
                 view === 'map' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
               }`}
+              aria-label="Map view"
             >
-              <MapIconLucide size={12} strokeWidth={2.2} />
+              <MapIconLucide size={14} strokeWidth={2.2} />
               <span className="hidden sm:inline">Map</span>
             </button>
             <button
               onClick={() => setView('list')}
               aria-pressed={view === 'list'}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
                 view === 'list' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
               }`}
+              aria-label="List view"
             >
-              <ListIcon size={12} strokeWidth={2.2} />
+              <ListIcon size={14} strokeWidth={2.2} />
               <span className="hidden sm:inline">List</span>
             </button>
           </div>
@@ -442,7 +410,7 @@ function FilterTab({ active, onClick, children }: { active: boolean; onClick: ()
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
+      className={`px-3.5 py-2 md:py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
         active
           ? 'bg-ink text-paper-light border-ink'
           : 'bg-paper-light text-ink-mute border-ink/20 hover:text-ink hover:border-ink'
