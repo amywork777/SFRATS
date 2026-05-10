@@ -13,7 +13,6 @@ const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 interface SubmitFormProps {
   initialData?: Partial<DbItem>
   editMode?: boolean
-  editCode?: string
   onClose?: () => void
 }
 
@@ -36,25 +35,20 @@ interface FormData {
 const inputCls =
   'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
 
-// Drop confusing chars (0/O/1/I/L) so users reading codes aloud don't fumble.
-const codeAlphabet = customAlphabet('ABCDEFGHJKMNPQRSTUVWXYZ23456789', 8)
-function generateEditCode() {
-  const raw = codeAlphabet()
-  return `${raw.slice(0, 4)}-${raw.slice(4)}`
-}
+// Hidden internal token — never shown to users. The DB column is NOT NULL,
+// so we generate a unique value per submission. With open-edit (no edit
+// code gate) it's effectively just an internal id we don't act on.
+const codeAlphabet = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 14)
+const generateEditCode = () => 'web-' + codeAlphabet()
 
-function SubmitForm({ initialData, editMode = false, editCode, onClose }: SubmitFormProps) {
+function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps) {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submittedItem, setSubmittedItem] = useState<DbItem | null>(null)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [copiedCode, setCopiedCode] = useState(false)
 
-  const initialEditCode = useMemo(
-    () => editCode || generateEditCode(),
-    [editCode]
-  )
+  const initialEditCode = useMemo(() => generateEditCode(), [])
 
   const [formData, setFormData] = useState<FormData>({
     location_lat: (initialData as any)?.location_lat ?? 0,
@@ -108,15 +102,9 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
 
       let data: DbItem
       if (editMode && initialData?.id) {
-        data = await api.updateItem(initialData.id.toString(), editCode || '', submitData as any) as any
+        data = await api.updateItem(initialData.id.toString(), submitData as any) as any
       } else {
         data = await api.createItem(submitData as any)
-        // Save the auto-generated code to localStorage so the user can find it later on the same device
-        try {
-          const saved = JSON.parse(localStorage.getItem('sfrats:edit-codes') || '{}')
-          saved[String((data as any).id)] = submitData.edit_code
-          localStorage.setItem('sfrats:edit-codes', JSON.stringify(saved))
-        } catch {/* ignore quota errors */}
       }
 
       if (editMode && onClose) {
@@ -133,7 +121,6 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
 
   // ──────────── SUCCESS SCREEN ────────────
   if (submittedItem) {
-    const code = formData.edit_code
     return (
       <div className="space-y-7">
         <div>
@@ -144,35 +131,12 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
             Listing live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
-            Your post is on the map. Anyone in San Francisco can see it now.
+            Your post is on the map. Anyone in San Francisco can see it now —
+            and anyone can update or take it down when it's gone.
           </p>
         </div>
 
         <div className="rule-thick" />
-
-        {/* Edit code reveal — the most important info */}
-        <div className="bg-paper-light border-2 border-ink shadow-stamp p-5">
-          <span className="label">Save this edit code</span>
-          <p className="text-[13px] text-ink-soft mt-1">
-            You'll need it if you want to update or remove the listing later.
-            We've saved it on this browser, but copy it somewhere safe — like a note on your phone.
-          </p>
-          <div className="mt-4 flex items-center justify-between gap-3 bg-paper border-2 border-ink px-4 py-3">
-            <code className="font-mono text-[20px] tracking-[0.18em] text-ink select-all">
-              {code}
-            </code>
-            <button
-              onClick={async () => {
-                await navigator.clipboard.writeText(code)
-                setCopiedCode(true)
-                setTimeout(() => setCopiedCode(false), 2000)
-              }}
-              className="bg-ink text-paper-light border-2 border-ink px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
-            >
-              {copiedCode ? '✓ Copied' : 'Copy'}
-            </button>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
@@ -183,7 +147,6 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
           </button>
           <button
             onClick={() => {
-              const fresh = generateEditCode()
               setSubmittedItem(null)
               setMoreOpen(false)
               setExistingImages([])
@@ -191,11 +154,11 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
               setFormData({
                 location_lat: 0, location_lng: 0,
                 title: '', description: '',
-                category: 'Items', location_address: '',
+                category: 'Events', location_address: '',
                 available_from: new Date().toISOString(),
                 available_until: null,
                 url: '', posted_by: '', contact_info: '',
-                edit_code: fresh, status: 'available',
+                edit_code: generateEditCode(), status: 'available',
               })
             }}
             className="inline-flex items-center justify-center gap-2 bg-paper-light text-ink border border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
@@ -439,7 +402,7 @@ function SubmitForm({ initialData, editMode = false, editCode, onClose }: Submit
         </button>
         {!editMode && (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade text-center mt-2">
-            We'll auto-generate an edit code so you can manage it later.
+            Posts are public · anyone can update or remove
           </p>
         )}
       </div>

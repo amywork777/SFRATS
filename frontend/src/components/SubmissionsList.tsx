@@ -5,6 +5,7 @@ import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { inferEmoji } from '../utils/categoryIcons'
+import { isActive } from '../utils/listingFilters'
 
 export default function SubmissionsList() {
   const [isOpen, setIsOpen] = useState(false)
@@ -17,8 +18,8 @@ export default function SubmissionsList() {
     setLoading(true)
     api.getItems()
       .then((data) => {
-        // Hide scraper-meta diagnostic rows from the public list
-        const visible = data.filter(r => r.posted_by !== 'scraper-meta')
+        // Hide scraper-meta diagnostic rows + expired listings
+        const visible = data.filter(r => r.posted_by !== 'scraper-meta' && isActive(r))
         setItems(visible.slice(0, 6))
       })
       .catch((err) => console.error('Error fetching items:', err))

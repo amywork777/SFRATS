@@ -25,8 +25,6 @@ interface ListingPreviewProps {
   showTimestamp?: boolean
   onRefresh?: () => void
   item?: any
-  edit_code?: string
-  isNewListing?: boolean
 }
 
 function ListingPreview({
@@ -45,8 +43,6 @@ function ListingPreview({
   onViewDetails,
   onRefresh,
   item,
-  edit_code,
-  isNewListing = false,
   available_until,
   created_at,
 }: ListingPreviewProps) {
@@ -164,7 +160,7 @@ function ListingPreview({
               location_lng: location_lng || 0,
               available_from, available_until, created_at,
               status: item?.status || 'available',
-              edit_code: item?.edit_code || '',
+              edit_code: item?.edit_code || '__legacy__',
               contact_info: item?.contact_info || '',
               url: item?.url || '',
               images: item?.images || [],
@@ -176,27 +172,6 @@ function ListingPreview({
         </div>
       )}
 
-      {/* Edit code reveal for newly-submitted listings */}
-      {isNewListing && edit_code && (
-        <div className="mt-2 p-3 bg-paper border border-ink">
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink mb-2">
-            Save this edit code
-          </p>
-          <div className="flex justify-between items-center bg-paper-light border border-ink p-2">
-            <code className="font-mono text-[14px] text-ink">{edit_code}</code>
-            <button
-              onClick={async () => {
-                await navigator.clipboard.writeText(edit_code)
-                setCopied(true)
-                setTimeout(() => setCopied(false), 2000)
-              }}
-              className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 inline-flex items-center gap-1.5"
-            >
-              {copied ? <><Check size={11} strokeWidth={2.5}/> Copied</> : 'Copy'}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

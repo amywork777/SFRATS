@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Lock, X, AlertTriangle, Pencil, Trash2, Save, Plus } from 'lucide-react'
+import { X, AlertTriangle, Pencil, Trash2, Save, Plus } from 'lucide-react'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import LocationPicker from './LocationPicker'
@@ -14,7 +14,6 @@ const inputCls =
   'w-full bg-paper-light border border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
 
 export default function EditListing({ item, onClose, onSave }: EditListingProps) {
-  const [editCode, setEditCode] = useState('')
   const [formData, setFormData] = useState({
     title: item.title,
     description: item.description,
@@ -30,22 +29,8 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
     images: item.images || [],
   })
   const [error, setError] = useState('')
-  const [mode, setMode] = useState<'verify' | 'edit'>('verify')
   const [newImages, setNewImages] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const isValid = await api.verifyEditCode(item.id.toString(), editCode)
-      if (isValid) {
-        setMode('edit')
-        setError('')
-      }
-    } catch {
-      setError('Invalid edit code')
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,7 +43,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
           ? new Date(formData.available_until).toISOString()
           : null,
       }
-      await api.updateItem(item.id.toString(), editCode, formattedData as any, newImages)
+      await api.updateItem(item.id.toString(), formattedData as any, newImages)
       onSave()
       onClose()
     } catch (err) {
@@ -69,7 +54,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
   const handleDelete = async () => {
     if (!window.confirm('Delete this listing? This can\'t be undone.')) return
     try {
-      await api.deleteItem(item.id.toString(), editCode)
+      await api.deleteItem(item.id.toString())
       onSave()
       onClose()
     } catch {
@@ -77,63 +62,6 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
     }
   }
 
-  // STAGE 1 — Verify edit code
-  if (mode === 'verify') {
-    return (
-      <div className="fixed inset-0 bg-ink/50 flex items-center justify-center p-4 z-[9999]">
-        <div className="bg-paper-light border border-ink shadow-stamp p-6 max-w-md w-full">
-          <div className="mb-5 pb-3 border-b border-ink">
-            <span className="label inline-flex items-center gap-1.5">
-              <Lock size={11} strokeWidth={2.5} /> Restricted
-            </span>
-            <h2 className="font-display font-black text-3xl text-ink mt-1 leading-tight">
-              Enter your edit code
-            </h2>
-          </div>
-
-          {error && (
-            <div className="border border-bridge-700 bg-bridge-50 p-3 mb-4 flex items-start gap-2">
-              <AlertTriangle size={14} strokeWidth={2.2} className="text-bridge-700 mt-0.5 shrink-0" />
-              <span className="font-mono text-[12px] text-bridge-700">{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleVerify} className="space-y-4">
-            <label className="block">
-              <span className="label">Edit Code</span>
-              <input
-                type="text"
-                value={editCode}
-                onChange={(e) => setEditCode(e.target.value)}
-                className={`mt-1.5 ${inputCls} font-mono`}
-                placeholder="The code you set when you posted"
-                required
-                autoFocus
-              />
-            </label>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 bg-paper-light text-ink border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
-              >
-                Verify
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  // STAGE 2 — Edit form
   return (
     <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="min-h-screen px-4 py-8 flex items-start justify-center">
@@ -287,7 +215,6 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   ))}
                 </div>
               )}
-
               {newImages.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {newImages.map((file, i) => (
@@ -304,7 +231,6 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   ))}
                 </div>
               )}
-
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}

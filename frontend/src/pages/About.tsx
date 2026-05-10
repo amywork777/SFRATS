@@ -1,9 +1,19 @@
 import { Link } from 'react-router-dom'
 
+const RULES = [
+  'Be respectful and kind to others.',
+  'Only post things that are actually free.',
+  'Update or remove your listing when items are gone.',
+  'Include clear photos and descriptions.',
+  'Provide accurate location information.',
+  'Take what you need. Leave the rest.',
+]
+
 export default function About() {
   return (
     <div className="pt-24 pb-20 px-4 md:px-8 max-w-3xl mx-auto">
-      <div className="mb-8">
+      {/* Hero */}
+      <div className="mb-10">
         <span className="label">A Field Guide · Editor's Note</span>
         <h1 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-3 tracking-tight">
           About SF&nbsp;RATS<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
@@ -20,39 +30,60 @@ export default function About() {
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">What is SF RATS?</h2>
           <p>
-            SF RATS (San Francisco Really Awesome Things Sharing) is a community map of free
-            stuff in the city. Reduce waste, build community, make it easier for everyone to
-            find and share resources.
+            SF RATS (San Francisco Really Awesome Things Sharing) is a community
+            map of free stuff in the city. Reduce waste, build community, make it
+            easier for everyone to find and share resources.
           </p>
         </section>
 
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-3">Features</h2>
           <ul className="space-y-2 font-mono text-[13px] uppercase tracking-[0.08em] text-ink">
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free items across SF</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free things across SF</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission system for sharing</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Categories: food, items, events, services</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> No account required — post and share</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Two categories: Events and Items</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly, no account required</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Listings auto-expire when events pass</li>
           </ul>
         </section>
 
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">Why rats?</h2>
           <p>
-            Rats are expert urban scavengers — they know where the good stuff is, and they
-            share that information with their social groups. We do the same.
+            Rats are expert urban scavengers — they know where the good stuff is,
+            and they share that information with their social groups. We do the same.
           </p>
         </section>
 
         <section>
-          <h2 className="font-display font-bold text-2xl text-ink mb-2">About the creator</h2>
+          <h2 className="font-display font-bold text-2xl text-ink mb-2">About the creators</h2>
           <p>
-            Hey! I'm Amy and I love free food and free stuff. Active in SF Buy Nothing,
-            way too excited about sidewalk scores — over half my furniture and clothes
-            came from free piles. At Stanford I ran a free-food club to help students
-            find leftover catering. SF RATS is the same idea, citywide.
+            Hey! I'm Amy and I love free food and free stuff. Active in SF Buy
+            Nothing, way too excited about sidewalk scores — over half my
+            furniture and clothes came from free piles. At Stanford I ran a
+            free-food club to help students find leftover catering. SF RATS is
+            the same idea, citywide. Maddie helps run the place too.
           </p>
+        </section>
+
+        {/* Guidelines block */}
+        <section id="guidelines" className="rule-thick pt-7 mt-6">
+          <span className="label">House Rules</span>
+          <h2 className="font-display font-bold text-3xl md:text-4xl text-ink mt-2 leading-[1.05] tracking-tight">
+            Guidelines.
+          </h2>
+          <ol className="mt-5 space-y-3.5">
+            {RULES.map((rule, i) => (
+              <li key={i} className="flex gap-4 items-baseline border-b border-ink/10 pb-3.5">
+                <span className="font-display font-black text-2xl text-bridge-500 leading-none w-7 shrink-0 tabular-nums">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span className="font-display text-[17px] leading-snug text-ink">
+                  {rule}
+                </span>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section>
@@ -77,12 +108,18 @@ export default function About() {
         </section>
       </div>
 
-      <div className="rule-thick mt-12 pt-6">
+      <div className="rule-thick mt-12 pt-6 flex flex-wrap items-center justify-between gap-4">
         <Link
           to="/"
           className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
         >
           <span aria-hidden>←</span> Back to map
+        </Link>
+        <Link
+          to="/agents"
+          className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
+        >
+          AI agent? Read the contributor guide →
         </Link>
       </div>
     </div>

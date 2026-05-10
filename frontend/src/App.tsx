@@ -4,7 +4,6 @@ import ListingPage from './pages/ListingPage'
 import TopBar from './components/TopBar'
 import SubmitForm from './components/SubmitForm'
 import About from './pages/About'
-import Guidelines from './pages/Guidelines'
 import Agents from './pages/Agents'
 import EditPage from './pages/EditPage'
 import ManagePage from './pages/ManagePage'
@@ -15,10 +14,9 @@ function App() {
       <TopBar />
       <div className="flex-1">
         <Routes>
-          {/* Home route */}
           <Route path="/" element={<Map />} />
 
-          {/* Submit new item route */}
+          {/* Post a new listing */}
           <Route path="/submit/new" element={
             <div className="max-w-3xl mx-auto px-4 md:px-8 pt-24 pb-16">
               <div className="mb-8">
@@ -32,16 +30,17 @@ function App() {
             </div>
           } />
 
-          {/* Edit item route with edit code */}
-          <Route path="/listing/:id/edit/:editCode" element={<EditPage />} />
-
-          {/* View listing route */}
-          <Route path="/listing/:id" element={<ListingPage />} />
-          
-          <Route path="/about" element={<About />} />
-          <Route path="/guidelines" element={<Guidelines />} />
-          <Route path="/agents" element={<Agents />} />
+          {/* Edit + view listing */}
+          <Route path="/listing/:id/edit"  element={<EditPage />} />
+          <Route path="/listing/:id"       element={<ListingPage />} />
           <Route path="/listing/:id/manage" element={<ManagePage />} />
+
+          <Route path="/about"  element={<About />} />
+          <Route path="/agents" element={<Agents />} />
+
+          {/* Guidelines used to live here — they're now part of /about */}
+          <Route path="/guidelines" element={<Navigate to="/about#guidelines" replace />} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
@@ -49,4 +48,4 @@ function App() {
   )
 }
 
-export default App 
+export default App

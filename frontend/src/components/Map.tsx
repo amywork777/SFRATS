@@ -13,6 +13,7 @@ import Sidebar from './Sidebar'
 import DirectionsButton from './DirectionsButton'
 import ListingPreview from './ListingPreview'
 import { inferEmoji, CATEGORY_ORDER } from '../utils/categoryIcons'
+import { isActive } from '../utils/listingFilters'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
@@ -260,30 +261,20 @@ function Map() {
   }
 
   const filteredItems = items.filter(item => {
-    // Filter out expired events
-    const now = new Date()
+    // Auto-expire: hide events past their end (or +24h after start), and Items
+    // older than 30 days. See utils/listingFilters.ts for the rules.
+    if (!isActive(item)) return false
+
     const eventDate = new Date(item.available_from)
-    const eventEndDate = item.available_until ? new Date(item.available_until) : null
-    
-    if (eventEndDate && eventEndDate < now) {
-      return false // Filter out if end date has passed
-    }
-    
-    // Apply existing filters
+
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false
     }
-
     if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
       return false
     }
-
-    if (filters.dates.start) {
-      if (eventDate.getTime() < filters.dates.start.getTime()) return false
-    }
-    if (filters.dates.end) {
-      if (eventDate.getTime() > filters.dates.end.getTime()) return false
-    }
+    if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
+    if (filters.dates.end   && eventDate.getTime() > filters.dates.end.getTime()) return false
 
     return true
   })
