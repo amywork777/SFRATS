@@ -1,10 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { X, SlidersHorizontal, Check } from 'lucide-react'
-import { CATEGORY_ORDER } from '../utils/categoryIcons'
+import { X, SlidersHorizontal } from 'lucide-react'
 import NearMe from './NearMe'
-
-const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
 interface MobileNavProps {
   onFiltersChange: (filters: any) => void
@@ -12,7 +8,6 @@ interface MobileNavProps {
 
 export default function MobileNav({ onFiltersChange }: MobileNavProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [timeRange, setTimeRange] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -25,14 +20,6 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     { id: 'week',  label: '7 days' },
     { id: 'month', label: '30 days' },
   ]
-
-  const toggleCategory = (category: string) => {
-    const next = selectedCategories.includes(category)
-      ? selectedCategories.filter(c => c !== category)
-      : [...selectedCategories, category]
-    setSelectedCategories(next)
-    onFiltersChange({ categories: next })
-  }
 
   const handleTimeRangeChange = (range: string) => {
     setTimeRange(range)
@@ -49,7 +36,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
     onFiltersChange({ dates: { start, end } })
   }
 
-  const filterCount = selectedCategories.length + (timeRange !== 'all' ? 1 : 0)
+  const filterCount = (timeRange !== 'all' ? 1 : 0)
 
   return (
     <>
@@ -79,12 +66,11 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  setSelectedCategories([])
                   setTimeRange('all')
                   setStartDate(''); setEndDate('')
                   setUserLocation(null)
                   setRadiusMiles(2)
-                  onFiltersChange({ search: '', categories: [], dates: { start: null, end: null }, userLocation: null, radiusMiles: 2 })
+                  onFiltersChange({ search: '', dates: { start: null, end: null }, userLocation: null, radiusMiles: 2 })
                 }}
                 className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 px-2 py-1"
               >
@@ -112,37 +98,9 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               />
             </div>
 
-            {/* Categories */}
-            <div>
-              <span className="label">§ 02 · Filed Under</span>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {CATEGORY_ORDER.map((category, i) => {
-                  const active = selectedCategories.includes(category)
-                  const tilt = ['rotate-[-1deg]', 'rotate-[0.5deg]', 'rotate-[-0.5deg]', 'rotate-[1deg]'][i % 4]
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => toggleCategory(category)}
-                      className={`flex items-center justify-between px-3 py-2.5 border border-ink font-mono text-[12px] uppercase tracking-[0.12em] font-semibold transition-all ${tilt}
-                        ${active
-                          ? 'bg-bridge-500 text-paper-light shadow-stamp'
-                          : 'bg-paper-light text-ink hover:bg-paper'
-                        }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-[16px] leading-none">{CATEGORY_EMOJI[category] ?? '📍'}</span>
-                        {category}
-                      </span>
-                      {active && <Check size={14} strokeWidth={2.5} />}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
             {/* Time */}
             <div>
-              <span className="label">§ 03 · When</span>
+              <span className="label">§ 02 · When</span>
               <div className="mt-3 grid grid-cols-2 gap-1.5">
                 {timeRanges.map(range => {
                   const active = timeRange === range.id
@@ -191,7 +149,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
 
             {/* Near me */}
             <div>
-              <span className="label">§ 04 · Near me</span>
+              <span className="label">§ 03 · Near me</span>
               <div className="mt-3">
                 <NearMe
                   location={userLocation}
@@ -205,34 +163,6 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               </div>
             </div>
 
-            {/* Site nav — phones can't see About/For AI from the topbar */}
-            <div>
-              <span className="label">§ 05 · The Field Guide</span>
-              <div className="mt-3 flex flex-col divide-y divide-ink/15 border border-ink/15 bg-paper-light">
-                <Link
-                  to="/about"
-                  onClick={() => setIsOpen(false)}
-                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
-                >
-                  About SF Rats
-                </Link>
-                <Link
-                  to="/agents"
-                  onClick={() => setIsOpen(false)}
-                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
-                >
-                  For AI agents
-                </Link>
-                <a
-                  href="https://discord.gg/T7jMh7kEPb"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-3 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:bg-paper transition-colors"
-                >
-                  Discord ↗
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Sticky Apply */}

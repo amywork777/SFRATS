@@ -1,15 +1,11 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { CATEGORY_ORDER } from '../utils/categoryIcons'
 import DateFilter from './Sidebar/DateFilter'
 import NearMe from './NearMe'
-
-const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
 export interface SidebarFilters {
   search: string
   dates: { start: Date | null; end: Date | null }
-  categories: string[]
   userLocation: { lat: number; lng: number } | null
   radiusMiles: number
 }
@@ -23,7 +19,6 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
   const [filters, setFilters] = useState<SidebarFilters>({
     search: '',
     dates: { start: null, end: null },
-    categories: [],
     userLocation: null,
     radiusMiles: 2,
   })
@@ -31,13 +26,6 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
   const update = (next: typeof filters) => {
     setFilters(next)
     onFiltersChange(next)
-  }
-
-  const handleCategoryToggle = (category: string) => {
-    const newCategories = filters.categories.includes(category)
-      ? filters.categories.filter(c => c !== category)
-      : [...filters.categories, category]
-    update({ ...filters, categories: newCategories })
   }
 
   const containerClass = isMobile
@@ -69,45 +57,10 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
           </div>
         </div>
 
-        {/* Section: Categories */}
-        <div className="mb-7">
-          <div className="flex items-baseline justify-between mb-3">
-            <span className="label">§ 02 · Filed Under</span>
-            {filters.categories.length > 0 && (
-              <button
-                onClick={() => update({ ...filters, categories: [] })}
-                className="text-xs text-bridge-600 hover:text-bridge-700 font-medium font-mono uppercase tracking-widest"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_ORDER.map((category, i) => {
-              const active = filters.categories.includes(category)
-              const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryToggle(category)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition ${tilt}
-                    ${active
-                      ? 'bg-bridge-500 text-paper-light shadow-stamp'
-                      : 'bg-paper-light text-ink hover:bg-paper'
-                    }`}
-                >
-                  <span className="text-[14px] leading-none">{CATEGORY_EMOJI[category] ?? '📍'}</span>
-                  {category}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
         {/* Section: Date */}
         <div className="mb-7">
           <div className="flex items-baseline justify-between mb-3">
-            <span className="label">§ 03 · When</span>
+            <span className="label">§ 02 · When</span>
           </div>
           <DateFilter onChange={(dates) => update({ ...filters, dates })} />
         </div>
@@ -115,7 +68,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         {/* Section: Near me */}
         <div>
           <div className="flex items-baseline justify-between mb-3">
-            <span className="label">§ 04 · Near me</span>
+            <span className="label">§ 03 · Near me</span>
           </div>
           <NearMe
             location={filters.userLocation}

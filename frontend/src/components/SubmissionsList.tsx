@@ -4,30 +4,35 @@ import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
-import { inferEmoji } from '../utils/categoryIcons'
+import { inferEmoji, type Category } from '../utils/categoryIcons'
 import { isActive } from '../utils/listingFilters'
 
-export default function SubmissionsList() {
+interface SubmissionsListProps {
+  category: Category
+}
+
+export default function SubmissionsList({ category }: SubmissionsListProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(false)
-  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (!isOpen || loaded) return
+    if (!isOpen) return
     setLoading(true)
     api.getItems()
       .then((data) => {
-        // Hide scraper-meta diagnostic rows + expired listings
-        const visible = data.filter(r => r.posted_by !== 'scraper-meta' && isActive(r))
+        // Hide scraper-meta diagnostic rows + expired listings, and only
+        // show entries matching the page's category.
+        const visible = data.filter(r =>
+          r.posted_by !== 'scraper-meta' &&
+          r.category === category &&
+          isActive(r)
+        )
         setItems(visible.slice(0, 6))
       })
       .catch((err) => console.error('Error fetching items:', err))
-      .finally(() => {
-        setLoading(false)
-        setLoaded(true)
-      })
-  }, [isOpen, loaded])
+      .finally(() => setLoading(false))
+  }, [isOpen, category])
 
   return (
     <div className="fixed bottom-5 right-5 w-[320px] z-[1000] pointer-events-none">

@@ -14,7 +14,11 @@ function App() {
       <TopBar />
       <div className="flex-1">
         <Routes>
-          <Route path="/" element={<Map />} />
+          {/* Events is the headline experience; Items lives at /items.
+              Each route renders the same Map component with a forced
+              category so the views never mix. */}
+          <Route path="/"      element={<Map forcedCategory="Events" />} />
+          <Route path="/items" element={<Map forcedCategory="Items"  />} />
 
           {/* Post a new listing */}
           <Route path="/submit/new" element={

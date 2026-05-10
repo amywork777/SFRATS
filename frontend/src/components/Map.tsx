@@ -7,13 +7,22 @@ import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import Sidebar from './Sidebar'
 import ListingPreview from './ListingPreview'
-import { inferEmoji, CATEGORY_ORDER } from '../utils/categoryIcons'
+import { inferEmoji, type Category } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
+import { NavLink } from 'react-router-dom'
+
+// Each map page is dedicated to one category — Events is the default
+// landing experience, Items lives at /items. The page-level tabs at the
+// top of the map area let users switch between them.
+const PAGE_META: Record<Category, { label: string; href: string; counterLabel: string; emptyText: string }> = {
+  Events: { label: 'Events', href: '/',      counterLabel: 'events', emptyText: 'No events posted yet — be the first.' },
+  Items:  { label: 'Items',  href: '/items', counterLabel: 'items',  emptyText: 'No free items posted yet — be the first.' },
+}
 
 // Create custom marker icons for each category
 const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
@@ -177,20 +186,22 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
   return null
 }
 
-function Map() {
+interface MapProps {
+  forcedCategory: Category
+}
+
+function Map({ forcedCategory }: MapProps) {
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<{
     search: string;
     dates: { start: Date | null; end: Date | null };
-    categories: string[];
     userLocation: { lat: number; lng: number } | null;
     radiusMiles: number;
   }>({
     search: '',
     dates: { start: null, end: null },
-    categories: [],
     userLocation: null,
     radiusMiles: 2,
   })
@@ -229,6 +240,8 @@ function Map() {
   }
 
   const filteredItems = items.filter(item => {
+    if (item.category !== forcedCategory) return false
+
     // Auto-expire: hide events past their end (or +24h after start), and Items
     // older than 30 days. See utils/listingFilters.ts for the rules.
     if (!isActive(item)) return false
@@ -236,9 +249,6 @@ function Map() {
     const eventDate = new Date(item.available_from)
 
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
-      return false
-    }
-    if (filters.categories.length > 0 && !filters.categories.includes(item.category)) {
       return false
     }
     if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
@@ -255,6 +265,8 @@ function Map() {
     return true
   })
 
+  const meta = PAGE_META[forcedCategory]
+
   return (
     <div className="fixed inset-0 top-14 md:top-16">
       {/* Mobile Navigation */}
@@ -267,26 +279,15 @@ function Map() {
         <Sidebar onFiltersChange={handleFiltersChange} />
       </div>
 
-      {/* Right column: filter tabs + view-toggle, then either Map or List */}
+      {/* Right column: page tabs + view-toggle, then either Map or List */}
       <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: category tabs (left) + view toggle (right) */}
+        {/* Top bar: page tabs (left) + view toggle (right). The two tabs
+            navigate between /events and /items — events is the headline,
+            items is its own dedicated map. */}
         <div className="flex items-center justify-between gap-3 px-3 md:px-5 py-2.5 bg-paper-light border-b border-ink/15 shrink-0">
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <FilterTab
-              active={filters.categories.length === 0}
-              onClick={() => handleFiltersChange({ categories: [] })}
-            >
-              All
-            </FilterTab>
-            {CATEGORY_ORDER.map(c => (
-              <FilterTab
-                key={c}
-                active={filters.categories.length === 1 && filters.categories[0] === c}
-                onClick={() => handleFiltersChange({ categories: [c] })}
-              >
-                {c}
-              </FilterTab>
-            ))}
+            <PageTab to="/"      active={forcedCategory === 'Events'}>Events</PageTab>
+            <PageTab to="/items" active={forcedCategory === 'Items'}>Free Items</PageTab>
           </div>
 
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
@@ -368,20 +369,20 @@ function Map() {
                 <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
                   {String(filteredItems.length).padStart(3, '0')}
                 </div>
-                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">listings</div>
+                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">{meta.counterLabel}</div>
               </div>
             </div>
 
             {/* Status overlay */}
-            {(loading || error || !items.length) && (
+            {(loading || error || !filteredItems.length) && (
               <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
                 <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
                   {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
                   {!loading && error && (
                     <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
                   )}
-                  {!loading && !error && !items.length && (
-                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No listings yet — be the first.</span>
+                  {!loading && !error && !filteredItems.length && (
+                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">{meta.emptyText}</span>
                   )}
                 </div>
               </div>
@@ -394,22 +395,25 @@ function Map() {
         )}
       </div>
 
-      {/* Recent Submissions Panel — only relevant in map mode */}
+      {/* Recent Submissions Panel — only relevant in map mode, scoped to
+          the current page's category so the Items page doesn't show events. */}
       {view === 'map' && (
         <div className="hidden md:block">
-          <SubmissionsList />
+          <SubmissionsList category={forcedCategory} />
         </div>
       )}
     </div>
   )
 }
 
-// Small filter pill used in the top-of-content tab bar
-function FilterTab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+// Tab linking to a category page (/, /items). The active tab is the
+// page we're already on — clicking it is a no-op, but we still render
+// it as a link for consistency with the inactive sibling.
+function PageTab({ to, active, children }: { to: string; active: boolean; children: React.ReactNode }) {
   return (
-    <button
-      onClick={onClick}
-      aria-pressed={active}
+    <NavLink
+      to={to}
+      aria-current={active ? 'page' : undefined}
       className={`px-3.5 py-2 md:py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
         active
           ? 'bg-ink text-paper-light border-ink'
@@ -417,8 +421,8 @@ function FilterTab({ active, onClick, children }: { active: boolean; onClick: ()
       }`}
     >
       {children}
-    </button>
+    </NavLink>
   )
 }
 
-export default Map 
+export default Map
