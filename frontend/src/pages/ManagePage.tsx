@@ -40,8 +40,7 @@ export default function ManagePage() {
     <div className="max-w-md mx-auto pt-24 pb-16 px-4">
       <div className="bg-paper-light border border-ink shadow-stamp p-6 md:p-7">
         <div className="mb-6 pb-3 border-b border-ink">
-          <span className="label">Manage · № {id?.padStart(4, '0')}</span>
-          <h1 className="font-display font-black text-3xl md:text-4xl text-ink mt-1 leading-tight">
+          <h1 className="font-display font-black text-3xl md:text-4xl text-ink leading-tight">
             Listing controls<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h1>
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade mt-3">

@@ -47,14 +47,6 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
 
   return (
     <div className="space-y-8 p-4 md:p-8 max-w-3xl mx-auto relative">
-      {/* Issue line */}
-      <div className="flex items-baseline justify-between">
-        <span className="label">A Listing · № {String(listing.id).padStart(4, '0')}</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
-          posted {formatDate(listing.created_at)}
-        </span>
-      </div>
-
       {/* Title block */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">

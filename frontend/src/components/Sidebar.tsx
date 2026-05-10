@@ -38,7 +38,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         {/* Section: Search */}
         <div className="mb-7">
           <div className="flex items-baseline justify-between mb-2">
-            <span className="label">§ 01 · Search</span>
+            <span className="label">Search</span>
             <span className="font-mono text-[10px] text-ink-fade tracking-widest">find</span>
           </div>
           <div className="relative">
@@ -60,7 +60,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         {/* Section: Date */}
         <div className="mb-7">
           <div className="flex items-baseline justify-between mb-3">
-            <span className="label">§ 02 · When</span>
+            <span className="label">When</span>
           </div>
           <DateFilter onChange={(dates) => update({ ...filters, dates })} />
         </div>
@@ -68,7 +68,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         {/* Section: Near me */}
         <div>
           <div className="flex items-baseline justify-between mb-3">
-            <span className="label">§ 03 · Near me</span>
+            <span className="label">Near me</span>
           </div>
           <NearMe
             location={filters.userLocation}

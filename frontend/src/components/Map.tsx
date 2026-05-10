@@ -7,22 +7,14 @@ import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import Sidebar from './Sidebar'
 import ListingPreview from './ListingPreview'
-import { inferEmoji, type Category } from '../utils/categoryIcons'
+import { inferEmoji } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
-import { NavLink } from 'react-router-dom'
-
-// Each map page is dedicated to one category — Events is the default
-// landing experience, Items lives at /items. The page-level tabs at the
-// top of the map area let users switch between them.
-const PAGE_META: Record<Category, { label: string; href: string; counterLabel: string; emptyText: string }> = {
-  Events: { label: 'Events', href: '/',      counterLabel: 'events', emptyText: 'No events posted yet — be the first.' },
-  Items:  { label: 'Items',  href: '/items', counterLabel: 'items',  emptyText: 'No free items posted yet — be the first.' },
-}
+import PageTabs from './PageTabs'
 
 // Create custom marker icons for each category
 const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
@@ -186,11 +178,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
   return null
 }
 
-interface MapProps {
-  forcedCategory: Category
-}
-
-function Map({ forcedCategory }: MapProps) {
+function Map() {
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -240,10 +228,10 @@ function Map({ forcedCategory }: MapProps) {
   }
 
   const filteredItems = items.filter(item => {
-    if (item.category !== forcedCategory) return false
+    if (item.category !== 'Events') return false
 
-    // Auto-expire: hide events past their end (or +24h after start), and Items
-    // older than 30 days. See utils/listingFilters.ts for the rules.
+    // Auto-expire: hide events past their end (or +24h after start).
+    // See utils/listingFilters.ts for the rules.
     if (!isActive(item)) return false
 
     const eventDate = new Date(item.available_from)
@@ -265,8 +253,6 @@ function Map({ forcedCategory }: MapProps) {
     return true
   })
 
-  const meta = PAGE_META[forcedCategory]
-
   return (
     <div className="fixed inset-0 top-14 md:top-16">
       {/* Mobile Navigation */}
@@ -285,10 +271,7 @@ function Map({ forcedCategory }: MapProps) {
             navigate between /events and /items — events is the headline,
             items is its own dedicated map. */}
         <div className="flex items-center justify-between gap-3 px-3 md:px-5 py-2.5 bg-paper-light border-b border-ink/15 shrink-0">
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            <PageTab to="/"      active={forcedCategory === 'Events'}>Events</PageTab>
-            <PageTab to="/items" active={forcedCategory === 'Items'}>Free Items</PageTab>
-          </div>
+          <PageTabs active="events" />
 
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
@@ -369,7 +352,7 @@ function Map({ forcedCategory }: MapProps) {
                 <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
                   {String(filteredItems.length).padStart(3, '0')}
                 </div>
-                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">{meta.counterLabel}</div>
+                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">events</div>
               </div>
             </div>
 
@@ -382,7 +365,7 @@ function Map({ forcedCategory }: MapProps) {
                     <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
                   )}
                   {!loading && !error && !filteredItems.length && (
-                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">{meta.emptyText}</span>
+                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No events posted yet — be the first.</span>
                   )}
                 </div>
               </div>
@@ -395,33 +378,13 @@ function Map({ forcedCategory }: MapProps) {
         )}
       </div>
 
-      {/* Recent Submissions Panel — only relevant in map mode, scoped to
-          the current page's category so the Items page doesn't show events. */}
+      {/* Recent Submissions Panel — only relevant in map mode */}
       {view === 'map' && (
         <div className="hidden md:block">
-          <SubmissionsList category={forcedCategory} />
+          <SubmissionsList category="Events" />
         </div>
       )}
     </div>
-  )
-}
-
-// Tab linking to a category page (/, /items). The active tab is the
-// page we're already on — clicking it is a no-op, but we still render
-// it as a link for consistency with the inactive sibling.
-function PageTab({ to, active, children }: { to: string; active: boolean; children: React.ReactNode }) {
-  return (
-    <NavLink
-      to={to}
-      aria-current={active ? 'page' : undefined}
-      className={`px-3.5 py-2 md:py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
-        active
-          ? 'bg-ink text-paper-light border-ink'
-          : 'bg-paper-light text-ink-mute border-ink/20 hover:text-ink hover:border-ink'
-      }`}
-    >
-      {children}
-    </NavLink>
   )
 }
 

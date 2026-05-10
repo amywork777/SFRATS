@@ -89,7 +89,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
           <div className="p-5 space-y-7 pb-28">
             {/* Search */}
             <div>
-              <span className="label">§ 01 · Search</span>
+              <span className="label">Search</span>
               <input
                 type="text"
                 placeholder="couches, pizza, plants…"
@@ -100,7 +100,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
 
             {/* Time */}
             <div>
-              <span className="label">§ 02 · When</span>
+              <span className="label">When</span>
               <div className="mt-3 grid grid-cols-2 gap-1.5">
                 {timeRanges.map(range => {
                   const active = timeRange === range.id
@@ -149,7 +149,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
 
             {/* Near me */}
             <div>
-              <span className="label">§ 03 · Near me</span>
+              <span className="label">Near me</span>
               <div className="mt-3">
                 <NearMe
                   location={userLocation}

@@ -22,11 +22,33 @@ const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32
 // occurrence — 3x "Pay-What-You-Can Taco Day", 5x "HellaSecret Comedy",
 // etc. We dedupe on the title-after-the-date-prefix so the user sees
 // each event once.
+const TITLE_DATE_RE = /^\s*(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[:\-–—]?\s*/
+
 const normalizeTitle = (t = '') => t
-  .replace(/^\s*(?:[A-Za-z]{3,9},?\s+)?\d{1,2}\/\d{1,2}\/\d{2,4}\s*[:\-–—]?\s*/, '')
+  .replace(TITLE_DATE_RE, '')
   .replace(/\s+/g, ' ')
   .trim()
   .toLowerCase()
+
+// Funcheap prefixes recurring posts with the actual event date — e.g.
+// "7/10/26: Free Comedy Night …". Lift that into a real ISO date so we
+// stop conflating "post date" with "event date" on the map. Returns
+// midnight local (we don't get a time of day from the prefix alone).
+function parseTitleDate(title = '', fallbackYear = new Date().getFullYear()) {
+  const m = TITLE_DATE_RE.exec(title)
+  if (!m) return null
+  const month = parseInt(m[1], 10)
+  const day   = parseInt(m[2], 10)
+  let year    = m[3] ? parseInt(m[3], 10) : fallbackYear
+  if (year < 100) year += 2000
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null
+  // 12:00 noon SF time so the map's date filter (which compares whole
+  // days) lands on the right calendar day regardless of UTC offset.
+  const d = new Date(Date.UTC(year, month - 1, day, 19, 0, 0))
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+const stripTitleDate = (t = '') => t.replace(TITLE_DATE_RE, '').trim()
 
 let existingTitles = new Set()
 
@@ -266,8 +288,11 @@ function extractLdJson(html) {
   return out
 }
 
-// Look up an Event's location on its full page (Funcheap embeds structured data per post).
-async function fetchEventLocation(url) {
+// Look up an Event's location AND date on its full page (Funcheap embeds
+// schema.org Event JSON-LD per post — that's the authoritative source for
+// when the event actually starts/ends, vs the RSS pubDate which is just
+// when the post was published).
+async function fetchEventDetails(url) {
   try {
     const res = await fetch(url, {
       headers: {
@@ -291,10 +316,17 @@ async function fetchEventLocation(url) {
       addr.postalCode,
     ].filter(Boolean)
     const address = parts.join(', ') || (typeof loc === 'string' ? loc : null)
+    const toIso = (v) => {
+      if (!v) return null
+      const d = new Date(v)
+      return Number.isNaN(d.getTime()) ? null : d.toISOString()
+    }
     return {
       address: address || null,
       lat: loc.geo?.latitude  ? parseFloat(loc.geo.latitude)  : null,
       lng: loc.geo?.longitude ? parseFloat(loc.geo.longitude) : null,
+      startDate: toIso(ev.startDate),
+      endDate:   toIso(ev.endDate),
     }
   } catch {
     return null
@@ -315,24 +347,33 @@ async function scrapeFuncheap() {
     counts.funcheap.fetched = items.length
     for (const item of items) {
       if (totalInserted >= PER_RUN_CAP || counts.funcheap.inserted >= PER_SOURCE_CAP) break
-      const title = stripHtml(xmlExtractFirst(item, 'title'))
-      const link  = stripHtml(xmlExtractFirst(item, 'link'))
-      const pub   = xmlExtractFirst(item, 'pubDate')
-      const desc  = stripHtml(xmlExtractFirst(item, 'content:encoded') || xmlExtractFirst(item, 'description')).slice(0, 240)
-      if (!title || !link) continue
+      const rawTitle = stripHtml(xmlExtractFirst(item, 'title'))
+      const link     = stripHtml(xmlExtractFirst(item, 'link'))
+      const pub      = xmlExtractFirst(item, 'pubDate')
+      const desc     = stripHtml(xmlExtractFirst(item, 'content:encoded') || xmlExtractFirst(item, 'description')).slice(0, 240)
+      if (!rawTitle || !link) continue
 
-      // Fetch the per-event page to pull structured location data
-      const loc = await fetchEventLocation(link)
+      // Fetch the per-event page to pull structured location + date data
+      const ev = await fetchEventDetails(link)
       // Be polite to Funcheap
       await sleep(300)
 
+      // Date precedence: ld+json startDate (most accurate), then the
+      // "M/D/YY:" prefix in the title, then the RSS pubDate as a last
+      // resort. The pubDate is when the *post* went up — useful only
+      // if there's literally nothing else.
+      const titleDate = parseTitleDate(rawTitle)
+      const startDate = ev?.startDate ?? titleDate ?? (pub ? new Date(pub).toISOString() : null)
+      const endDate   = ev?.endDate ?? null
+
       await tryInsert('funcheap', {
-        title, description: desc, url: link,
+        title: stripTitleDate(rawTitle), description: desc, url: link,
         category: 'Events', posted_by: 'funcheap',
-        available_from: pub ? new Date(pub).toISOString() : null,
-        location_address: loc?.address ?? null,
-        location_lat:    loc?.lat ?? null,
-        location_lng:    loc?.lng ?? null,
+        available_from:  startDate,
+        available_until: endDate,
+        location_address: ev?.address ?? null,
+        location_lat:    ev?.lat ?? null,
+        location_lng:    ev?.lng ?? null,
       })
     }
   } catch (e) {

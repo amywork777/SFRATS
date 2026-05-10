@@ -5,6 +5,7 @@ import TopBar from './components/TopBar'
 import SubmitForm from './components/SubmitForm'
 import About from './pages/About'
 import Agents from './pages/Agents'
+import Items from './pages/Items'
 import EditPage from './pages/EditPage'
 import ManagePage from './pages/ManagePage'
 
@@ -14,11 +15,12 @@ function App() {
       <TopBar />
       <div className="flex-1">
         <Routes>
-          {/* Events is the headline experience; Items lives at /items.
-              Each route renders the same Map component with a forced
-              category so the views never mix. */}
-          <Route path="/"      element={<Map forcedCategory="Events" />} />
-          <Route path="/items" element={<Map forcedCategory="Items"  />} />
+          {/* Events is the headline experience at /. /items is a curated
+              directory of where to actually find free stuff in SF
+              (Craigslist, Buy Nothing, Freecycle, etc) — we don't try
+              to compete with those communities, we point you at them. */}
+          <Route path="/"      element={<Map />} />
+          <Route path="/items" element={<Items />} />
 
           {/* Post a new listing */}
           <Route path="/submit/new" element={

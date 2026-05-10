@@ -1,9 +1,9 @@
 name: SFRATS scraper
 
 on:
-  # Mondays at 14:00 UTC (06:00 SF / 07:00 SF DST)
+  # Every other day at 18:00 UTC = 11:00 SF (PDT) / 10:00 SF (PST).
   schedule:
-    - cron: "0 14 * * 1"
+    - cron: "0 18 */2 * *"
   # Manual trigger from the Actions tab
   workflow_dispatch:
 
