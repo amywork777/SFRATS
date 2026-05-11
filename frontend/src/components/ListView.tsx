@@ -132,17 +132,14 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                 const time  = timeLabel(item)
                 const place = locationLabel(item)
                 const source = item.posted_by ? (SOURCE_LABEL[item.posted_by] ?? item.posted_by) : null
-                const href  = item.url || `/listing/${item.id}`
                 const isEvent = item.category === 'Events' && !!item.available_from
                 return (
                   <li key={item.id} className="relative group bg-paper-light border border-ink/20 hover:border-ink hover:shadow-stamp transition-all">
-                    {/* The whole card is a link to the source. AddToCalendar
-                        sits as a sibling overlay so its click stays out of
-                        the link's hit area. */}
+                    {/* The card itself always navigates to our own listing
+                        page. The source/external link is a separate small
+                        button so it never hijacks a tap on the card. */}
                     <a
-                      href={href}
-                      target={item.url ? '_blank' : undefined}
-                      rel={item.url ? 'noopener noreferrer' : undefined}
+                      href={`/listing/${item.id}`}
                       className="block px-5 py-4"
                     >
                       <div className="flex items-start gap-4">
@@ -180,23 +177,35 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                             </p>
                           )}
 
-                          <div className="flex items-center gap-3 mt-3">
-                            {source && (
+                          {source && (
+                            <div className="mt-3">
                               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
                                 {source}
                               </span>
-                            )}
-                            <ArrowUpRight
-                              size={14}
-                              strokeWidth={2.2}
-                              className={`ml-auto text-ink-fade opacity-0 group-hover:opacity-100 transition-opacity ${isEvent ? 'mr-[148px]' : ''}`}
-                            />
-                          </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </a>
-                    {isEvent && (
-                      <div className="absolute bottom-3 right-4 z-10">
+
+                    {/* Overlay actions: source-link (if any) + calendar.
+                        These are siblings of the <a>, so taps never reach
+                        the card link. */}
+                    <div className="absolute bottom-3 right-4 z-10 flex items-center gap-2">
+                      {item.url && (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          title="Open original source"
+                          aria-label="Open original source"
+                          className="inline-flex items-center justify-center w-9 h-9 bg-paper-light text-ink border border-ink shadow-stamp hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                        >
+                          <ArrowUpRight size={14} strokeWidth={2.2} />
+                        </a>
+                      )}
+                      {isEvent && (
                         <AddToCalendar
                           title={item.title}
                           description={item.description}
@@ -207,8 +216,8 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                           variant="secondary"
                           dropUp
                         />
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </li>
                 )
               })}
