@@ -15,6 +15,7 @@ import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 import PageTabs from './PageTabs'
+import DateChips from './DateChips'
 
 // Create custom marker icons for each category
 const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
@@ -26,6 +27,19 @@ const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description
     iconAnchor: [28, 28],
     popupAnchor: [0, -22],
   })
+}
+
+// When the user enables "Near me", pan + zoom the map so the radius
+// circle fills the view. Otherwise the circle is drawn but might sit
+// off-screen, which makes the feature feel broken on first use.
+function FitToRadius({ location, radiusKm }: { location: { lat: number; lng: number }; radiusKm: number }) {
+  const map = useMap()
+  useEffect(() => {
+    const center = L.latLng(location.lat, location.lng)
+    const bounds = center.toBounds(radiusKm * 2 * 1000) // diameter in metres
+    map.flyToBounds(bounds, { padding: [40, 40], duration: 0.6 })
+  }, [location.lat, location.lng, radiusKm, map])
+  return null
 }
 
 // Create a new component for handling markers
@@ -299,6 +313,13 @@ function Map() {
           </div>
         </div>
 
+        {/* Quick date filters — Tonight / Tomorrow / Weekend etc. */}
+        <DateChips
+          start={filters.dates.start}
+          end={filters.dates.end}
+          onChange={(dates) => handleFiltersChange({ dates })}
+        />
+
         {/* The content swaps based on view */}
         {view === 'map' ? (
           <div className="relative flex-1 min-h-0">
@@ -341,6 +362,7 @@ function Map() {
                       iconAnchor: [9, 9],
                     })}
                   />
+                  <FitToRadius location={filters.userLocation} radiusKm={filters.radiusMiles * MILE_KM} />
                 </>
               )}
             </MapContainer>
