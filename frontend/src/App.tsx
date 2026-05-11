@@ -26,10 +26,14 @@ function App() {
           <Route path="/submit/new" element={
             <div className="max-w-3xl mx-auto px-4 md:px-8 pt-24 pb-16">
               <div className="mb-8">
-                <span className="label">Post a Find</span>
+                <span className="label">Post an Event</span>
                 <h1 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-3 tracking-tight">
-                  Share something<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+                  Share an event<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
                 </h1>
+                <p className="font-display text-[17px] md:text-[19px] leading-snug text-ink-soft mt-4 max-w-2xl">
+                  A free show, a workshop, a market, a meetup. Anything in
+                  San Francisco that people can show up to.
+                </p>
                 <div className="rule-thick mt-6" />
               </div>
               <SubmitForm />

@@ -99,6 +99,8 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
       if (!submitData.title.trim()) throw new Error('Add a title — even a short one.')
       if (!submitData.location_lat || !submitData.location_lng || !submitData.location_address)
         throw new Error('Pick a location on the map or search for an address.')
+      if (submitData.category === 'Events' && !submitData.available_from)
+        throw new Error('Events need a start date — when does it kick off?')
 
       let data: DbItem
       if (editMode && initialData?.id) {
@@ -121,6 +123,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
 
   // ──────────── SUCCESS SCREEN ────────────
   if (submittedItem) {
+    const wasEvent = submittedItem.category === 'Events'
     return (
       <div className="space-y-7">
         <div>
@@ -128,11 +131,12 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             <Check size={12} strokeWidth={2.5} /> Posted
           </span>
           <h2 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-2 tracking-tight">
-            Listing live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+            {wasEvent ? 'Event live' : 'Listing live'}<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
-            Your post is on the map. Anyone in San Francisco can see it now —
-            and anyone can update or take it down when it's gone.
+            {wasEvent
+              ? "Your event is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's done."
+              : "Your post is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's gone."}
           </p>
         </div>
 
@@ -170,18 +174,20 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
     )
   }
 
+  const isEvent = formData.category === 'Events'
+
   // ──────────── FORM ────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-7">
       {/* ESSENTIAL: TITLE */}
       <label className="block">
-        <span className="label">What is it?</span>
+        <span className="label">{isEvent ? 'Event name' : 'What is it?'}</span>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => update('title', e.target.value)}
           className={`mt-1.5 ${inputCls} font-display text-[20px]`}
-          placeholder="Free couch, must take today"
+          placeholder={isEvent ? 'Pottery night at Fort Mason' : 'Free couch, must take today'}
           autoFocus
           required
         />
@@ -211,6 +217,34 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             )
           })}
         </div>
+        {!isEvent && (
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade mt-2">
+            Free physical stuff? Most of it lives on <a href="/items" className="text-bridge-600 hover:text-bridge-700 underline underline-offset-4">/items</a> via established communities — but you can also post here.
+          </p>
+        )}
+      </div>
+
+      {/* ESSENTIAL: WHEN (events need a date; items get a default of "now") */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="block">
+          <span className="label">{isEvent ? 'Starts' : 'Available from'}</span>
+          <input
+            type="datetime-local"
+            value={formData.available_from.slice(0, 16)}
+            onChange={(e) => update('available_from', e.target.value)}
+            className={`mt-1.5 ${inputCls} font-mono`}
+            required={isEvent}
+          />
+        </label>
+        <label className="block">
+          <span className="label">{isEvent ? 'Ends' : 'Available until'}</span>
+          <input
+            type="datetime-local"
+            value={formData.available_until?.slice(0, 16) || ''}
+            onChange={(e) => update('available_until', e.target.value || null)}
+            className={`mt-1.5 ${inputCls} font-mono`}
+          />
+        </label>
       </div>
 
       {/* ESSENTIAL: LOCATION */}
@@ -238,7 +272,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
           className="w-full flex items-center justify-between py-2 group"
         >
           <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute group-hover:text-ink transition-colors">
-            {moreOpen ? '— Hide details' : '+ Add description, photos, dates, link'}
+            {moreOpen ? '— Hide details' : '+ Add description, photos, link, contact'}
           </span>
           <span className="font-mono text-[10px] text-ink-fade">
             {moreOpen ? 'optional' : 'all optional'}
@@ -255,7 +289,9 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
                 onChange={(e) => update('description', e.target.value)}
                 rows={3}
                 className={`mt-1.5 ${inputCls}`}
-                placeholder="Comfy 3-seater, has a small tear on the arm…"
+                placeholder={isEvent
+                  ? 'Drop-in from 6–9pm, BYO clay welcome…'
+                  : 'Comfy 3-seater, small tear on the arm…'}
               />
             </label>
 
@@ -319,28 +355,6 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
               )}
             </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="label">Available From</span>
-                <input
-                  type="datetime-local"
-                  value={formData.available_from.slice(0, 16)}
-                  onChange={(e) => update('available_from', e.target.value)}
-                  className={`mt-1.5 ${inputCls} font-mono`}
-                />
-              </label>
-              <label className="block">
-                <span className="label">Available Until</span>
-                <input
-                  type="datetime-local"
-                  value={formData.available_until?.slice(0, 16) || ''}
-                  onChange={(e) => update('available_until', e.target.value || null)}
-                  className={`mt-1.5 ${inputCls} font-mono`}
-                />
-              </label>
-            </div>
-
             {/* Link & contact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block">
@@ -398,7 +412,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
               : 'hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)]'
           }`}
         >
-          {submitting ? 'Posting…' : editMode ? 'Save Changes' : 'Post Listing'}
+          {submitting ? 'Posting…' : editMode ? 'Save changes' : isEvent ? 'Post event' : 'Post item'}
         </button>
         {!editMode && (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade text-center mt-2">

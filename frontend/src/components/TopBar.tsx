@@ -46,10 +46,10 @@ export default function TopBar() {
           <button
             onClick={() => navigate('/submit/new')}
             className="group inline-flex items-center justify-center gap-1.5 bg-bridge-500 text-paper-light w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 md:px-4 md:py-2 border border-ink shadow-stamp hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all font-mono text-[10px] md:text-[11px] tracking-[0.14em] uppercase font-semibold shrink-0"
-            aria-label="Post a find"
+            aria-label="Post an event"
           >
             <Plus size={14} strokeWidth={2.5} />
-            <span className="hidden md:inline">Post a Find</span>
+            <span className="hidden md:inline">Post an Event</span>
             <span className="hidden sm:inline md:hidden">Post</span>
           </button>
         </nav>
