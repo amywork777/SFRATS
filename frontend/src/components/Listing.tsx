@@ -7,6 +7,7 @@ import 'leaflet/dist/leaflet.css'
 import { useState } from 'react'
 import { Pencil, ArrowUpRight } from 'lucide-react'
 import EditListing from './EditListing'
+import AddToCalendar from './AddToCalendar'
 import { api } from '../services/api'
 import { inferEmoji } from '../utils/categoryIcons'
 
@@ -68,6 +69,16 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
             itemId={listing.id}
             initialCount={listing.interest_count}
           />
+          {listing.category === 'Events' && listing.available_from && (
+            <AddToCalendar
+              title={listing.title}
+              description={listing.description}
+              location={listing.location_address}
+              startsAt={listing.available_from}
+              endsAt={listing.available_until}
+              url={typeof window !== 'undefined' ? `${window.location.origin}/listing/${listing.id}` : undefined}
+            />
+          )}
         </div>
         <div className="rule-thick" />
       </header>
