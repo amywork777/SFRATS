@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
 import EditListing from './EditListing'
+import AddToCalendar from './AddToCalendar'
 import { inferEmoji } from '../utils/categoryIcons'
 
 interface ListingPreviewProps {
@@ -112,39 +113,54 @@ function ListingPreview({
 
       {/* Actions */}
       {showActions && (
-        <div className="flex gap-2 pt-2">
-          <button
-            onClick={handleViewDetails}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-ink text-paper-light px-3 py-2.5 sm:py-1.5 border border-ink font-mono text-[11px] sm:text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
-          >
-            Open <ArrowRight size={12} strokeWidth={2.5} />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }}
-            className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
-            title="Edit listing"
-            aria-label="Edit listing"
-          >
-            <Pencil size={14} strokeWidth={2.2} />
-          </button>
-          <button
-            onClick={handleShare}
-            className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
-            title="Copy link"
-            aria-label="Copy link"
-          >
-            {copied ? <Check size={14} strokeWidth={2.5} /> : <Share2 size={14} strokeWidth={2.2} />}
-          </button>
-          {showDirections && location_lat && location_lng && (
-            <button
-              onClick={openInGoogleMaps}
-              className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
-              title="Open in Google Maps"
-              aria-label="Open in Google Maps"
-            >
-              <MapIcon size={14} strokeWidth={2.2} />
-            </button>
+        <div className="pt-2 space-y-2">
+          {category === 'Events' && available_from && (
+            <AddToCalendar
+              title={title}
+              description={description}
+              location={location_address}
+              startsAt={available_from}
+              endsAt={available_until}
+              url={typeof window !== 'undefined' ? `${window.location.origin}/listing/${id}` : undefined}
+              variant="primary"
+              fullWidth
+              dropUp
+            />
           )}
+          <div className="flex gap-2">
+            <button
+              onClick={handleViewDetails}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-ink text-paper-light px-3 py-2.5 sm:py-1.5 border border-ink font-mono text-[11px] sm:text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
+            >
+              Open <ArrowRight size={12} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowEditModal(true) }}
+              className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
+              title="Edit listing"
+              aria-label="Edit listing"
+            >
+              <Pencil size={14} strokeWidth={2.2} />
+            </button>
+            <button
+              onClick={handleShare}
+              className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
+              title="Copy link"
+              aria-label="Copy link"
+            >
+              {copied ? <Check size={14} strokeWidth={2.5} /> : <Share2 size={14} strokeWidth={2.2} />}
+            </button>
+            {showDirections && location_lat && location_lng && (
+              <button
+                onClick={openInGoogleMaps}
+                className="px-3 sm:px-2 py-2.5 sm:py-1.5 bg-paper-light text-ink border border-ink hover:bg-paper transition-colors"
+                title="Open in Google Maps"
+                aria-label="Open in Google Maps"
+              >
+                <MapIcon size={14} strokeWidth={2.2} />
+              </button>
+            )}
+          </div>
         </div>
       )}
 

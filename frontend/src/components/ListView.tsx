@@ -3,6 +3,7 @@ import { format, isToday, isTomorrow, isYesterday } from 'date-fns'
 import { ArrowUpRight } from 'lucide-react'
 import { DbItem } from '../types/supabase'
 import { inferEmoji } from '../utils/categoryIcons'
+import AddToCalendar from './AddToCalendar'
 
 interface ListViewProps {
   items: DbItem[]
@@ -132,13 +133,17 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                 const place = locationLabel(item)
                 const source = item.posted_by ? (SOURCE_LABEL[item.posted_by] ?? item.posted_by) : null
                 const href  = item.url || `/listing/${item.id}`
+                const isEvent = item.category === 'Events' && !!item.available_from
                 return (
-                  <li key={item.id}>
+                  <li key={item.id} className="relative group bg-paper-light border border-ink/20 hover:border-ink hover:shadow-stamp transition-all">
+                    {/* The whole card is a link to the source. AddToCalendar
+                        sits as a sibling overlay so its click stays out of
+                        the link's hit area. */}
                     <a
                       href={href}
                       target={item.url ? '_blank' : undefined}
                       rel={item.url ? 'noopener noreferrer' : undefined}
-                      className="group block bg-paper-light border border-ink/20 px-5 py-4 hover:border-ink hover:shadow-stamp transition-all"
+                      className="block px-5 py-4"
                     >
                       <div className="flex items-start gap-4">
                         <span className="shrink-0 inline-flex items-center justify-center w-11 h-11 text-[22px] bg-paper border border-ink/15">
@@ -146,7 +151,7 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                         </span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-3 mb-1">
-                            <h3 className="font-display font-bold text-[18px] leading-tight text-ink">
+                            <h3 className="font-display font-bold text-[18px] leading-tight text-ink pr-1">
                               {item.title}
                             </h3>
                             <span className="shrink-0 inline-flex items-center px-2.5 py-0.5 bg-bridge-50 text-bridge-700 border border-bridge-200 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold">
@@ -184,12 +189,26 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                             <ArrowUpRight
                               size={14}
                               strokeWidth={2.2}
-                              className="ml-auto text-ink-fade opacity-0 group-hover:opacity-100 transition-opacity"
+                              className={`ml-auto text-ink-fade opacity-0 group-hover:opacity-100 transition-opacity ${isEvent ? 'mr-[148px]' : ''}`}
                             />
                           </div>
                         </div>
                       </div>
                     </a>
+                    {isEvent && (
+                      <div className="absolute bottom-3 right-4 z-10">
+                        <AddToCalendar
+                          title={item.title}
+                          description={item.description}
+                          location={item.location_address}
+                          startsAt={item.available_from!}
+                          endsAt={item.available_until}
+                          url={typeof window !== 'undefined' ? `${window.location.origin}/listing/${item.id}` : undefined}
+                          variant="secondary"
+                          dropUp
+                        />
+                      </div>
+                    )}
                   </li>
                 )
               })}

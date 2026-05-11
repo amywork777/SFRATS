@@ -8,6 +8,12 @@ interface AddToCalendarProps {
   startsAt: string | Date
   endsAt?: string | Date | null
   url?: string | null
+  /** "primary" = filled orange CTA, "secondary" = outlined paper button */
+  variant?: 'primary' | 'secondary'
+  /** Open the menu upward instead of down (useful inside bottom sheets) */
+  dropUp?: boolean
+  /** Stretch the button to fill its container */
+  fullWidth?: boolean
 }
 
 const DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000
@@ -110,13 +116,19 @@ export default function AddToCalendar(props: AddToCalendarProps) {
     setOpen(false)
   }
 
+  const variant   = props.variant   ?? 'secondary'
+  const fullWidth = props.fullWidth ?? false
+  const buttonTone = variant === 'primary'
+    ? 'bg-bridge-500 text-paper-light'
+    : 'bg-paper-light text-ink'
+
   return (
-    <div ref={ref} className="relative inline-block">
+    <div ref={ref} className={`relative ${fullWidth ? 'block w-full' : 'inline-block'}`}>
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v) }}
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 bg-paper-light text-ink border border-ink shadow-stamp px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+        className={`${fullWidth ? 'w-full justify-center' : ''} inline-flex items-center gap-1.5 ${buttonTone} border border-ink shadow-stamp px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all`}
       >
         <Calendar size={13} strokeWidth={2.2} />
         Add to calendar
@@ -124,7 +136,7 @@ export default function AddToCalendar(props: AddToCalendarProps) {
       </button>
 
       {open && (
-        <div className="absolute z-50 left-0 mt-1.5 w-[240px] bg-paper-light border border-ink shadow-stamp">
+        <div className={`absolute z-50 left-0 ${props.dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-[240px] bg-paper-light border border-ink shadow-stamp`}>
           <a
             href={buildGoogleUrl(props, start, safeEnd)}
             target="_blank"
