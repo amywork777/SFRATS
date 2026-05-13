@@ -284,7 +284,7 @@ function Map() {
         {/* Top bar: page tabs (left) + view toggle (right). The two tabs
             navigate between /events and /items — events is the headline,
             items is its own dedicated map. */}
-        <div className="flex items-center justify-between gap-3 px-3 md:px-5 py-2.5 bg-paper-light border-b border-ink/15 shrink-0">
+        <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2 bg-paper-light shrink-0">
           <PageTabs active="events" />
 
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">

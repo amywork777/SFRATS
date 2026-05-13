@@ -6,10 +6,10 @@ interface PageTabsProps {
 }
 
 const tabClass = (active: boolean) =>
-  `px-3.5 py-2 md:py-1.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
+  `px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border border-ink transition-colors whitespace-nowrap ${
     active
-      ? 'bg-ink text-paper-light border-ink'
-      : 'bg-paper-light text-ink-mute border-ink/20 hover:text-ink hover:border-ink'
+      ? 'bg-ink text-paper-light'
+      : 'bg-paper-light text-ink-mute hover:text-ink hover:bg-paper'
   }`
 
 export default function PageTabs({ active, className = '' }: PageTabsProps) {

@@ -40,7 +40,7 @@ export default function DateChips({ start, end, onChange }: DateChipsProps) {
   const current = sig({ start, end })
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto px-3 md:px-5 py-2 bg-paper border-b border-ink/15">
+    <div className="flex items-center gap-2 overflow-x-auto px-3 md:px-5 pb-2.5 bg-paper-light border-b border-ink/15">
       {PRESETS.map(p => {
         const range = p.range()
         const active = sig(range) === current
@@ -50,10 +50,10 @@ export default function DateChips({ start, end, onChange }: DateChipsProps) {
             type="button"
             onClick={() => onChange(range)}
             aria-pressed={active}
-            className={`shrink-0 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold border transition-colors whitespace-nowrap ${
+            className={`shrink-0 px-4 py-2.5 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold border border-ink transition-colors whitespace-nowrap ${
               active
-                ? 'bg-bridge-500 text-paper-light border-ink shadow-stamp'
-                : 'bg-paper-light text-ink-mute border-ink/20 hover:text-ink hover:border-ink'
+                ? 'bg-bridge-500 text-paper-light shadow-stamp'
+                : 'bg-paper-light text-ink-mute hover:text-ink hover:bg-paper'
             }`}
           >
             {p.label}

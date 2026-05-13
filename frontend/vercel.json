@@ -3,11 +3,6 @@
     { "source": "/listing/:id(\\d+)", "destination": "/api/listing?id=:id" },
     { "source": "/(.*)",              "destination": "/index.html" }
   ],
-  "functions": {
-    "api/listing.js": {
-      "includeFiles": "dist/index.html"
-    }
-  },
   "buildCommand": "CI=false GENERATE_SOURCEMAP=false vite build",
   "outputDirectory": "dist",
   "framework": "vite",

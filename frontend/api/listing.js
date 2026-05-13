@@ -1,28 +1,17 @@
 // Serverless function that injects per-listing Open Graph meta tags
 // into the SPA shell. vercel.json rewrites /listing/:id → /api/listing?id=:id
-// so social-media crawlers see real event metadata instead of the
-// site-wide default. Browsers boot the React app exactly as before.
-
-import { readFile } from 'node:fs/promises'
-import { join } from 'node:path'
-import { format } from 'date-fns'
+// so social-media crawlers see real event metadata. Browsers boot the
+// React app exactly as before.
+//
+// The shell is fetched from the same deployment's static /index.html
+// rather than read off disk — Vercel's lambda fs layout varies, but
+// the static asset always lives at the public URL.
 
 const SUPABASE_URL = 'https://uflkltmvzvhziysheccd.supabase.co'
 const SUPABASE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmbGtsdG12enZoeml5c2hlY2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMTEzNTYsImV4cCI6MjA5Mzg4NzM1Nn0.4rnQa5rCJNzmnfzjUg0B-ecJ-dxCnJamrA9tu8eiBWU'
 
 const DEFAULT_IMAGE = 'https://sfrats.com/sfrats-logo.png'
-
-// Cache the built shell across warm invocations — it doesn't change
-// between requests, only between deploys.
-let shellPromise = null
-
-async function getShell() {
-  if (!shellPromise) {
-    shellPromise = readFile(join(process.cwd(), 'dist', 'index.html'), 'utf-8')
-  }
-  return shellPromise
-}
 
 function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -34,18 +23,28 @@ function truncate(s, n) {
   return trimmed.length > n ? trimmed.slice(0, n - 1).trimEnd() + '…' : trimmed
 }
 
+// "Sat May 11 · 6:00pm" without pulling in date-fns.
+function formatEventDate(iso) {
+  try {
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ''
+    const day  = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'America/Los_Angeles' })
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' }).toLowerCase().replace(/\s/g, '')
+    return `${day} · ${time}`
+  } catch {
+    return ''
+  }
+}
+
 function buildOgTags(item, canonicalUrl) {
   const isEvent = item.category === 'Events'
   const emoji = item.emoji || (isEvent ? '📅' : '📦')
   const title = `${emoji} ${item.title}`.trim()
 
-  // Description: "Sat May 11 · 6:00pm · Fort Mason — <listing description>"
   const parts = []
   if (isEvent && item.available_from) {
-    try {
-      const d = new Date(item.available_from)
-      parts.push(format(d, 'EEE MMM d · h:mma').toLowerCase())
-    } catch {/* fallthrough */}
+    const d = formatEventDate(item.available_from)
+    if (d) parts.push(d)
   }
   if (item.location_address) {
     parts.push(item.location_address.replace(/,\s*San Francisco.*$/i, '').slice(0, 60))
@@ -72,7 +71,6 @@ function buildOgTags(item, canonicalUrl) {
     <title>${escapeAttr(title)} · SF Rats</title>`.trim()
 }
 
-// Strip the default tags + title so we can replace them cleanly.
 function stripDefaults(html) {
   return html
     .replace(/<title>[^<]*<\/title>/, '')
@@ -81,37 +79,56 @@ function stripDefaults(html) {
     .replace(/<meta name="twitter:[^"]+"[^>]*>/g, '')
 }
 
+async function fetchShell(host) {
+  const url = `https://${host}/index.html`
+  const r = await fetch(url, { headers: { 'cache-control': 'no-cache' } })
+  if (!r.ok) throw new Error(`shell fetch failed: ${r.status}`)
+  return r.text()
+}
+
+async function fetchListing(id) {
+  if (!/^\d+$/.test(id)) return null
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/items?id=eq.${id}&select=id,title,description,category,emoji,location_address,available_from,available_until,images`,
+      { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
+    )
+    if (!r.ok) return null
+    const rows = await r.json()
+    return rows[0] ?? null
+  } catch {
+    return null
+  }
+}
+
 export default async function handler(req, res) {
-  const id = String(req.query?.id ?? '').trim()
+  const id   = String(req.query?.id ?? '').trim()
   const host = req.headers['x-forwarded-host'] || req.headers.host || 'sfrats.com'
   const canonical = `https://${host}/listing/${id}`
 
-  let html = await getShell()
-  let listing = null
+  try {
+    const [shell, listing] = await Promise.all([fetchShell(host), fetchListing(id)])
 
-  if (/^\d+$/.test(id)) {
-    try {
-      const r = await fetch(
-        `${SUPABASE_URL}/rest/v1/items?id=eq.${id}&select=id,title,description,category,emoji,location_address,available_from,available_until,images`,
-        { headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` } }
-      )
-      if (r.ok) {
-        const rows = await r.json()
-        listing = rows[0] ?? null
-      }
-    } catch (err) {
-      // Not fatal — fall back to default tags.
-      console.error('listing fetch failed', err)
+    let html = shell
+    if (listing) {
+      html = stripDefaults(html).replace('</head>', `${buildOgTags(listing, canonical)}\n  </head>`)
     }
-  }
 
-  if (listing) {
-    html = stripDefaults(html).replace('</head>', `${buildOgTags(listing, canonical)}\n  </head>`)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900')
+    res.status(200).send(html)
+  } catch (err) {
+    console.error('og listing handler failed', err)
+    // Don't crash. Redirect into the SPA via the homepage with a hint
+    // — the React router will pick up the actual /listing/:id path
+    // once the user is back in the app.
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.status(200).send(`<!doctype html>
+<html><head>
+<meta http-equiv="refresh" content="0;url=/" />
+<title>SF Rats</title>
+</head><body>
+<script>location.replace('/listing/${id}'.replace(/[^/a-z0-9-]/gi,''))</script>
+</body></html>`)
   }
-
-  res.setHeader('Content-Type', 'text/html; charset=utf-8')
-  // Short cache so updates surface quickly but bursts of crawler traffic
-  // don't hit Supabase each time.
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=900')
-  res.status(200).send(html)
 }
