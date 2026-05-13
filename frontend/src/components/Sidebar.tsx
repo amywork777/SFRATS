@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search } from 'lucide-react'
 import DateFilter from './Sidebar/DateFilter'
 import NearMe from './NearMe'
+import { readUrlFilters } from '../utils/urlFilters'
 
 export interface SidebarFilters {
   search: string
@@ -16,11 +17,14 @@ interface SidebarProps {
 }
 
 function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
-  const [filters, setFilters] = useState<SidebarFilters>({
-    search: '',
-    dates: { start: null, end: null },
-    userLocation: null,
-    radiusMiles: 2,
+  const [filters, setFilters] = useState<SidebarFilters>(() => {
+    const u = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { search: '' }
+    return {
+      search: u.search,
+      dates: { start: null, end: null },
+      userLocation: null,
+      radiusMiles: 2,
+    }
   })
 
   const update = (next: typeof filters) => {

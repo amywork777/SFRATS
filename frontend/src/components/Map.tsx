@@ -16,6 +16,7 @@ import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 import PageTabs from './PageTabs'
 import DateChips from './DateChips'
+import { presetToRange, rangeToPreset, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
 // Create custom marker icons for each category
 const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
@@ -196,18 +197,33 @@ function Map() {
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Filter state initializes from the URL so links like
+  // /?d=tonight&q=comedy bring you straight to a pre-filtered view.
   const [filters, setFilters] = useState<{
     search: string;
     dates: { start: Date | null; end: Date | null };
     userLocation: { lat: number; lng: number } | null;
     radiusMiles: number;
-  }>({
-    search: '',
-    dates: { start: null, end: null },
-    userLocation: null,
-    radiusMiles: 2,
+  }>(() => {
+    const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, search: '' }
+    return {
+      search: initial.search,
+      dates: initial.preset ? presetToRange(initial.preset) : { start: null, end: null },
+      userLocation: null,
+      radiusMiles: 2,
+    }
   })
   const [view, setView] = useState<'map' | 'list'>('map')
+
+  // Keep the URL in sync with the filters that make sense to share —
+  // date preset + search. Location / radius stay local.
+  useEffect(() => {
+    writeUrlFilters({
+      preset: rangeToPreset(filters.dates),
+      search: filters.search,
+    })
+  }, [filters.dates, filters.search])
 
   const fetchItems = useCallback(async () => {
     try {

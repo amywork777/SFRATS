@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { X, SlidersHorizontal } from 'lucide-react'
 import NearMe from './NearMe'
+import { readUrlFilters } from '../utils/urlFilters'
 
 interface MobileNavProps {
   onFiltersChange: (filters: any) => void
 }
 
 export default function MobileNav({ onFiltersChange }: MobileNavProps) {
+  const initialSearch = typeof window !== 'undefined' ? readUrlFilters(window.location.search).search : ''
   const [isOpen, setIsOpen] = useState(false)
   const [timeRange, setTimeRange] = useState<string>('all')
   const [startDate, setStartDate] = useState('')
@@ -93,6 +95,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               <input
                 type="text"
                 placeholder="couches, pizza, plants…"
+                defaultValue={initialSearch}
                 onChange={(e) => onFiltersChange({ search: e.target.value })}
                 className="mt-2 w-full px-3 py-2.5 bg-paper border border-ink/30 font-mono text-[14px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:border-ink focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
               />

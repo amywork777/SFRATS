@@ -511,7 +511,10 @@ async function scrapeEventbrite() {
   }
 
   await scrapeFuncheap()
-  await scrapeReddit()
+  // Reddit r/sanfrancisco search for "free" is too noisy — most hits
+  // are conversation posts, not events. Keeping the function around
+  // in case we want to point it at a tighter query later.
+  // await scrapeReddit()
   await scrapeEventbrite()
 
   const summary =
