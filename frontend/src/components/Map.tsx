@@ -11,23 +11,97 @@ import { inferEmoji } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
-import { Map as MapIconLucide, List as ListIcon } from 'lucide-react'
+import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react'
+import { format } from 'date-fns'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 import PageTabs from './PageTabs'
 import DateChips from './DateChips'
 import { presetToRange, rangeToPreset, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
-// Create custom marker icons for each category
-const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => {
+// Create custom marker icons for each category. When several events share a
+// venue they collapse into one pin (see groupByVenue) — `count` renders a
+// badge so people know there's more than one event behind it.
+const createMarkerIcon = (
+  item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>,
+  count: number,
+) => {
   const glyph = item.emoji || inferEmoji(item.title, item.description ?? null, item.category)
+  const badge = count > 1 ? `<span class="marker-count">${count}</span>` : ''
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span></div>`,
+    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span>${badge}</div>`,
     iconSize: [56, 56],
     iconAnchor: [28, 28],
     popupAnchor: [0, -22],
   })
+}
+
+// Events frequently share a venue, which geocodes to identical coordinates.
+// Leaflet would stack those pins exactly on top of each other — that both
+// piles their drop shadows into a dark blob and makes every event but the
+// top one unclickable. Collapse co-located events into a single pin instead.
+type Venue = { lat: number; lng: number; items: DbItem[] }
+
+const groupByVenue = (items: DbItem[]): Venue[] => {
+  // NB: a plain object, not a Map — the `Map` identifier is shadowed by this
+  // file's own `Map` component, so `new Map()` wouldn't resolve to the builtin.
+  const venues: Record<string, Venue> = {}
+  for (const item of items) {
+    if (item.location_lat == null || item.location_lng == null) continue
+    // Round to ~1m so one address resolves to one pin.
+    const key = `${item.location_lat.toFixed(5)},${item.location_lng.toFixed(5)}`
+    const existing = venues[key]
+    if (existing) existing.items.push(item)
+    else venues[key] = { lat: item.location_lat, lng: item.location_lng, items: [item] }
+  }
+  return Object.values(venues)
+}
+
+// Popup body for a venue that hosts more than one event: a compact, scrollable
+// list. Tapping a row opens that event's detail page.
+function VenueListPopup({ items }: { items: DbItem[] }) {
+  const address = items.find(i => i.location_address)?.location_address
+  return (
+    <div className="w-[260px]">
+      <div className="mb-2">
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
+          {items.length} events here
+        </span>
+        {address && (
+          <h3 className="font-display font-bold text-[15px] leading-tight text-ink mt-0.5">
+            {address}
+          </h3>
+        )}
+      </div>
+      <div className="rule-hair mb-2" />
+      <div className="max-h-[280px] overflow-y-auto -mr-1 pr-1 space-y-1.5">
+        {items.map(it => {
+          const glyph = it.emoji || inferEmoji(it.title, it.description ?? null, it.category)
+          return (
+            <button
+              key={it.id}
+              onClick={() => { window.location.href = `/listing/${it.id}` }}
+              className="w-full flex items-start gap-2 text-left p-2 border border-ink/20 bg-paper-light hover:bg-paper hover:border-ink/40 transition-colors"
+            >
+              <span className="inline-flex items-center justify-center w-7 h-7 text-[15px] bg-paper border border-ink/30 leading-none shrink-0">
+                {glyph}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display font-bold text-[13px] leading-tight text-ink truncate">
+                  {it.title}
+                </span>
+                <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
+                  {format(new Date(it.available_from), 'MMM d · h:mm a')}
+                </span>
+              </span>
+              <ArrowRight size={13} strokeWidth={2.5} className="text-ink-mute mt-1 shrink-0" />
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 // When the user enables "Near me", pan + zoom the map so the radius
@@ -62,14 +136,14 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
       return
     }
 
-    // Add new markers
-    items.forEach(item => {
-      if (item.location_lat && item.location_lng) {
-        const marker = L.marker([item.location_lat, item.location_lng], {
-          icon: createMarkerIcon(item)
-        })
-        
-        marker.on('click', () => {
+    // Add new markers — one per venue, so co-located events don't stack.
+    groupByVenue(items).forEach(venue => {
+      const venueKey = venue.items[0].id
+      const marker = L.marker([venue.lat, venue.lng], {
+        icon: createMarkerIcon(venue.items[0], venue.items.length)
+      })
+
+      marker.on('click', () => {
           // Close any existing popups first
           Object.values(popupRootsRef.current).forEach(root => {
             root.unmount()
@@ -87,7 +161,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
           // bottom sheet on phones (see [id^="popup-"][data-mobile] in index.css).
           const isMobile = window.matchMedia('(max-width: 767px)').matches
           const popupDiv = document.createElement('div')
-          popupDiv.id = `popup-${item.id}`
+          popupDiv.id = `popup-${venueKey}`
           popupDiv.className = 'fixed z-[2000] bg-white rounded-lg shadow-lg p-4'
           if (isMobile) popupDiv.dataset.mobile = 'true'
           document.body.appendChild(popupDiv)
@@ -106,7 +180,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
 
           // Create root and store it
           const root = createRoot(popupDiv)
-          popupRootsRef.current[item.id] = root
+          popupRootsRef.current[venueKey] = root
 
           // Render content
           root.render(
@@ -115,27 +189,31 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
                 onClick={() => {
                   root.unmount()
                   document.body.removeChild(popupDiv)
-                  delete popupRootsRef.current[item.id]
+                  delete popupRootsRef.current[venueKey]
                 }}
                 aria-label="Close"
                 className="absolute top-1 right-1 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
-              <ListingPreview 
-                {...{
-                  ...item,
-                  available_from: new Date(item.available_from)
-                }}
-                showDirections={true}
-                inPopup={true}
-                onViewDetails={() => {
-                  root.unmount()
-                  document.body.removeChild(popupDiv)
-                  delete popupRootsRef.current[item.id]
-                  window.location.href = `/listing/${item.id}`
-                }}
-              />
+              {venue.items.length === 1 ? (
+                <ListingPreview
+                  {...{
+                    ...venue.items[0],
+                    available_from: new Date(venue.items[0].available_from)
+                  }}
+                  showDirections={true}
+                  inPopup={true}
+                  onViewDetails={() => {
+                    root.unmount()
+                    document.body.removeChild(popupDiv)
+                    delete popupRootsRef.current[venueKey]
+                    window.location.href = `/listing/${venue.items[0].id}`
+                  }}
+                />
+              ) : (
+                <VenueListPopup items={venue.items} />
+              )}
             </div>
           )
 
@@ -144,14 +222,13 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
           map.on('move', placeNearMarker)
           map.on('zoom', placeNearMarker)
 
-          cleanupFnsRef.current[item.id] = () => {
+          cleanupFnsRef.current[venueKey] = () => {
             map.off('move', placeNearMarker)
             map.off('zoom', placeNearMarker)
           }
         })
 
-        marker.addTo(map)
-      }
+      marker.addTo(map)
     })
 
     return () => {
