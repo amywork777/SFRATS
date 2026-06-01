@@ -56,6 +56,7 @@ const counts = {
   funcheap:   { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
   reddit:     { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
   eventbrite: { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
+  dothebay:   { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
 }
 
 const PER_RUN_CAP = 30
@@ -234,6 +235,7 @@ async function tryInsert(source, row) {
     location_lat: row.location_lat ?? null,
     location_lng: row.location_lng ?? null,
     available_from: row.available_from ?? null,
+    available_until: row.available_until ?? null,
     status: 'available',
     url: row.url,
     posted_by: row.posted_by,
@@ -433,11 +435,23 @@ async function scrapeReddit() {
   }
 }
 
-// ──────────────── 3) Eventbrite SF free events HTML ────────────────
-async function scrapeEventbrite() {
-  console.log('--- Eventbrite ---')
+// ──────────────── 3) JSON-LD event-listing pages ────────────────
+// Eventbrite, DoTheBay, and similar aggregators all embed schema.org Event
+// blocks in their listing HTML, so one parser serves them all. `source` is
+// both the counts key and the posted_by tag.
+const isLdEvent = (c) =>
+  c?.['@type'] === 'Event' || (Array.isArray(c?.['@type']) && c['@type'].includes('Event'))
+
+const toIsoOrNull = (v) => {
+  if (!v) return null
+  const d = new Date(v)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
+async function scrapeLdJsonPage(source, pageUrl) {
+  console.log(`--- ${source} ---`)
   try {
-    const res = await fetch('https://www.eventbrite.com/d/ca--san-francisco/free--events/', {
+    const res = await fetch(pageUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; sfrats-scraper/1.0)',
         'Accept': 'text/html,application/xhtml+xml',
@@ -448,47 +462,32 @@ async function scrapeEventbrite() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const html = await res.text()
 
-    // Pull every application/ld+json block, find @type=Event entries.
-    const ldRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g
-    const events = []
-    let m
-    while ((m = ldRe.exec(html)) !== null) {
-      try {
-        const j = JSON.parse(m[1])
-        const candidates = Array.isArray(j) ? j : [j]
-        for (const c of candidates) {
-          if (c?.['@type'] === 'Event' && c.url && c.name) events.push(c)
-          if (c?.['@graph']) {
-            for (const g of c['@graph']) {
-              if (g?.['@type'] === 'Event' && g.url && g.name) events.push(g)
-            }
-          }
-        }
-      } catch { /* tolerate one bad block */ }
-    }
+    // extractLdJson already flattens @graph for us.
+    const events = extractLdJson(html).filter(c => isLdEvent(c) && c.url && c.name)
+    counts[source].fetched = events.length
 
-    counts.eventbrite.fetched = events.length
     for (const ev of events) {
-      if (totalInserted >= PER_RUN_CAP || counts.eventbrite.inserted >= PER_SOURCE_CAP) break
+      if (totalInserted >= PER_RUN_CAP || counts[source].inserted >= PER_SOURCE_CAP) break
       const loc = ev.location ?? {}
       const addr = loc.address ?? {}
       const address = [loc.name, addr.streetAddress, addr.addressLocality, addr.postalCode]
         .filter(Boolean).join(', ')
-      await tryInsert('eventbrite', {
+      await tryInsert(source, {
         title: stripHtml(ev.name).slice(0, 255),
         description: stripHtml(ev.description || '').slice(0, 240) || null,
         url: ev.url,
         category: 'Events',
-        posted_by: 'eventbrite',
-        available_from: ev.startDate ? new Date(ev.startDate).toISOString() : null,
+        posted_by: source,
+        available_from:  toIsoOrNull(ev.startDate),
+        available_until: toIsoOrNull(ev.endDate),
         location_address: address || null,
-        location_lat: addr.latitude ? parseFloat(addr.latitude) : (loc.geo?.latitude  ? parseFloat(loc.geo.latitude)  : null),
+        location_lat: addr.latitude  ? parseFloat(addr.latitude)  : (loc.geo?.latitude  ? parseFloat(loc.geo.latitude)  : null),
         location_lng: addr.longitude ? parseFloat(addr.longitude) : (loc.geo?.longitude ? parseFloat(loc.geo.longitude) : null),
       })
     }
   } catch (e) {
-    console.error('Eventbrite error:', e.message)
-    counts.eventbrite.error++
+    console.error(`${source} error:`, e.message)
+    counts[source].error++
   }
 }
 
@@ -516,7 +515,8 @@ async function scrapeEventbrite() {
   // are conversation posts, not events. Keeping the function around
   // in case we want to point it at a tighter query later.
   // await scrapeReddit()
-  await scrapeEventbrite()
+  await scrapeLdJsonPage('eventbrite', 'https://www.eventbrite.com/d/ca--san-francisco/free--events/')
+  await scrapeLdJsonPage('dothebay', 'https://dothebay.com/free')
 
   const summary =
     `=== SFRATS scrape summary ===\n` +
