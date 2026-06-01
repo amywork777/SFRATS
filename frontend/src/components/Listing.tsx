@@ -1,6 +1,6 @@
 import InterestButton from './InterestButton'
 import { DbItem } from '../types/supabase'
-import { format } from 'date-fns'
+import { formatEventDate } from '../utils/dates'
 import { MapContainer, TileLayer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -41,8 +41,8 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
     }
   }
 
-  const formatDate = (date: string | Date) =>
-    format(new Date(date), 'MMM d, yyyy · h:mm a')
+  const formatDate = (date: string | Date | null | undefined) =>
+    formatEventDate(date, 'MMM d, yyyy · h:mm a')
 
   const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 

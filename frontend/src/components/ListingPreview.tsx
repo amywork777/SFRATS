@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { formatEventDate } from '../utils/dates'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
@@ -15,8 +15,8 @@ interface ListingPreviewProps {
   location_address?: string
   location_lat?: number
   location_lng?: number
-  available_from: Date
-  available_until: Date | null
+  available_from?: string | Date | null
+  available_until?: string | Date | null
   created_at: string
   showDirections?: boolean
   showActions?: boolean
@@ -107,7 +107,7 @@ function ListingPreview({
         )}
         <div className="flex items-start gap-1.5">
           <span className="text-bridge-500">▸</span>
-          <span>{format(new Date(available_from), 'MMM d · h:mm a')}</span>
+          <span>{formatEventDate(available_from)}</span>
         </div>
       </div>
 

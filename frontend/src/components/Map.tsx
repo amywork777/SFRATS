@@ -198,10 +198,7 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
               </button>
               {venue.items.length === 1 ? (
                 <ListingPreview
-                  {...{
-                    ...venue.items[0],
-                    available_from: new Date(venue.items[0].available_from)
-                  }}
+                  {...venue.items[0]}
                   showDirections={true}
                   inPopup={true}
                   onViewDetails={() => {
