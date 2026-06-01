@@ -53,9 +53,9 @@ const stripTitleDate = (t = '') => t.replace(TITLE_DATE_RE, '').trim()
 let existingTitles = new Set()
 
 const counts = {
-  funcheap:   { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
-  reddit:     { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
-  eventbrite: { fetched: 0, inserted: 0, dup: 0, nolocation: 0, error: 0 },
+  funcheap:   { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
+  reddit:     { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
+  eventbrite: { fetched: 0, inserted: 0, dup: 0, nodate: 0, nolocation: 0, error: 0 },
 }
 
 const PER_RUN_CAP = 30
@@ -158,7 +158,14 @@ async function alreadyInDb(url) {
 }
 
 async function geocode(address) {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address + ', San Francisco, CA')}&format=json&limit=1`
+  // Don't double-append the city/state if the address already names it.
+  const hasCity = /san\s*francisco|,\s*ca\b|california/i.test(address)
+  const q = hasCity ? address : `${address}, San Francisco, CA`
+  // Bias + restrict results to the SF bounding box so a bare street name
+  // ("123 Main St") can't match an identically-named street elsewhere.
+  const viewbox = `${SF_BBOX.lngMin},${SF_BBOX.latMax},${SF_BBOX.lngMax},${SF_BBOX.latMin}`
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}`
+    + `&format=json&limit=1&countrycodes=us&viewbox=${viewbox}&bounded=1`
   const res = await fetch(url, { headers: { 'User-Agent': 'sfrats-scraper/1.0' } })
   if (!res.ok) return null
   const data = await res.json()
@@ -170,16 +177,6 @@ function inSfBbox(lat, lng) {
   return lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
 }
 
-// Fallback for SF events whose venue can't be precisely geocoded
-// ("Secret Location (SF)", sparse venue names, etc.) — drop a jittered
-// pin near SF center so the listing still appears on the map.
-function jitteredSfCenter() {
-  return {
-    lat: 37.7749 + (Math.random() - 0.5) * 0.036,  // ~±2km
-    lng: -122.4194 + (Math.random() - 0.5) * 0.036,
-  }
-}
-
 async function tryInsert(source, row) {
   if (totalInserted >= PER_RUN_CAP) return 'cap'
   if (counts[source].inserted >= PER_SOURCE_CAP) return 'cap'
@@ -187,6 +184,13 @@ async function tryInsert(source, row) {
   if (!row.title || !row.url) {
     counts[source].error++
     return 'invalid'
+  }
+  // Events must carry a real date. We used to stamp `now` on anything
+  // undated, which put events on the map claiming to happen "today".
+  // Skip instead so we never publish a fabricated date.
+  if (row.category === 'Events' && !row.available_from) {
+    counts[source].nodate++
+    return 'nodate'
   }
   if (await alreadyInDb(row.url)) {
     counts[source].dup++
@@ -213,13 +217,11 @@ async function tryInsert(source, row) {
     row.location_lng = null
   }
 
-  // If we still have no coords after geocoding, fall back to a jittered
-  // SF center so the marker still appears on the map. Better than hiding
-  // the listing entirely.
+  // No fabricated coordinates: an event we can't place precisely is left
+  // without a map pin (it still shows in the list) rather than dropped onto
+  // a random spot near SF center, which misrepresents where it actually is.
   if (!row.location_lat || !row.location_lng) {
-    const c = jitteredSfCenter()
-    row.location_lat = c.lat
-    row.location_lng = c.lng
+    counts[source].nolocation++
   }
 
   // POST — tries with emoji first; if the column doesn't exist on the
@@ -231,7 +233,7 @@ async function tryInsert(source, row) {
     location_address: row.location_address ?? null,
     location_lat: row.location_lat ?? null,
     location_lng: row.location_lng ?? null,
-    available_from: row.available_from ?? new Date().toISOString(),
+    available_from: row.available_from ?? null,
     status: 'available',
     url: row.url,
     posted_by: row.posted_by,
@@ -349,7 +351,6 @@ async function scrapeFuncheap() {
       if (totalInserted >= PER_RUN_CAP || counts.funcheap.inserted >= PER_SOURCE_CAP) break
       const rawTitle = stripHtml(xmlExtractFirst(item, 'title'))
       const link     = stripHtml(xmlExtractFirst(item, 'link'))
-      const pub      = xmlExtractFirst(item, 'pubDate')
       const desc     = stripHtml(xmlExtractFirst(item, 'content:encoded') || xmlExtractFirst(item, 'description')).slice(0, 240)
       if (!rawTitle || !link) continue
 
@@ -359,11 +360,11 @@ async function scrapeFuncheap() {
       await sleep(300)
 
       // Date precedence: ld+json startDate (most accurate), then the
-      // "M/D/YY:" prefix in the title, then the RSS pubDate as a last
-      // resort. The pubDate is when the *post* went up — useful only
-      // if there's literally nothing else.
+      // "M/D/YY:" prefix in the title. We deliberately do NOT fall back to
+      // the RSS pubDate — that's when the *post* went up, not when the
+      // event happens. Undated events are skipped in tryInsert.
       const titleDate = parseTitleDate(rawTitle)
-      const startDate = ev?.startDate ?? titleDate ?? (pub ? new Date(pub).toISOString() : null)
+      const startDate = ev?.startDate ?? titleDate ?? null
       const endDate   = ev?.endDate ?? null
 
       await tryInsert('funcheap', {
@@ -520,7 +521,7 @@ async function scrapeEventbrite() {
   const summary =
     `=== SFRATS scrape summary ===\n` +
     Object.entries(counts).map(([s, c]) =>
-      `${s.padEnd(11, ' ')} fetched=${c.fetched} inserted=${c.inserted} dup=${c.dup} nolocation=${c.nolocation} error=${c.error}`
+      `${s.padEnd(11, ' ')} fetched=${c.fetched} inserted=${c.inserted} dup=${c.dup} nodate=${c.nodate} nolocation=${c.nolocation} error=${c.error}`
     ).join('\n') +
     `\ntotal inserts: ${totalInserted}\n` +
     `runtime: ${((Date.now() - t0) / 1000).toFixed(1)}s`
