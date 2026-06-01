@@ -29,7 +29,7 @@ const REST = `${SUPABASE_URL}/rest/v1/items`
 const HEADERS = { apikey: ANON, Authorization: `Bearer ${ANON}`, 'Content-Type': 'application/json' }
 
 const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32 }
-const SCRAPER_SOURCES = new Set(['funcheap', 'eventbrite'])
+const SCRAPER_SOURCES = new Set(['funcheap', 'eventbrite', 'dothebay'])
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 const inSfBbox = (lat, lng) =>
   lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
