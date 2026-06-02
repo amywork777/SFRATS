@@ -45,10 +45,12 @@ function timeLabel(item: DbItem) {
 
 function locationLabel(item: DbItem) {
   if (!item.location_address) return null
-  // Trim "San Francisco, CA, USA" tails for compactness
+  // Trim ", CA / CA 94110 / USA" tails for compactness, but keep the city
+  // name — events now span the whole Bay Area, so "Oakland" matters.
   return item.location_address
-    .replace(/,\s*San Francisco.*$/i, '')
-    .replace(/,\s*CA(\s*\d{5})?.*$/i, '')
+    .replace(/,\s*CA\b(\s*\d{5})?.*$/i, '')
+    .replace(/,\s*USA\s*$/i, '')
+    .replace(/,\s*$/, '')
     .trim()
 }
 

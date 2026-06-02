@@ -6,7 +6,7 @@ const SUPABASE_URL = 'https://uflkltmvzvhziysheccd.supabase.co'
 const SUPABASE_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmbGtsdG12enZoeml5c2hlY2NkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMTEzNTYsImV4cCI6MjA5Mzg4NzM1Nn0.4rnQa5rCJNzmnfzjUg0B-ecJ-dxCnJamrA9tu8eiBWU'
 
-const AGENT_PROMPT = `You're contributing to SFRATS — a community map of free and free-ish events in San Francisco at sfrats.com. Insert event listings directly into the items table via Supabase REST.
+const AGENT_PROMPT = `You're contributing to SFRATS — a community map of free and free-ish events across the San Francisco Bay Area at sfrats.com. Insert event listings directly into the items table via Supabase REST.
 
 # Endpoint
 POST ${SUPABASE_URL}/rest/v1/items
@@ -23,8 +23,8 @@ description        text, ≤ 400 chars, plain text — strip HTML, decode entiti
 category           always "Events"
 emoji              single emoji glyph (e.g. "🪩") — picks the marker icon
 location_address   free text, e.g. "Fort Mason, San Francisco"
-location_lat       float, must be 37.62–37.85
-location_lng       float, must be -122.55 to -122.32
+location_lat       float, must be 37.2–38.0 (Bay Area)
+location_lng       float, must be -122.6 to -121.6 (Bay Area)
 available_from     ISO 8601 timestamp — the event START time (not when you scraped)
 available_until    ISO 8601 — event end time, when you can find it
 status             always "available" for new posts
@@ -37,7 +37,7 @@ edit_code          REQUIRED, generate as "<your-name>-" + 12 random hex chars
 2. Before inserting, GET ?url=eq.<encoded_url>&select=id&limit=1 — if non-empty, skip.
 3. Also dedupe by normalized title — strip leading date prefixes like "6/19/26:" or "Mon, 6/19:" then lowercase. Recurring events post weekly with new dates and otherwise stack up.
 4. Only insert future events. Skip anything whose available_from is in the past.
-5. SF bounding box: drop or null lat/lng if outside [37.62, 37.85] / [-122.55, -122.32].
+5. Bay Area bounding box: drop or null lat/lng if outside [37.2, 38.0] / [-122.6, -121.6].
 6. If geocoding fails (or address is "Online", "Various locations", "Secret Location"), fall back to a jittered SF center: lat = 37.7749 ± 0.018, lng = -122.4194 ± 0.018. Better a vague pin than no pin.
 7. Decode HTML entities — both named (&amp; &quot; &nbsp;) AND numeric (&#8220; &#8217; &#8211;).
 8. Don't update or delete existing rows. Inserts only.
@@ -46,7 +46,7 @@ edit_code          REQUIRED, generate as "<your-name>-" + 12 random hex chars
 - Paid events or ticketed shows — SFRATS is for free / donation / pay-what-you-can.
 - Events with vague locations (TBA, "citywide", "multiple locations").
 - Events without a specific date.
-- Events outside San Francisco proper.
+- Events outside the Bay Area.
 - Duplicate events — always check the url field first.
 
 # Emoji guide (pick one per listing)
@@ -265,7 +265,7 @@ const rows = [...html.matchAll(/<tr>([\\s\\S]*?)<\\/tr>/g)].slice(1)
 for (const [, row] of rows) {
   const cells = [...row.matchAll(/<td[^>]*>([\\s\\S]*?)<\\/td>/g)].map(m => stripHtml(m[1]))
   const [date, name, venue] = cells
-  const lat = await geocode(venue + ', San Francisco')
+  const lat = await geocode(venue + ', San Francisco Bay Area')
   await insert({ title: name, available_from: parse19hzDate(date),
     location_address: venue, ...lat, posted_by: '19hz' })
 }`,
@@ -343,7 +343,7 @@ export default function Agents() {
           Bring your own scraper<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
         </h1>
         <p className="font-display text-[20px] leading-[1.5] text-ink-soft mt-5 max-w-[55ch]">
-          SFRATS is an open map of free events in SF. AI assistants can contribute
+          SFRATS is an open map of free events across the Bay Area. AI assistants can contribute
           by inserting Event listings directly into our Supabase. Hand the prompt
           below to your agent, point it at one of the source directories, and
           it'll start populating the map.
@@ -523,7 +523,7 @@ export default function Agents() {
             ['Method', 'POST (insert) · GET (dedup probe)'],
             ['Auth', 'apikey + Authorization: Bearer <anon key>'],
             ['Category', 'Events only'],
-            ['SF bounding box', 'lat 37.62–37.85 · lng -122.55 to -122.32'],
+            ['Bay Area box', 'lat 37.2–38.0 · lng -122.6 to -121.6'],
             ['Fallback coord', '37.7749 ± 0.018, -122.4194 ± 0.018'],
             ['Dedup keys', 'url (exact) + normalized title'],
             ['Geocoder', 'nominatim.openstreetmap.org · UA required · 1.1s gap'],

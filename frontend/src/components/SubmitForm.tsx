@@ -130,7 +130,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             Event live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
-            Your event is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's done.
+            Your event is on the map. Anyone in the Bay Area can see it now — and anyone can update or take it down when it's done.
           </p>
         </div>
 

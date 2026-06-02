@@ -15,7 +15,7 @@ function App() {
       <div className="flex-1">
         <Routes>
           {/* Events are the whole experience — a community map of free
-              and free-ish events in San Francisco. */}
+              and free-ish events across the Bay Area. */}
           <Route path="/" element={<Map />} />
 
           {/* Post a new listing */}
@@ -28,7 +28,7 @@ function App() {
                 </h1>
                 <p className="font-display text-[17px] md:text-[19px] leading-snug text-ink-soft mt-4 max-w-2xl">
                   A free show, a workshop, a market, a meetup. Anything in
-                  San Francisco that people can show up to.
+                  the Bay Area that people can show up to.
                 </p>
                 <div className="rule-thick mt-6" />
               </div>

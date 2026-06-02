@@ -23,7 +23,7 @@ export default function About() {
 
       <div className="space-y-7 text-[16px] leading-[1.7] text-ink-soft">
         <p className="font-display text-[20px] leading-[1.5] text-ink">
-          A real-time map of free and free-ish events around San Francisco —
+          A real-time map of free and free-ish events around the Bay Area —
           built so neighbors can find what's happening and share it with the people who'd want to be there.
         </p>
 
@@ -31,8 +31,8 @@ export default function About() {
           <h2 className="font-display font-bold text-2xl text-ink mb-2">What is SF RATS?</h2>
           <p>
             SF RATS (San Francisco Really Awesome Things Sharing) is a community
-            map of free stuff in the city. Reduce waste, build community, make it
-            easier for everyone to find and share resources.
+            map of free stuff across the Bay Area. Reduce waste, build community,
+            make it easier for everyone to find and share resources.
           </p>
         </section>
 
