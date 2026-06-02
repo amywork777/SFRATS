@@ -128,45 +128,43 @@ export default function ListView({ items, loading, error }: ListViewProps) {
               </span>
             </div>
 
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {items.map(item => {
                 const emoji = item.emoji || inferEmoji(item.title, item.description, item.category)
                 const time  = timeLabel(item)
                 const place = locationLabel(item)
                 const source = item.posted_by ? (SOURCE_LABEL[item.posted_by] ?? item.posted_by) : null
                 const isEvent = item.category === 'Events' && !!item.available_from
+                const hasFooter = !!(source || item.url || isEvent)
                 return (
-                  <li key={item.id} className="relative group bg-paper-light border border-ink/20 hover:border-ink hover:shadow-stamp transition-all">
-                    {/* The card itself always navigates to our own listing
-                        page. The source/external link is a separate small
-                        button so it never hijacks a tap on the card. */}
-                    <a
-                      href={`/listing/${item.id}`}
-                      className="block px-5 py-4"
-                    >
-                      <div className="flex items-start gap-4">
+                  <li key={item.id} className="group bg-paper-light border border-ink/20 hover:border-ink hover:shadow-stamp transition-all">
+                    {/* The card body navigates to our own listing page. Actions
+                        live in a separate footer row below, so they never
+                        overlap the text or hijack a tap on the card. */}
+                    <a href={`/listing/${item.id}`} className="block px-4 sm:px-5 pt-4 pb-3.5">
+                      <div className="flex items-start gap-3.5">
                         <span className="shrink-0 inline-flex items-center justify-center w-11 h-11 text-[22px] bg-paper border border-ink/15">
                           {emoji}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-3 mb-1">
-                            <h3 className="font-display font-bold text-[18px] leading-tight text-ink pr-1">
+                          <div className="flex items-start justify-between gap-2.5 mb-1.5">
+                            <h3 className="font-display font-bold text-[17px] sm:text-[18px] leading-snug text-ink">
                               {item.title}
                             </h3>
-                            <span className="shrink-0 inline-flex items-center px-2.5 py-0.5 bg-bridge-50 text-bridge-700 border border-bridge-200 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold">
+                            <span className="shrink-0 inline-flex items-center px-2 py-0.5 bg-bridge-50 text-bridge-700 border border-bridge-200 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold">
                               Free
                             </span>
                           </div>
 
                           {(time || place) && (
-                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 mb-2 font-mono text-[11px] text-ink-mute">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 font-mono text-[11px] text-ink-mute">
                               {time && (
                                 <span className="inline-flex items-center gap-1.5">
                                   <span className="text-bridge-500">◷</span> {time}
                                 </span>
                               )}
                               {place && (
-                                <span className="inline-flex items-center gap-1.5 truncate">
+                                <span className="inline-flex items-center gap-1.5 min-w-0">
                                   <span className="text-bridge-500">◇</span> <span className="truncate">{place}</span>
                                 </span>
                               )}
@@ -178,48 +176,44 @@ export default function ListView({ items, loading, error }: ListViewProps) {
                               {item.description}
                             </p>
                           )}
-
-                          {source && (
-                            <div className="mt-3">
-                              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
-                                {source}
-                              </span>
-                            </div>
-                          )}
                         </div>
                       </div>
                     </a>
 
-                    {/* Overlay actions: source-link (if any) + calendar.
-                        These are siblings of the <a>, so taps never reach
-                        the card link. */}
-                    <div className="absolute bottom-3 right-4 z-10 flex items-center gap-2">
-                      {item.url && (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          title="Open original source"
-                          aria-label="Open original source"
-                          className="inline-flex items-center justify-center w-9 h-9 bg-paper-light text-ink border border-ink shadow-stamp hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
-                        >
-                          <ArrowUpRight size={14} strokeWidth={2.2} />
-                        </a>
-                      )}
-                      {isEvent && (
-                        <AddToCalendar
-                          title={item.title}
-                          description={item.description}
-                          location={item.location_address}
-                          startsAt={item.available_from!}
-                          endsAt={item.available_until}
-                          url={typeof window !== 'undefined' ? `${window.location.origin}/listing/${item.id}` : undefined}
-                          variant="secondary"
-                          dropUp
-                        />
-                      )}
-                    </div>
+                    {hasFooter && (
+                      <div className="flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 border-t border-ink/10">
+                        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade truncate">
+                          {source || ''}
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {item.url && (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Open original source"
+                              aria-label="Open original source"
+                              className="inline-flex items-center justify-center w-9 h-9 bg-paper-light text-ink border border-ink shadow-stamp hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                            >
+                              <ArrowUpRight size={14} strokeWidth={2.2} />
+                            </a>
+                          )}
+                          {isEvent && (
+                            <AddToCalendar
+                              title={item.title}
+                              description={item.description}
+                              location={item.location_address}
+                              startsAt={item.available_from!}
+                              endsAt={item.available_until}
+                              url={typeof window !== 'undefined' ? `${window.location.origin}/listing/${item.id}` : undefined}
+                              variant="secondary"
+                              dropUp
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </li>
                 )
               })}

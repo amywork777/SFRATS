@@ -15,8 +15,8 @@ import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react
 import { format } from 'date-fns'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
-import DateChips from './DateChips'
-import { presetToRange, rangeToPreset, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
+import DatePicker from './DatePicker'
+import { presetToRange, rangeToPreset, dayToRange, rangeToDay, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
 // Create custom marker icons for each category. When several events share a
 // venue they collapse into one pin (see groupByVenue) — `count` renders a
@@ -279,10 +279,13 @@ function Map() {
     userLocation: { lat: number; lng: number } | null;
     radiusMiles: number;
   }>(() => {
-    const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, search: '' }
+    const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, day: null, search: '' }
+    const dates = initial.day
+      ? dayToRange(initial.day)
+      : initial.preset ? presetToRange(initial.preset) : { start: null, end: null }
     return {
       search: initial.search,
-      dates: initial.preset ? presetToRange(initial.preset) : { start: null, end: null },
+      dates,
       userLocation: null,
       radiusMiles: 2,
     }
@@ -290,9 +293,10 @@ function Map() {
   const [view, setView] = useState<'map' | 'list'>('map')
 
   // Keep the URL in sync with the filters that make sense to share —
-  // date preset + search. Location / radius stay local.
+  // selected day (or weekend preset) + search. Location / radius stay local.
   useEffect(() => {
     writeUrlFilters({
+      day: rangeToDay(filters.dates),
       preset: rangeToPreset(filters.dates),
       search: filters.search,
     })
@@ -370,8 +374,12 @@ function Map() {
 
       {/* Right column: view-toggle, then either Map or List */}
       <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: view toggle (map / list). */}
-        <div className="flex items-center justify-end gap-3 px-3 md:px-5 pt-2.5 pb-2 bg-paper-light shrink-0">
+        {/* Top bar: pick-a-day filter (left) + view toggle (right). */}
+        <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5 bg-paper-light border-b border-ink/15 shrink-0">
+          <DatePicker
+            value={filters.dates}
+            onChange={(dates) => handleFiltersChange({ dates })}
+          />
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
               onClick={() => setView('map')}
@@ -397,13 +405,6 @@ function Map() {
             </button>
           </div>
         </div>
-
-        {/* Quick date filters — Tonight / Tomorrow / Weekend etc. */}
-        <DateChips
-          start={filters.dates.start}
-          end={filters.dates.end}
-          onChange={(dates) => handleFiltersChange({ dates })}
-        />
 
         {/* The content swaps based on view */}
         {view === 'map' ? (

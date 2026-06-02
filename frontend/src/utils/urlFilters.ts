@@ -1,12 +1,13 @@
-// URL <-> filter state. Date filter is encoded by preset slug
-// (`?d=tonight`) and search by raw query (`?q=…`) so links stay
-// short and human-readable. Custom date ranges aren't encoded —
-// they remain in-memory only.
+// URL <-> filter state. The date filter is encoded either as a single
+// day (`?day=2026-06-04`) or — for the multi-day "This weekend" shortcut —
+// a preset slug (`?d=weekend`). Search is a raw query (`?q=…`). Links stay
+// short and human-readable.
 
 export type DatePresetId = 'all' | 'tonight' | 'tomorrow' | 'weekend' | 'week'
 
 export interface UrlFilters {
   preset: DatePresetId | null
+  day: string | null   // 'YYYY-MM-DD' when a single calendar day is selected
   search: string
 }
 
@@ -15,6 +16,33 @@ const ALL_PRESETS: DatePresetId[] = ['all', 'tonight', 'tomorrow', 'weekend', 'w
 function startOfDay(d: Date) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x }
 function endOfDay(d: Date)   { const x = new Date(d); x.setHours(23, 59, 59, 999); return x }
 function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x }
+
+// ── Single calendar day <-> range ───────────────────────────────────────
+function pad(n: number) { return String(n).padStart(2, '0') }
+
+/** 'YYYY-MM-DD' (local) for a Date. */
+export function dayKey(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** Parse 'YYYY-MM-DD' into the start/end-of-day range for that local day. */
+export function dayToRange(key: string): { start: Date | null; end: Date | null } {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key)
+  if (!m) return { start: null, end: null }
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  return { start: startOfDay(d), end: endOfDay(d) }
+}
+
+/** If a range is exactly one calendar day's bounds, return its key, else null. */
+export function rangeToDay(r: { start: Date | null; end: Date | null }): string | null {
+  if (!r.start || !r.end) return null
+  if (dayKey(r.start) !== dayKey(r.end)) return null
+  const expected = dayToRange(dayKey(r.start))
+  if (!expected.start || !expected.end) return null
+  if (Math.abs(expected.start.getTime() - r.start.getTime()) > 60000) return null
+  if (Math.abs(expected.end.getTime() - r.end.getTime()) > 60000) return null
+  return dayKey(r.start)
+}
 
 function weekendRange() {
   const now = new Date()
@@ -50,10 +78,13 @@ export function rangeToPreset(r: { start: Date | null; end: Date | null }): Date
 
 export function readUrlFilters(search: string): UrlFilters {
   const params = new URLSearchParams(search)
+  const rawDay = params.get('day')
+  const day = rawDay && /^\d{4}-\d{2}-\d{2}$/.test(rawDay) ? rawDay : null
   const d = params.get('d')
   const preset = d && (ALL_PRESETS as string[]).includes(d) ? (d as DatePresetId) : null
   return {
     preset,
+    day,
     search: params.get('q') ?? '',
   }
 }
@@ -61,8 +92,10 @@ export function readUrlFilters(search: string): UrlFilters {
 export function writeUrlFilters(u: UrlFilters) {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
-  if (u.preset && u.preset !== 'all') params.set('d', u.preset)
-  else params.delete('d')
+  // A single day wins; otherwise fall back to a multi-day preset (weekend).
+  if (u.day) { params.set('day', u.day); params.delete('d') }
+  else if (u.preset && u.preset !== 'all') { params.set('d', u.preset); params.delete('day') }
+  else { params.delete('d'); params.delete('day') }
   if (u.search.trim()) params.set('q', u.search.trim())
   else params.delete('q')
   const qs = params.toString()

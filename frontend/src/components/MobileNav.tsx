@@ -1,23 +1,23 @@
 import { useState } from 'react'
 import { X, SlidersHorizontal } from 'lucide-react'
 import NearMe from './NearMe'
-import { readUrlFilters } from '../utils/urlFilters'
+import DatePicker from './DatePicker'
+import { readUrlFilters, dayToRange, presetToRange } from '../utils/urlFilters'
 
 interface MobileNavProps {
   onFiltersChange: (filters: any) => void
 }
 
 export default function MobileNav({ onFiltersChange }: MobileNavProps) {
-  const initialSearch = typeof window !== 'undefined' ? readUrlFilters(window.location.search).search : ''
+  const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { search: '', day: null, preset: null }
+  const initialSearch = initial.search
   const [isOpen, setIsOpen] = useState(false)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
+  const [dates, setDates] = useState<{ start: Date | null; end: Date | null }>(
+    initial.day ? dayToRange(initial.day) : initial.preset ? presetToRange(initial.preset) : { start: null, end: null })
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [radiusMiles, setRadiusMiles] = useState(2)
 
-  // Quick presets (Tonight / This weekend / Next 7 days …) live in the single
-  // DateChips bar above the map. This sheet keeps the custom From/To range.
-  const filterCount = (startDate || endDate ? 1 : 0)
+  const filterCount = (dates.start || dates.end ? 1 : 0)
 
   return (
     <>
@@ -47,7 +47,7 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
-                  setStartDate(''); setEndDate('')
+                  setDates({ start: null, end: null })
                   setUserLocation(null)
                   setRadiusMiles(2)
                   onFiltersChange({ search: '', dates: { start: null, end: null }, userLocation: null, radiusMiles: 2 })
@@ -79,34 +79,17 @@ export default function MobileNav({ onFiltersChange }: MobileNavProps) {
               />
             </div>
 
-            {/* Time */}
+            {/* When */}
             <div>
               <span className="label">When</span>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <label className="block">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">From</span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value)
-                      onFiltersChange({ dates: { start: e.target.value ? new Date(e.target.value) : null, end: endDate ? new Date(endDate) : null } })
-                    }}
-                    className="w-full bg-paper-light border border-ink/30 px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-ink"
-                  />
-                </label>
-                <label className="block">
-                  <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute block mb-1">To</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => {
-                      setEndDate(e.target.value)
-                      onFiltersChange({ dates: { start: startDate ? new Date(startDate) : null, end: e.target.value ? new Date(e.target.value) : null } })
-                    }}
-                    className="w-full bg-paper-light border border-ink/30 px-2 py-1.5 font-mono text-[12px] text-ink outline-none focus:border-ink"
-                  />
-                </label>
+              <div className="mt-3">
+                <DatePicker
+                  value={dates}
+                  onChange={(next) => {
+                    setDates(next)
+                    onFiltersChange({ dates: next })
+                  }}
+                />
               </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import DateFilter from './Sidebar/DateFilter'
+import DatePicker from './DatePicker'
 import NearMe from './NearMe'
 import { readUrlFilters } from '../utils/urlFilters'
 
@@ -66,7 +66,10 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
           <div className="flex items-baseline justify-between mb-3">
             <span className="label">When</span>
           </div>
-          <DateFilter onChange={(dates) => update({ ...filters, dates })} />
+          <DatePicker
+            value={filters.dates}
+            onChange={(dates) => update({ ...filters, dates })}
+          />
         </div>
 
         {/* Section: Near me */}
