@@ -410,8 +410,8 @@ function Map() {
         {view === 'map' ? (
           <div className="relative flex-1 min-h-0">
             <MapContainer
-              center={[37.62, -122.15]}
-              zoom={10}
+              center={[37.7749, -122.4194]}
+              zoom={13}
               style={{ height: '100%', width: '100%' }}
               zoomControl={false}
             >

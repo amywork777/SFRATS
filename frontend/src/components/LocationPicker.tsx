@@ -161,8 +161,8 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
       {/* Map */}
       <div className="h-[260px] border border-ink overflow-hidden relative z-0">
         <MapContainer
-          center={position || [37.62, -122.15]}
-          zoom={position ? 13 : 10}
+          center={position || [37.7749, -122.4194]}
+          zoom={13}
           style={{ height: '100%', width: '100%' }}
           ref={mapRef}
           className="z-0"
