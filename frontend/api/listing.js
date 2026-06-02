@@ -38,7 +38,7 @@ function formatEventDate(iso) {
 
 function buildOgTags(item, canonicalUrl) {
   const isEvent = item.category === 'Events'
-  const emoji = item.emoji || (isEvent ? '📅' : '📦')
+  const emoji = item.emoji || '📅'
   const title = `${emoji} ${item.title}`.trim()
 
   const parts = []
@@ -47,12 +47,13 @@ function buildOgTags(item, canonicalUrl) {
     if (d) parts.push(d)
   }
   if (item.location_address) {
-    parts.push(item.location_address.replace(/,\s*San Francisco.*$/i, '').slice(0, 60))
+    // Trim the ", CA / 94110 / USA" tail but keep the city (Bay-Area-wide).
+    parts.push(item.location_address.replace(/,\s*CA\b(\s*\d{5})?.*$/i, '').replace(/,\s*USA\s*$/i, '').slice(0, 60))
   }
   const meta = parts.join(' · ')
   const body = item.description ? truncate(item.description, 200) : ''
   const description = truncate([meta, body].filter(Boolean).join(' — '), 240)
-    || 'A free event in San Francisco. Posted on SF Rats.'
+    || 'A free event in the Bay Area. Posted on SF Rats.'
 
   const image = (item.images && item.images[0]) || DEFAULT_IMAGE
 

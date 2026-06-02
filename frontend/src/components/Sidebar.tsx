@@ -48,7 +48,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
           <div className="relative">
             <input
               type="text"
-              placeholder="Couches, pizza, plants…"
+              placeholder="Concerts, markets, comedy…"
               className="w-full pl-9 pr-3 py-2.5 bg-paper border border-ink/30 font-mono text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:border-ink focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
               value={filters.search}
               onChange={(e) => update({ ...filters, search: e.target.value })}
@@ -89,7 +89,7 @@ function Sidebar({ onFiltersChange, isMobile = false }: SidebarProps) {
         {/* Footer note */}
         <div className="mt-10 pt-5 border-t border-ink/15">
           <p className="font-mono text-[10px] leading-relaxed text-ink-fade uppercase tracking-[0.1em]">
-            All listings posted by neighbors. Free means free. Take what you need, leave the rest.
+            All events posted by neighbors. Free means free. Show up, enjoy, share the word.
           </p>
         </div>
       </div>

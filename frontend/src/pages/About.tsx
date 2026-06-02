@@ -2,11 +2,11 @@ import { Link } from 'react-router-dom'
 
 const RULES = [
   'Be respectful and kind to others.',
-  'Only post things that are actually free.',
+  'Only post events that are actually free.',
   'Update or remove your listing when the event is over.',
   'Include clear photos and descriptions.',
   'Provide accurate location information.',
-  'Take what you need. Leave the rest.',
+  'Show up, have fun, spread the word.',
 ]
 
 export default function About() {
@@ -31,16 +31,18 @@ export default function About() {
           <h2 className="font-display font-bold text-2xl text-ink mb-2">What is SF RATS?</h2>
           <p>
             SF RATS (San Francisco Really Awesome Things Sharing) is a community
-            map of free stuff across the Bay Area. Reduce waste, build community,
-            make it easier for everyone to find and share resources.
+            map of free and free-ish events across the Bay Area — concerts,
+            markets, workshops, comedy, meetups and more. Build community and
+            make it easier for everyone to find great things to do without
+            spending a dime.
           </p>
         </section>
 
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-3">Features</h2>
           <ul className="space-y-2 font-mono text-[13px] uppercase tracking-[0.08em] text-ink">
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free things across SF</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission system for sharing</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free events across the Bay Area</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission — post an event in seconds</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly, no account required</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Listings auto-expire when events pass</li>
           </ul>
@@ -49,19 +51,21 @@ export default function About() {
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">Why rats?</h2>
           <p>
-            Rats are expert urban scavengers — they know where the good stuff is,
-            and they share that information with their social groups. We do the same.
+            Rats are expert urban scavengers — they know where the good stuff is
+            happening, and they share that with their crew. We do the same with
+            the Bay Area's free events.
           </p>
         </section>
 
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">About the creators</h2>
           <p>
-            Hey! I'm Amy and I love free food and free stuff. Active in SF Buy
-            Nothing, way too excited about sidewalk scores — over half my
-            furniture and clothes came from free piles. At Stanford I ran a
-            free-food club to help students find leftover catering. SF RATS is
-            the same idea, citywide. Maddie helps run the place too.
+            Hey! I'm Amy and I love a good free event — gallery openings,
+            warehouse shows, park festivals, free workshops, the whole calendar
+            of it. At Stanford I ran a free-food club to help students find
+            campus events with leftover catering. SF RATS is the same idea,
+            Bay-Area-wide: surface everything free and fun that's happening near
+            you. Maddie helps run the place too.
           </p>
         </section>
 
@@ -88,9 +92,9 @@ export default function About() {
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">Join the community</h2>
           <p>
-            SF RATS gets better the more people use it. Whether you're decluttering,
-            sharing leftover catering, or organizing a free event — posting helps
-            build a more sustainable, connected San Francisco.
+            SF RATS gets better the more people use it. Whether you're hosting a
+            show, running a workshop, or just spotted a free event worth sharing —
+            posting helps build a more connected Bay Area.
           </p>
           <p className="mt-3">
             Join the{' '}
