@@ -1,15 +1,14 @@
-import { Package, PartyPopper, Pizza, Wrench, MapPin, type LucideIcon } from 'lucide-react'
+import { PartyPopper, Pizza, Wrench, MapPin, type LucideIcon } from 'lucide-react'
 
-// Two user-facing categories. Old data uses Food/Services — kept here in
-// the lookup so historical rows still render with a sensible icon.
+// Events is the only user-facing category. Old data uses Food/Services/Items —
+// kept here in the lookup so historical rows still render with a sensible icon.
 const map: Record<string, LucideIcon> = {
-  Items:    Package,
   Events:   PartyPopper,
-  Food:     Pizza,        // legacy — remapped to Items going forward
-  Services: Wrench,       // legacy — remapped to Events going forward
+  Food:     Pizza,        // legacy
+  Services: Wrench,       // legacy
 }
 
-export const CATEGORY_ORDER = ['Events', 'Items'] as const
+export const CATEGORY_ORDER = ['Events'] as const
 export type Category = typeof CATEGORY_ORDER[number]
 
 interface CategoryIconProps extends React.SVGAttributes<SVGSVGElement> {
@@ -57,13 +56,7 @@ const EMOJI_RULES: Array<[RegExp, string]> = [
   [/\b(haircut|salon|beauty|nail|barber)\b/i,                           '💇'],
   [/\b(vaccin|flu\s*shot|clinic|health\s*screening|blood\s*drive)\b/i,  '💉'],
   [/\b(legal|lawyer|attorney|tenant|housing)\b/i,                       '⚖️'],
-  [/\b(furniture|couch|sofa|chair|table|desk|dresser|shelv|bookcase)\b/i, '🛋️'],
-  [/\b(plant|succulent|cactus|monstera|cutting)\b/i,                    '🪴'],
   [/\b(garden|gardening|compost|seed)\b/i,                              '🌱'],
-  [/\b(books?\s*(for|free)|free\s*books?)\b/i,                          '📚'],
-  [/\b(clothes|clothing|shirt|jacket|dress|shoes)\b/i,                  '👕'],
-  [/\b(electronics?|laptop|monitor|cable|kitchen|appliance)\b/i,        '🔌'],
-  [/\b(curb\s*alert|sidewalk\s*score|free\s*pile|free\s*stuff)\b/i,     '🚮'],
 ]
 
 export function inferEmoji(
@@ -75,8 +68,7 @@ export function inferEmoji(
   for (const [re, emoji] of EMOJI_RULES) {
     if (re.test(text)) return emoji
   }
-  // Defaults by category
+  // Default
   if (category === 'Events') return '📅'
-  if (category === 'Items')  return '📦'
   return '✿'
 }

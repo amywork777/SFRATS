@@ -6,9 +6,6 @@ import LocationPicker from './LocationPicker'
 import { api } from '../services/api'
 import { DbItem } from '../types/supabase'
 import { supabase } from '../utils/supabase'
-import { CATEGORY_ORDER } from '../utils/categoryIcons'
-
-const CATEGORY_EMOJI: Record<string, string> = { Items: '📦', Events: '📅' }
 
 interface SubmitFormProps {
   initialData?: Partial<DbItem>
@@ -123,7 +120,6 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
 
   // ──────────── SUCCESS SCREEN ────────────
   if (submittedItem) {
-    const wasEvent = submittedItem.category === 'Events'
     return (
       <div className="space-y-7">
         <div>
@@ -131,12 +127,10 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             <Check size={12} strokeWidth={2.5} /> Posted
           </span>
           <h2 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-2 tracking-tight">
-            {wasEvent ? 'Event live' : 'Listing live'}<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+            Event live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
-            {wasEvent
-              ? "Your event is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's done."
-              : "Your post is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's gone."}
+            Your event is on the map. Anyone in San Francisco can see it now — and anyone can update or take it down when it's done.
           </p>
         </div>
 
@@ -174,70 +168,37 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
     )
   }
 
-  const isEvent = formData.category === 'Events'
-
   // ──────────── FORM ────────────
   return (
     <form onSubmit={handleSubmit} className="space-y-7">
       {/* ESSENTIAL: TITLE */}
       <label className="block">
-        <span className="label">{isEvent ? 'Event name' : 'What is it?'}</span>
+        <span className="label">Event name</span>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => update('title', e.target.value)}
           className={`mt-1.5 ${inputCls} font-display text-[20px]`}
-          placeholder={isEvent ? 'Pottery night at Fort Mason' : 'Free couch, must take today'}
+          placeholder="Pottery night at Fort Mason"
           autoFocus
           required
         />
       </label>
 
-      {/* ESSENTIAL: CATEGORY (small chips, picks the marker icon) */}
-      <div>
-        <span className="label">Type</span>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {CATEGORY_ORDER.map((c, i) => {
-            const active = formData.category === c
-            const tilt = ['rotate-[-1.5deg]', 'rotate-[1deg]', 'rotate-[-0.5deg]', 'rotate-[1.5deg]'][i % 4]
-            return (
-              <button
-                key={c}
-                type="button"
-                onClick={() => update('category', c)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition ${tilt} ${
-                  active
-                    ? 'bg-bridge-500 text-paper-light shadow-stamp'
-                    : 'bg-paper-light text-ink hover:bg-paper'
-                }`}
-              >
-                <span className="text-[14px] leading-none">{CATEGORY_EMOJI[c] ?? '📍'}</span>
-                {c}
-              </button>
-            )
-          })}
-        </div>
-        {!isEvent && (
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade mt-2">
-            Free physical stuff? Most of it lives on <a href="/items" className="text-bridge-600 hover:text-bridge-700 underline underline-offset-4">/items</a> via established communities — but you can also post here.
-          </p>
-        )}
-      </div>
-
-      {/* ESSENTIAL: WHEN (events need a date; items get a default of "now") */}
+      {/* ESSENTIAL: WHEN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="block">
-          <span className="label">{isEvent ? 'Starts' : 'Available from'}</span>
+          <span className="label">Starts</span>
           <input
             type="datetime-local"
             value={formData.available_from.slice(0, 16)}
             onChange={(e) => update('available_from', e.target.value)}
             className={`mt-1.5 ${inputCls} font-mono`}
-            required={isEvent}
+            required
           />
         </label>
         <label className="block">
-          <span className="label">{isEvent ? 'Ends' : 'Available until'}</span>
+          <span className="label">Ends</span>
           <input
             type="datetime-local"
             value={formData.available_until?.slice(0, 16) || ''}
@@ -289,9 +250,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
                 onChange={(e) => update('description', e.target.value)}
                 rows={3}
                 className={`mt-1.5 ${inputCls}`}
-                placeholder={isEvent
-                  ? 'Drop-in from 6–9pm, BYO clay welcome…'
-                  : 'Comfy 3-seater, small tear on the arm…'}
+                placeholder="Drop-in from 6–9pm, BYO clay welcome…"
               />
             </label>
 
@@ -412,7 +371,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
               : 'hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)]'
           }`}
         >
-          {submitting ? 'Posting…' : editMode ? 'Save changes' : isEvent ? 'Post event' : 'Post item'}
+          {submitting ? 'Posting…' : editMode ? 'Save changes' : 'Post event'}
         </button>
         {!editMode && (
           <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade text-center mt-2">

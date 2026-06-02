@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 const RULES = [
   'Be respectful and kind to others.',
   'Only post things that are actually free.',
-  'Update or remove your listing when items are gone.',
+  'Update or remove your listing when the event is over.',
   'Include clear photos and descriptions.',
   'Provide accurate location information.',
   'Take what you need. Leave the rest.',
@@ -23,8 +23,8 @@ export default function About() {
 
       <div className="space-y-7 text-[16px] leading-[1.7] text-ink-soft">
         <p className="font-display text-[20px] leading-[1.5] text-ink">
-          A real-time map of free items, food, and events around San Francisco —
-          built so neighbors can share what they don't need with the people who do.
+          A real-time map of free and free-ish events around San Francisco —
+          built so neighbors can find what's happening and share it with the people who'd want to be there.
         </p>
 
         <section>
@@ -41,7 +41,6 @@ export default function About() {
           <ul className="space-y-2 font-mono text-[13px] uppercase tracking-[0.08em] text-ink">
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free things across SF</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission system for sharing</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Two categories: Events and Items</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly, no account required</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Listings auto-expire when events pass</li>
           </ul>

@@ -5,7 +5,6 @@ import TopBar from './components/TopBar'
 import SubmitForm from './components/SubmitForm'
 import About from './pages/About'
 import Agents from './pages/Agents'
-import Items from './pages/Items'
 import EditPage from './pages/EditPage'
 import ManagePage from './pages/ManagePage'
 
@@ -15,12 +14,9 @@ function App() {
       <TopBar />
       <div className="flex-1">
         <Routes>
-          {/* Events is the headline experience at /. /items is a curated
-              directory of where to actually find free stuff in SF
-              (Craigslist, Buy Nothing, Freecycle, etc) — we don't try
-              to compete with those communities, we point you at them. */}
-          <Route path="/"      element={<Map />} />
-          <Route path="/items" element={<Items />} />
+          {/* Events are the whole experience — a community map of free
+              and free-ish events in San Francisco. */}
+          <Route path="/" element={<Map />} />
 
           {/* Post a new listing */}
           <Route path="/submit/new" element={

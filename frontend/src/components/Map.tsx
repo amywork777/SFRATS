@@ -15,7 +15,6 @@ import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react
 import { format } from 'date-fns'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
-import PageTabs from './PageTabs'
 import DateChips from './DateChips'
 import { presetToRange, rangeToPreset, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
@@ -369,14 +368,10 @@ function Map() {
         <Sidebar onFiltersChange={handleFiltersChange} />
       </div>
 
-      {/* Right column: page tabs + view-toggle, then either Map or List */}
+      {/* Right column: view-toggle, then either Map or List */}
       <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: page tabs (left) + view toggle (right). The two tabs
-            navigate between /events and /items — events is the headline,
-            items is its own dedicated map. */}
-        <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2 bg-paper-light shrink-0">
-          <PageTabs active="events" />
-
+        {/* Top bar: view toggle (map / list). */}
+        <div className="flex items-center justify-end gap-3 px-3 md:px-5 pt-2.5 pb-2 bg-paper-light shrink-0">
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
               onClick={() => setView('map')}

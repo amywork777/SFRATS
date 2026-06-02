@@ -127,36 +127,22 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               />
             </label>
 
-            <div className="grid md:grid-cols-2 gap-4">
-              <label className="block">
-                <span className="label">Category</span>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className={`mt-1.5 ${inputCls} font-mono`}
-                >
-                  <option value="Events">Events</option>
-                  <option value="Items">Items</option>
-                </select>
-              </label>
-
-              <div>
-                <span className="label">Location</span>
-                <div className="mt-1.5">
-                  <LocationPicker
-                    initialAddress={formData.location_address}
-                    initialLat={formData.location_lat}
-                    initialLng={formData.location_lng}
-                    onLocationSelected={({ address, lat, lng }) => {
-                      setFormData({
-                        ...formData,
-                        location_address: address,
-                        location_lat: lat,
-                        location_lng: lng,
-                      })
-                    }}
-                  />
-                </div>
+            <div>
+              <span className="label">Location</span>
+              <div className="mt-1.5">
+                <LocationPicker
+                  initialAddress={formData.location_address}
+                  initialLat={formData.location_lat}
+                  initialLng={formData.location_lng}
+                  onLocationSelected={({ address, lat, lng }) => {
+                    setFormData({
+                      ...formData,
+                      location_address: address,
+                      location_lat: lat,
+                      location_lng: lng,
+                    })
+                  }}
+                />
               </div>
             </div>
 

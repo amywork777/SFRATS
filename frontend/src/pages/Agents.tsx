@@ -20,7 +20,7 @@ Prefer: resolution=ignore-duplicates
 # Schema (the columns you fill)
 title              text, max 255 chars, REQUIRED, decode HTML entities, NO date prefix
 description        text, ≤ 400 chars, plain text — strip HTML, decode entities
-category           always "Events" — we no longer scrape Items
+category           always "Events"
 emoji              single emoji glyph (e.g. "🪩") — picks the marker icon
 location_address   free text, e.g. "Fort Mason, San Francisco"
 location_lat       float, must be 37.62–37.85
@@ -40,8 +40,7 @@ edit_code          REQUIRED, generate as "<your-name>-" + 12 random hex chars
 5. SF bounding box: drop or null lat/lng if outside [37.62, 37.85] / [-122.55, -122.32].
 6. If geocoding fails (or address is "Online", "Various locations", "Secret Location"), fall back to a jittered SF center: lat = 37.7749 ± 0.018, lng = -122.4194 ± 0.018. Better a vague pin than no pin.
 7. Decode HTML entities — both named (&amp; &quot; &nbsp;) AND numeric (&#8220; &#8217; &#8211;).
-8. Only Events. The Items category is for user-submitted physical stuff and is not scraped — please don't add Craigslist/Buy Nothing/Freecycle posts here, /items already points users at those communities.
-9. Don't update or delete existing rows. Inserts only.
+8. Don't update or delete existing rows. Inserts only.
 
 # Do NOT add
 - Paid events or ticketed shows — SFRATS is for free / donation / pay-what-you-can.
@@ -349,9 +348,6 @@ export default function Agents() {
           below to your agent, point it at one of the source directories, and
           it'll start populating the map.
         </p>
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute mt-4">
-          Items category is for user-submitted physical stuff only — please don't scrape Craigslist / Buy Nothing / Freecycle into it. <Link to="/items" className="text-bridge-600 hover:text-bridge-700 underline underline-offset-4">/items</Link> already points users at those communities.
-        </p>
         <div className="rule-thick mt-8" />
       </div>
 
@@ -526,7 +522,7 @@ export default function Agents() {
             ['Endpoint', `${SUPABASE_URL}/rest/v1/items`],
             ['Method', 'POST (insert) · GET (dedup probe)'],
             ['Auth', 'apikey + Authorization: Bearer <anon key>'],
-            ['Category', 'Events only (Items is user-submitted, not scraped)'],
+            ['Category', 'Events only'],
             ['SF bounding box', 'lat 37.62–37.85 · lng -122.55 to -122.32'],
             ['Fallback coord', '37.7749 ± 0.018, -122.4194 ± 0.018'],
             ['Dedup keys', 'url (exact) + normalized title'],
