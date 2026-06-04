@@ -48,7 +48,7 @@ function ListingPreview({
   created_at,
 }: ListingPreviewProps) {
   const glyph = emoji || inferEmoji(title, description, category)
-  const navigate = !inPopup ? useNavigate() : null
+  const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
 
@@ -62,7 +62,7 @@ function ListingPreview({
 
   const handleViewDetails = () => {
     if (inPopup && onViewDetails) onViewDetails()
-    else if (navigate) navigate(`/listing/${id}`)
+    else navigate(`/listing/${id}`)
   }
 
   const openInGoogleMaps = (e: React.MouseEvent) => {
