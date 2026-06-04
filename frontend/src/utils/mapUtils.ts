@@ -1,5 +1,5 @@
 import L from 'leaflet'
-import { categoryEmojis } from '../components/Legend'
+import { inferEmoji } from './categoryIcons'
 
 export const createMarkerIcon = (category: string, status: string = 'available') => {
   // Ensure status is valid
@@ -21,7 +21,7 @@ export const createMarkerIcon = (category: string, status: string = 'available')
         font-size: 16px;
         opacity: ${validStatus === 'gone' ? '0.6' : '1'};
       ">
-        ${categoryEmojis[category as keyof typeof categoryEmojis] || '📦'}
+        ${inferEmoji(null, null, category)}
       </div>
     `,
     iconSize: [30, 30],
