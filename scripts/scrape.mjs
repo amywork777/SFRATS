@@ -528,20 +528,9 @@ async function scrapeLdJsonPage(source, pageUrl) {
 
   console.log('\n' + summary)
 
-  // Also write a meta row to items so the result is queryable from the app DB
-  await fetch(REST, {
-    method: 'POST',
-    headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
-    body: JSON.stringify({
-      title: '__SCRAPER_RUN__ ' + new Date().toISOString(),
-      description: summary,
-      category: 'Services',
-      status: 'available',
-      posted_by: 'scraper-meta',
-      edit_code: 'scraper-meta-' + randHex(8),
-      url: null,
-    }),
-  }).catch(() => {})
+  // Run summary is logged to stdout only. We intentionally do NOT write a
+  // "__SCRAPER_RUN__" heartbeat row into `items` — nothing reads it, and it
+  // pollutes the events table (and the app's event count) with non-events.
 
   process.exit(0)
 })()

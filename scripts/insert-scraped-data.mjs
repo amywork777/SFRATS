@@ -282,37 +282,9 @@ async function insertItem(item) {
 
   console.log('\n' + summary)
 
-  // Write summary row
-  const summaryBody = {
-    title: '__SCRAPER_RUN__ ' + new Date().toISOString(),
-    description: summary,
-    category: 'Services',
-    status: 'available',
-    posted_by: 'scraper-meta',
-    edit_code: 'scraper-meta-' + randHex(8),
-    url: null,
-  }
-
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const res = await fetch(REST, {
-        method: 'POST',
-        headers: { ...HEADERS, Prefer: 'resolution=ignore-duplicates' },
-        body: JSON.stringify(summaryBody),
-      })
-      if (res.status === 201) {
-        console.log('\nSummary row written successfully.')
-        break
-      } else {
-        const txt = await res.text().catch(() => '')
-        console.error(`Summary row attempt ${attempt+1} failed: HTTP ${res.status}: ${txt}`)
-        if (attempt === 1) process.exit(1)
-      }
-    } catch (e) {
-      console.error(`Summary row attempt ${attempt+1} error: ${e.message}`)
-      if (attempt === 1) process.exit(1)
-    }
-  }
+  // Run summary is logged to stdout only. We intentionally do NOT write a
+  // "__SCRAPER_RUN__" heartbeat row into `items` — nothing reads it, and it
+  // pollutes the events table (and the app's event count) with non-events.
 
   process.exit(0)
 })()
