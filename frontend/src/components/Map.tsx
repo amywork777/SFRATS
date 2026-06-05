@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, useMap, Circle } from 'react-leaflet'
-import { createRoot, Root } from 'react-dom/client'
+import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { DbItem } from '../types/supabase'
@@ -12,7 +13,7 @@ import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react'
-import { format } from 'date-fns'
+import { formatEventDate } from '../utils/dates'
 import SubmissionsList from './SubmissionsList'
 import MobileNav from './MobileNav'
 import DatePicker from './DatePicker'
@@ -91,7 +92,7 @@ function VenueListPopup({ items }: { items: DbItem[] }) {
                   {it.title}
                 </span>
                 <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
-                  {format(new Date(it.available_from), 'MMM d · h:mm a')}
+                  {formatEventDate(it.available_from, 'MMM d · h:mm a')}
                 </span>
               </span>
               <ArrowRight size={13} strokeWidth={2.5} className="text-ink-mute mt-1 shrink-0" />
@@ -116,154 +117,98 @@ function FitToRadius({ location, radiusKm }: { location: { lat: number; lng: num
   return null
 }
 
-// Create a new component for handling markers
+// Renders Leaflet markers (imperatively, since they live on the Leaflet map)
+// and the currently-open popup (declaratively, via a portal that stays inside
+// the React tree). Keeping the popup in the tree — instead of hand-managing
+// createRoot/unmount — avoids the React 18 "unmount during render" race that
+// used to leave empty popup cards stranded on the map.
 function MarkerLayer({ items }: { items: DbItem[] }) {
   const map = useMap()
-  const popupRootsRef = useRef<{ [key: string]: Root }>({})
-  const cleanupFnsRef = useRef<{ [key: string]: () => void }>({})
+  const navigate = useNavigate()
+  const [open, setOpen] = useState<{ key: number; venue: Venue } | null>(null)
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
 
+  // One marker per venue (co-located events collapse into a single pin).
+  // Clicking a marker opens its popup; we only remove the markers we added.
   useEffect(() => {
-    // Clear existing markers
-    map.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer)
-      }
-    })
-
-    if (!items || !items.length) {
-      console.log('No items to display')
-      return
-    }
-
-    // Add new markers — one per venue, so co-located events don't stack.
+    const markers: L.Marker[] = []
     groupByVenue(items).forEach(venue => {
-      const venueKey = venue.items[0].id
+      const key = venue.items[0].id
       const marker = L.marker([venue.lat, venue.lng], {
-        icon: createMarkerIcon(venue.items[0], venue.items.length)
+        icon: createMarkerIcon(venue.items[0], venue.items.length),
       })
-
-      marker.on('click', () => {
-          // Close any existing popups first
-          Object.values(popupRootsRef.current).forEach(root => {
-            root.unmount()
-          })
-          // Run any existing cleanup functions
-          Object.values(cleanupFnsRef.current).forEach(cleanup => cleanup())
-          
-          document.querySelectorAll('[id^="popup-"]').forEach(el => {
-            el.remove()
-          })
-          popupRootsRef.current = {}
-          cleanupFnsRef.current = {}
-
-          // Create popup div. CSS branches on `data-mobile` to make this a
-          // bottom sheet on phones (see [id^="popup-"][data-mobile] in index.css).
-          const isMobile = window.matchMedia('(max-width: 767px)').matches
-          const popupDiv = document.createElement('div')
-          popupDiv.id = `popup-${venueKey}`
-          popupDiv.className = 'fixed z-[2000] bg-white rounded-lg shadow-lg p-4'
-          if (isMobile) popupDiv.dataset.mobile = 'true'
-          document.body.appendChild(popupDiv)
-
-          const mapContainer = map.getContainer()
-
-          // Desktop: anchor next to the marker. Mobile: CSS pins to bottom.
-          const placeNearMarker = () => {
-            if (popupDiv.dataset.mobile) return
-            const pt = map.latLngToContainerPoint(marker.getLatLng())
-            const r = mapContainer.getBoundingClientRect()
-            popupDiv.style.left = `${r.left + pt.x + 20}px`
-            popupDiv.style.top  = `${r.top  + pt.y - 20}px`
-          }
-          placeNearMarker()
-
-          // Create root and store it
-          const root = createRoot(popupDiv)
-          popupRootsRef.current[venueKey] = root
-
-          // Render content
-          root.render(
-            <div className="relative">
-              <button
-                onClick={() => {
-                  root.unmount()
-                  document.body.removeChild(popupDiv)
-                  delete popupRootsRef.current[venueKey]
-                }}
-                aria-label="Close"
-                className="absolute top-1 right-1 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              </button>
-              {venue.items.length === 1 ? (
-                <ListingPreview
-                  {...venue.items[0]}
-                  showDirections={true}
-                  inPopup={true}
-                  onViewDetails={() => {
-                    root.unmount()
-                    document.body.removeChild(popupDiv)
-                    delete popupRootsRef.current[venueKey]
-                    window.location.href = `/listing/${venue.items[0].id}`
-                  }}
-                />
-              ) : (
-                <VenueListPopup items={venue.items} />
-              )}
-            </div>
-          )
-
-          // Keep desktop popup glued to its marker as the user pans/zooms.
-          // (Mobile bottom sheet doesn't need this — CSS pins it.)
-          map.on('move', placeNearMarker)
-          map.on('zoom', placeNearMarker)
-
-          cleanupFnsRef.current[venueKey] = () => {
-            map.off('move', placeNearMarker)
-            map.off('zoom', placeNearMarker)
-          }
-        })
-
+      marker.on('click', () => setOpen({ key, venue }))
       marker.addTo(map)
+      markers.push(marker)
     })
-
-    return () => {
-      // Cleanup
-      Object.values(popupRootsRef.current).forEach(root => root.unmount())
-      Object.values(cleanupFnsRef.current).forEach(cleanup => cleanup())
-      popupRootsRef.current = {}
-      cleanupFnsRef.current = {}
-      
-      document.querySelectorAll('[id^="popup-"]').forEach(el => {
-        el.remove()
-      })
-    }
+    return () => { markers.forEach(m => map.removeLayer(m)) }
   }, [items, map])
 
-  // Close popup when clicking on map
+  // If the open venue drops out of the filtered set, close its popup.
   useEffect(() => {
-    const handleMapClick = (e: L.LeafletMouseEvent) => {
-      // Only close if click wasn't on a marker
-      if (!(e.originalEvent.target as Element).closest('.marker-pin')) {
-        Object.values(popupRootsRef.current).forEach(root => root.unmount())
-        Object.values(cleanupFnsRef.current).forEach(cleanup => cleanup())
-        
-        popupRootsRef.current = {}
-        cleanupFnsRef.current = {}
-        
-        document.querySelectorAll('[id^="popup-"]').forEach(el => {
-          el.remove()
-        })
-      }
+    if (open && !groupByVenue(items).some(v => v.items[0].id === open.key)) {
+      setOpen(null)
     }
+  }, [items, open])
 
-    map.on('click', handleMapClick)
-    return () => {
-      map.off('click', handleMapClick)
+  // Desktop: glue the popup next to its marker as the map pans/zooms.
+  // Mobile: CSS pins it to the bottom as a sheet, so no positioning needed.
+  useEffect(() => {
+    if (!open || isMobile) { setPos(null); return }
+    const place = () => {
+      const pt = map.latLngToContainerPoint(L.latLng(open.venue.lat, open.venue.lng))
+      const r = map.getContainer().getBoundingClientRect()
+      setPos({ left: r.left + pt.x + 20, top: r.top + pt.y - 20 })
     }
+    place()
+    map.on('move', place)
+    map.on('zoom', place)
+    return () => { map.off('move', place); map.off('zoom', place) }
+  }, [open, isMobile, map])
+
+  // Clicking empty map space closes the popup; clicking a marker does not.
+  useEffect(() => {
+    const onMapClick = (e: L.LeafletMouseEvent) => {
+      if (!(e.originalEvent.target as Element)?.closest?.('.marker-pin')) setOpen(null)
+    }
+    map.on('click', onMapClick)
+    return () => { map.off('click', onMapClick) }
   }, [map])
 
-  return null
+  if (!open) return null
+  const { key, venue } = open
+  const close = () => setOpen(null)
+
+  return createPortal(
+    <div
+      id={`popup-${key}`}
+      data-mobile={isMobile ? 'true' : undefined}
+      // Render off-screen until positioned (desktop) so it never flashes at 0,0.
+      style={isMobile ? undefined : { left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
+    >
+      <div className="relative">
+        <button
+          onClick={close}
+          aria-label="Close"
+          className="absolute top-1 right-1 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        {venue.items.length === 1 ? (
+          <ListingPreview
+            {...venue.items[0]}
+            showDirections={true}
+            inPopup={true}
+            onViewDetails={() => { close(); navigate(`/listing/${venue.items[0].id}`) }}
+          />
+        ) : (
+          <VenueListPopup items={venue.items} />
+        )}
+      </div>
+    </div>,
+    document.body,
+  )
 }
 
 function Map() {
