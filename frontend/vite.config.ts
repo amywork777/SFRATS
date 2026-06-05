@@ -41,7 +41,7 @@ export default defineConfig({
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json']
   },
   optimizeDeps: {
-    include: ['@supabase/supabase-js', 'react', 'react-dom'],
+    include: ['@supabase/supabase-js', 'nominatim-browser', 'react', 'react-dom'],
     esbuildOptions: {
       target: 'esnext',
       supported: { 

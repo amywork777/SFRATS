@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import 'leaflet/dist/leaflet.css'
 import Listing from '../components/Listing'
@@ -12,7 +12,7 @@ export default function ListingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchListing = useCallback(async () => {
+  const fetchListing = async () => {
     try {
       if (!id) throw new Error('No listing ID provided')
       const data = await api.getItem(id)
@@ -24,9 +24,9 @@ export default function ListingPage() {
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }
 
-  useEffect(() => { fetchListing() }, [fetchListing])
+  useEffect(() => { fetchListing() }, [id])
 
   if (loading) return (
     <div className="max-w-3xl mx-auto p-8 pt-24">
