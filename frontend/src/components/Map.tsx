@@ -10,6 +10,8 @@ import Sidebar from './Sidebar'
 import ListingPreview from './ListingPreview'
 import { inferEmoji } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
+import { eventType } from '../utils/eventTypes'
+import TypeChips from './TypeChips'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react'
@@ -223,6 +225,7 @@ function Map() {
     dates: { start: Date | null; end: Date | null };
     userLocation: { lat: number; lng: number } | null;
     radiusMiles: number;
+    types: string[];
   }>(() => {
     const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, day: null, search: '' }
     const dates = initial.day
@@ -233,6 +236,7 @@ function Map() {
       dates,
       userLocation: null,
       radiusMiles: 2,
+      types: [],
     }
   })
   const [view, setView] = useState<'map' | 'list'>('map')
@@ -291,6 +295,8 @@ function Map() {
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false
     }
+    // Type filter (derived from emoji — see utils/eventTypes.ts).
+    if (filters.types.length && !filters.types.includes(eventType(item))) return false
     if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
     if (filters.dates.end   && eventDate.getTime() > filters.dates.end.getTime()) return false
 
@@ -319,8 +325,9 @@ function Map() {
 
       {/* Right column: view-toggle, then either Map or List */}
       <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: pick-a-day filter (left) + view toggle (right). */}
-        <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5 bg-paper-light border-b border-ink/15 shrink-0">
+        {/* Top bar: day filter + view toggle, then event-type chips. */}
+        <div className="bg-paper-light border-b border-ink/15 shrink-0">
+          <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5">
           <DatePicker
             value={filters.dates}
             onChange={(dates) => handleFiltersChange({ dates })}
@@ -348,6 +355,13 @@ function Map() {
               <ListIcon size={14} strokeWidth={2.2} />
               <span className="hidden sm:inline">List</span>
             </button>
+          </div>
+          </div>
+          <div className="px-3 md:px-5 pb-2.5">
+            <TypeChips
+              value={filters.types}
+              onChange={(types) => handleFiltersChange({ types })}
+            />
           </div>
         </div>
 
