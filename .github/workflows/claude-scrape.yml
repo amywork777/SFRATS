@@ -1,0 +1,49 @@
+name: SFRATS Claude event scraper
+
+# A Claude Code agent that discovers free Bay Area events (fashion/clothing
+# prioritized) and inserts new ones into Supabase. Runs in CI, where the
+# network is open — the claude.ai/code routine sandbox blocks egress, which is
+# why this lives here instead. Authenticated by a Claude subscription OAuth
+# token (CLAUDE_CODE_OAUTH_TOKEN), not a metered API key.
+
+on:
+  # Every 2 days at 14:00 UTC (~7am PT) — offset from the deterministic
+  # scraper's 18:00 UTC run so they don't overlap.
+  schedule:
+    - cron: "0 14 */2 * *"
+  # Manual "Run workflow" button in the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --max-turns 50
+            --model claude-sonnet-4-6
+            --allowedTools "Bash,WebSearch,WebFetch,Read,Grep,Glob"
+          prompt: |
+            You are the scheduled "Claude scraper" for SFRATS (sfrats.com) — a community map of FREE and free-ish events across the San Francisco Bay Area. Each run, discover NEW free events and insert them into the Supabase `items` table. The SFRATS repo is checked out in the current directory.
+
+            1 — READ THE CONTRACT. Open `frontend/src/pages/Agents.tsx` and read the `AGENT_PROMPT` constant. It is the authoritative insertion contract: the Supabase REST endpoint, the auth headers (the public anon key is in that file), the column schema, and the hard rules — Bay Area bounding box (lat 37.2–38.0, lng -122.6 to -121.6), future-events-only, dedupe by `url` via a GET before insert, normalized-title dedupe, HTML-entity decoding, geocode fallback to jittered SF center, the "do NOT add" list, and the emoji guide. Follow it exactly. If anything in this prompt conflicts with that file, the file wins.
+
+            2 — DISCOVER. Use web search to find FREE / donation / pay-what-you-can events in the SF Bay Area happening in the next ~21 days. Cast a wide net beyond the usual feeds (Funcheap, DoTheBay, Eventbrite free filter, Luma, 19hz, Partiful, venue/library/museum sites, neighborhood orgs).
+
+            PRIORITIZE FASHION & CLOTHING EVENTS — these are a top priority, find as many as you can: thrift pop-ups, clothing swaps / clothes swaps, vintage markets, free clothing giveaways, sample sales that are free to attend, secondhand/consignment events, upcycling and mending workshops, and fashion meetups. Use the 👗 emoji for these (or 🛒 for markets). Also include music, art, comedy, markets, food, workshops, talks, and outdoors events.
+
+            Skip paid/ticketed events (sample sales are fine only if free to enter), events with no specific date, vague locations (TBA / "various locations"), and anything outside the Bay Area.
+
+            3 — INSERT. For each candidate, FIRST GET `?url=eq.<url-encoded url>&select=id&limit=1` and skip if a row already exists; also skip if a normalized-title match exists (strip date prefixes, lowercase). Then POST the new event via curl with `category: "Events"`, `status: "available"`, `posted_by: "claude-scheduled"`, and a unique `edit_code` ("claude-scheduled-" + 12 random hex chars). Always include a `url` — it is the dedup key. Inserts only — never update or delete existing rows.
+
+            LIMITS — insert at most ~15 NEW events this run. Quality over quantity: a correctly-located, correctly-dated free event beats five sketchy ones. Aim to make a good share of them clothing/fashion events.
+
+            FINISH — print a short summary: how many candidates you found, how many were new vs duplicates, and the titles + dates of what you inserted (note which are clothing/fashion). Do NOT modify any files in the repo or open any PRs — this is a data-only job.
