@@ -325,13 +325,19 @@ function Map() {
 
       {/* Right column: view-toggle, then either Map or List */}
       <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: day filter + view toggle, then event-type chips. */}
-        <div className="bg-paper-light border-b border-ink/15 shrink-0">
+        {/* Top bar: day + type filters on the left, view toggle on the right. */}
+        <div className="relative z-[1200] bg-paper-light border-b border-ink/15 shrink-0">
           <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5">
-          <DatePicker
-            value={filters.dates}
-            onChange={(dates) => handleFiltersChange({ dates })}
-          />
+          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+            <DatePicker
+              value={filters.dates}
+              onChange={(dates) => handleFiltersChange({ dates })}
+            />
+            <TypeChips
+              value={filters.types}
+              onChange={(types) => handleFiltersChange({ types })}
+            />
+          </div>
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
               onClick={() => setView('map')}
@@ -356,12 +362,6 @@ function Map() {
               <span className="hidden sm:inline">List</span>
             </button>
           </div>
-          </div>
-          <div className="px-3 md:px-5 pb-2.5">
-            <TypeChips
-              value={filters.types}
-              onChange={(types) => handleFiltersChange({ types })}
-            />
           </div>
         </div>
 
