@@ -12,14 +12,12 @@ export interface EventType {
 }
 
 export const EVENT_TYPES: EventType[] = [
-  { key: 'fashion',   label: 'Fashion',      emoji: '👗' },
-  { key: 'music',     label: 'Music',        emoji: '🎵' },
-  { key: 'markets',   label: 'Markets',      emoji: '🛒' },
-  { key: 'food',      label: 'Food & Drink', emoji: '🍴' },
-  { key: 'arts',      label: 'Arts',         emoji: '🎨' },
-  { key: 'workshops', label: 'Workshops',    emoji: '🛠️' },
-  { key: 'tech',      label: 'Tech',         emoji: '💻' },
-  { key: 'other',     label: 'Other',        emoji: '✨' },
+  { key: 'music',     label: 'Music',             emoji: '🎵' },
+  { key: 'arts',      label: 'Arts & Culture',    emoji: '🎨' },
+  { key: 'markets',   label: 'Markets & Fashion', emoji: '🛍️' },
+  { key: 'food',      label: 'Food & Drink',      emoji: '🍴' },
+  { key: 'tech',      label: 'Tech',              emoji: '💻' },
+  { key: 'other',     label: 'Other',             emoji: '✨' },
 ]
 
 // Strip emoji variation selectors (U+FE0F) so '✂️' and '✂' both match.
@@ -33,12 +31,10 @@ const assign = (key: string, glyphs: string[]) =>
 // Keep these glyphs in sync with the "Emoji guide" in pages/Agents.tsx — that
 // guide is what the scraper agents pick from, so every glyph they can emit must
 // roll up to a chip here or the event silently lands in 'other'.
-assign('fashion',   ['👗', '✂️', '💇'])                          // thrift/vintage, textile craft, beauty
 assign('music',     ['🎵', '💃', '🪩', '⚡', '🥁', '🔊', '🖤', '🏭']) // music, dance, disco, techno, dnb, bass, goth, warehouse/rave
-assign('markets',   ['🛒', '📦', '🛍️'])                          // markets, maker fairs, pop-up shops
+assign('arts',      ['🎨', '🎬', '📖', '🖨️', '🏺', '😂', '🎭', '🏛️', '📚', '🛠️', '🔧', '✂️']) // art, film, books, print, pottery, comedy, theater, museum, workshops, repair, craft
+assign('markets',   ['🛒', '📦', '🛍️', '👗', '👕', '💇'])         // markets, maker fairs, pop-ups, thrift/vintage, clothing, beauty
 assign('food',      ['🍕', '🍳', '☕', '🍺', '🍱', '🍽️', '🍴'])    // food + drink
-assign('arts',      ['🎨', '🎬', '📖', '🖨️', '🏺', '😂', '🎭', '🏛️', '📚']) // art, film, books, print, pottery, comedy, theater, museum
-assign('workshops', ['🛠️', '🔧'])                                // workshops, repair
 assign('tech',      ['🤖', '💻', '🚀', '🤝'])                     // AI, hackathon, startup/pitch, networking
 // everything else (🎉 festival, 🎤 talk, 🚶 tour, 🚲 bike, 🧘 wellness,
 // 💉 health, ⚖️ legal, 🌱 garden, 📅/✨/✿ default) → 'other'
