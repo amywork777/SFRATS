@@ -13,7 +13,7 @@ import { eventType } from '../utils/eventTypes'
 import TypeChips from './TypeChips'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
-import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react'
+import { Map as MapIconLucide, List as ListIcon, ArrowRight, X } from 'lucide-react'
 import { formatEventDate } from '../utils/dates'
 import SubmissionsList from './SubmissionsList'
 import SearchFilter from './SearchFilter'
@@ -283,6 +283,16 @@ function Map() {
     }))
   }
 
+  // How many filter groups are active — drives the toolbar's "Clear all".
+  const activeFilterCount =
+    (filters.dates.start || filters.dates.end ? 1 : 0) +
+    (filters.types.length ? 1 : 0) +
+    (filters.userLocation ? 1 : 0) +
+    (filters.search.trim() ? 1 : 0)
+
+  const clearAllFilters = () =>
+    handleFiltersChange({ search: '', dates: { start: null, end: null }, types: [], userLocation: null, radiusMiles: 2 })
+
   const filteredItems = items.filter(item => {
     if (item.category !== 'Events') return false
 
@@ -338,6 +348,16 @@ function Map() {
               value={filters.search}
               onChange={(search) => handleFiltersChange({ search })}
             />
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 transition-colors"
+              >
+                <X size={12} strokeWidth={2.4} />
+                Clear{activeFilterCount > 1 ? ` (${activeFilterCount})` : ''}
+              </button>
+            )}
           </div>
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
             <button
