@@ -6,7 +6,6 @@ import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
-import Sidebar from './Sidebar'
 import ListingPreview from './ListingPreview'
 import { inferEmoji } from '../utils/categoryIcons'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
@@ -17,7 +16,8 @@ import ListView from './ListView'
 import { Map as MapIconLucide, List as ListIcon, ArrowRight } from 'lucide-react'
 import { formatEventDate } from '../utils/dates'
 import SubmissionsList from './SubmissionsList'
-import MobileNav from './MobileNav'
+import SearchFilter from './SearchFilter'
+import NearMeFilter from './NearMeFilter'
 import DatePicker from './DatePicker'
 import { presetToRange, rangeToPreset, dayToRange, rangeToDay, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
@@ -313,19 +313,10 @@ function Map() {
 
   return (
     <div className="fixed inset-0 top-14 md:top-16">
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <MobileNav onFiltersChange={handleFiltersChange} />
-      </div>
-
-      {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar onFiltersChange={handleFiltersChange} />
-      </div>
-
-      {/* Right column: view-toggle, then either Map or List */}
-      <div className="relative h-full md:ml-[300px] lg:ml-[320px] flex flex-col">
-        {/* Top bar: day + type filters on the left, view toggle on the right. */}
+      {/* Full-width column: unified filter bar, then either Map or List */}
+      <div className="relative h-full flex flex-col">
+        {/* Unified filter bar: when / type / near-me / search on the left,
+            view toggle on the right. Replaces the old sidebar + mobile sheet. */}
         <div className="relative z-[1200] bg-paper-light border-b border-ink/15 shrink-0">
           <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5">
           <div className="flex flex-wrap items-center gap-1.5 min-w-0">
@@ -336,6 +327,16 @@ function Map() {
             <TypeChips
               value={filters.types}
               onChange={(types) => handleFiltersChange({ types })}
+            />
+            <NearMeFilter
+              location={filters.userLocation}
+              radiusMiles={filters.radiusMiles}
+              onChange={({ location, radiusMiles }) =>
+                handleFiltersChange({ userLocation: location, radiusMiles })}
+            />
+            <SearchFilter
+              value={filters.search}
+              onChange={(search) => handleFiltersChange({ search })}
             />
           </div>
           <div className="flex items-center border border-ink/30 bg-paper shrink-0">
