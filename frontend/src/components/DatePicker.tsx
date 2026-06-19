@@ -4,7 +4,7 @@ import {
   isToday, parseISO, startOfMonth,
 } from 'date-fns'
 import { CalendarDays, ChevronLeft, ChevronRight, Check } from 'lucide-react'
-import { dayKey, dayToRange, rangeToDay, presetToRange, rangeToPreset } from '../utils/urlFilters'
+import { dayKey, dayToRange, rangeFromKeys, rangeToDay, presetToRange, rangeToPreset } from '../utils/urlFilters'
 import FilterDropdown from './FilterDropdown'
 
 interface DatePickerProps {
@@ -27,6 +27,12 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
   // A specific calendar day that isn't already covered by a quick preset.
   const specificDay = selectedDay && !isToday && !isTomorrow ? selectedDay : null
   const active = !!(value.start || value.end)
+  const isRange = !!(value.start && value.end) && dayKey(value.start) !== dayKey(value.end) && !isWeekend
+
+  // Two-click range selection: first click sets the anchor, second sets the end.
+  // hoverDay drives the live preview between the two clicks.
+  const [rangeAnchor, setRangeAnchor] = useState<Date | null>(null)
+  const [hoverDay, setHoverDay] = useState<Date | null>(null)
 
   const [viewMonth, setViewMonth] = useState(() =>
     startOfMonth(selectedDay ? parseISO(selectedDay) : new Date()))
@@ -44,8 +50,32 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
     isToday ? 'Today'
     : isTomorrow ? 'Tomorrow'
     : isWeekend ? 'Weekend'
+    : isRange && value.start && value.end ? `${format(value.start, 'MMM d')} – ${format(value.end, 'MMM d')}`
     : specificDay ? format(parseISO(specificDay), 'MMM d')
     : 'When'
+
+  const onDayClick = (d: Date, close: () => void) => {
+    if (!rangeAnchor) {
+      // First click — start a range (also a valid single-day filter for now).
+      setRangeAnchor(d)
+      onChange(rangeFromKeys(dayKey(d), dayKey(d)))
+    } else {
+      // Second click — commit the span and close.
+      onChange(rangeFromKeys(dayKey(rangeAnchor), dayKey(d)))
+      setRangeAnchor(null)
+      setHoverDay(null)
+      close()
+    }
+  }
+
+  // Highlight bounds: the committed range, or the in-progress preview.
+  let loKey = value.start ? dayKey(value.start) : null
+  let hiKey = value.end ? dayKey(value.end) : null
+  if (rangeAnchor) {
+    const h = hoverDay ?? rangeAnchor
+    const [a, b] = h >= rangeAnchor ? [rangeAnchor, h] : [h, rangeAnchor]
+    loKey = dayKey(a); hiKey = dayKey(b)
+  }
 
   const quick = [
     { key: 'anytime',  label: 'Anytime',      on: !active,    apply: () => onChange({ start: null, end: null }) },
@@ -58,6 +88,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
     <FilterDropdown
       active={active}
       panelClassName="w-[286px]"
+      onOpenChange={(o) => { if (o) { setRangeAnchor(null); setHoverDay(null) } }}
       label={
         <span className="inline-flex items-center gap-1.5">
           <CalendarDays size={13} strokeWidth={2.2} />
@@ -117,22 +148,27 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-0.5">
+            <div className="grid grid-cols-7 gap-0.5" onMouseLeave={() => setHoverDay(null)}>
               {days.map((d, i) => {
                 if (!d) return <span key={i} />
-                const sel = selectedDay === dayKey(d)
+                const k = dayKey(d)
+                const isEnd = k === loKey || k === hiKey
+                const inRange = !!loKey && !!hiKey && k >= loKey && k <= hiKey
                 const today = isTodayFn(d)
                 return (
                   <button
                     key={i}
                     type="button"
-                    onClick={() => { onChange(dayToRange(dayKey(d))); close() }}
+                    onClick={() => onDayClick(d, close)}
+                    onMouseEnter={() => { if (rangeAnchor) setHoverDay(d) }}
                     className={`aspect-square flex items-center justify-center font-mono text-[12px] border transition-colors ${
-                      sel
+                      isEnd
                         ? 'bg-bridge-500 text-paper-light border-ink font-bold'
-                        : today
-                          ? 'border-bridge-300 text-ink hover:bg-paper'
-                          : 'border-transparent text-ink-soft hover:bg-paper hover:border-ink/20'
+                        : inRange
+                          ? 'bg-bridge-500/15 text-ink border-transparent'
+                          : today
+                            ? 'border-bridge-300 text-ink hover:bg-paper'
+                            : 'border-transparent text-ink-soft hover:bg-paper hover:border-ink/20'
                     }`}
                   >
                     {format(d, 'd')}
@@ -140,6 +176,11 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
                 )
               })}
             </div>
+            {rangeAnchor && (
+              <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-bridge-700">
+                Pick an end day…
+              </p>
+            )}
           </div>
         </>
       )}

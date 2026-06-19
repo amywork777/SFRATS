@@ -19,7 +19,7 @@ import SubmissionsList from './SubmissionsList'
 import SearchFilter from './SearchFilter'
 import NearMeFilter from './NearMeFilter'
 import DatePicker from './DatePicker'
-import { presetToRange, rangeToPreset, dayToRange, rangeToDay, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
+import { presetToRange, rangeToPreset, dayToRange, rangeToDay, rangeFromKeys, rangeToDays, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
 // Create custom marker icons for each category. When several events share a
 // venue they collapse into one pin (see groupByVenue) — `count` renders a
@@ -227,10 +227,12 @@ function Map() {
     radiusMiles: number;
     types: string[];
   }>(() => {
-    const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, day: null, search: '' }
+    const initial = typeof window !== 'undefined' ? readUrlFilters(window.location.search) : { preset: null, day: null, from: null, to: null, search: '' }
     const dates = initial.day
       ? dayToRange(initial.day)
-      : initial.preset ? presetToRange(initial.preset) : { start: null, end: null }
+      : (initial.from && initial.to)
+        ? rangeFromKeys(initial.from, initial.to)
+        : initial.preset ? presetToRange(initial.preset) : { start: null, end: null }
     return {
       search: initial.search,
       dates,
@@ -244,9 +246,12 @@ function Map() {
   // Keep the URL in sync with the filters that make sense to share —
   // selected day (or weekend preset) + search. Location / radius stay local.
   useEffect(() => {
+    const rd = rangeToDays(filters.dates)
     writeUrlFilters({
       day: rangeToDay(filters.dates),
       preset: rangeToPreset(filters.dates),
+      from: rd?.from ?? null,
+      to: rd?.to ?? null,
       search: filters.search,
     })
   }, [filters.dates, filters.search])

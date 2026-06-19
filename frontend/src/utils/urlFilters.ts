@@ -8,6 +8,8 @@ export type DatePresetId = 'all' | 'tonight' | 'tomorrow' | 'weekend' | 'week'
 export interface UrlFilters {
   preset: DatePresetId | null
   day: string | null   // 'YYYY-MM-DD' when a single calendar day is selected
+  from: string | null  // 'YYYY-MM-DD' start of a custom multi-day range
+  to: string | null    // 'YYYY-MM-DD' end of a custom multi-day range
   search: string
 }
 
@@ -31,6 +33,24 @@ export function dayToRange(key: string): { start: Date | null; end: Date | null 
   if (!m) return { start: null, end: null }
   const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
   return { start: startOfDay(d), end: endOfDay(d) }
+}
+
+/** Build a whole-day range spanning from..to (inclusive), order-normalized. */
+export function rangeFromKeys(fromKey: string, toKey: string): { start: Date | null; end: Date | null } {
+  const a = dayToRange(fromKey).start
+  const b = dayToRange(toKey).end
+  if (!a || !b) return { start: null, end: null }
+  if (a <= b) return { start: a, end: b }
+  // keys out of order — swap so start ≤ end
+  return { start: dayToRange(toKey).start, end: dayToRange(fromKey).end }
+}
+
+/** If a range spans more than one calendar day, return its from/to keys. */
+export function rangeToDays(r: { start: Date | null; end: Date | null }): { from: string; to: string } | null {
+  if (!r.start || !r.end) return null
+  const from = dayKey(r.start)
+  const to = dayKey(r.end)
+  return from === to ? null : { from, to }
 }
 
 /** If a range is exactly one calendar day's bounds, return its key, else null. */
@@ -82,9 +102,15 @@ export function readUrlFilters(search: string): UrlFilters {
   const day = rawDay && /^\d{4}-\d{2}-\d{2}$/.test(rawDay) ? rawDay : null
   const d = params.get('d')
   const preset = d && (ALL_PRESETS as string[]).includes(d) ? (d as DatePresetId) : null
+  const rawFrom = params.get('from')
+  const from = rawFrom && /^\d{4}-\d{2}-\d{2}$/.test(rawFrom) ? rawFrom : null
+  const rawTo = params.get('to')
+  const to = rawTo && /^\d{4}-\d{2}-\d{2}$/.test(rawTo) ? rawTo : null
   return {
     preset,
     day,
+    from,
+    to,
     search: params.get('q') ?? '',
   }
 }
@@ -92,10 +118,11 @@ export function readUrlFilters(search: string): UrlFilters {
 export function writeUrlFilters(u: UrlFilters) {
   if (typeof window === 'undefined') return
   const params = new URLSearchParams(window.location.search)
-  // A single day wins; otherwise fall back to a multi-day preset (weekend).
-  if (u.day) { params.set('day', u.day); params.delete('d') }
-  else if (u.preset && u.preset !== 'all') { params.set('d', u.preset); params.delete('day') }
-  else { params.delete('d'); params.delete('day') }
+  // Precedence: single day > custom range > multi-day preset (weekend) > none.
+  params.delete('day'); params.delete('d'); params.delete('from'); params.delete('to')
+  if (u.day) params.set('day', u.day)
+  else if (u.preset && u.preset !== 'all') params.set('d', u.preset)
+  else if (u.from && u.to) { params.set('from', u.from); params.set('to', u.to) }
   if (u.search.trim()) params.set('q', u.search.trim())
   else params.delete('q')
   const qs = params.toString()

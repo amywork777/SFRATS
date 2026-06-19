@@ -8,15 +8,22 @@ export default function FilterDropdown({
   label,
   active = false,
   panelClassName = 'w-[220px]',
+  onOpenChange,
   children,
 }: {
   label: ReactNode
   active?: boolean
   panelClassName?: string
+  onOpenChange?: (open: boolean) => void
   children: ReactNode | ((close: () => void) => ReactNode)
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Notify on open/close via a ref so an inline callback can't churn the effect.
+  const onOpenChangeRef = useRef(onOpenChange)
+  onOpenChangeRef.current = onOpenChange
+  useEffect(() => { onOpenChangeRef.current?.(open) }, [open])
 
   useEffect(() => {
     if (!open) return
