@@ -18,6 +18,7 @@ export const EVENT_TYPES: EventType[] = [
   { key: 'food',      label: 'Food & Drink', emoji: '🍴' },
   { key: 'arts',      label: 'Arts',         emoji: '🎨' },
   { key: 'workshops', label: 'Workshops',    emoji: '🛠️' },
+  { key: 'tech',      label: 'Tech',         emoji: '💻' },
   { key: 'other',     label: 'Other',        emoji: '✨' },
 ]
 
@@ -29,14 +30,18 @@ const GLYPH_TO_TYPE: Record<string, string> = {}
 const assign = (key: string, glyphs: string[]) =>
   glyphs.forEach(g => { GLYPH_TO_TYPE[strip(g)] = key })
 
-assign('fashion',   ['👗', '✂️', '💇'])           // thrift/vintage, textile craft, beauty
-assign('music',     ['🎵', '💃'])                  // music, dance
-assign('markets',   ['🛒', '📦'])                  // markets, maker fairs
-assign('food',      ['🍕', '🍳', '☕', '🍺', '🍱']) // food + drink
-assign('arts',      ['🎨', '🎬', '📖', '🖨️', '🏺', '😂']) // art, film, books, print, pottery, comedy
-assign('workshops', ['🛠️', '🔧'])                 // workshops, repair
+// Keep these glyphs in sync with the "Emoji guide" in pages/Agents.tsx — that
+// guide is what the scraper agents pick from, so every glyph they can emit must
+// roll up to a chip here or the event silently lands in 'other'.
+assign('fashion',   ['👗', '✂️', '💇'])                          // thrift/vintage, textile craft, beauty
+assign('music',     ['🎵', '💃', '🪩', '⚡', '🥁', '🔊', '🖤', '🏭']) // music, dance, disco, techno, dnb, bass, goth, warehouse/rave
+assign('markets',   ['🛒', '📦', '🛍️'])                          // markets, maker fairs, pop-up shops
+assign('food',      ['🍕', '🍳', '☕', '🍺', '🍱', '🍽️', '🍴'])    // food + drink
+assign('arts',      ['🎨', '🎬', '📖', '🖨️', '🏺', '😂', '🎭', '🏛️', '📚']) // art, film, books, print, pottery, comedy, theater, museum
+assign('workshops', ['🛠️', '🔧'])                                // workshops, repair
+assign('tech',      ['🤖', '💻', '🚀', '🤝'])                     // AI, hackathon, startup/pitch, networking
 // everything else (🎉 festival, 🎤 talk, 🚶 tour, 🚲 bike, 🧘 wellness,
-// 💉 health, ⚖️ legal, 🌱 garden, 📅/✿ default) → 'other'
+// 💉 health, ⚖️ legal, 🌱 garden, 📅/✨/✿ default) → 'other'
 
 /** Roll a listing up to one of the user-facing EVENT_TYPES keys. */
 export function eventType(
