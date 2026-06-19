@@ -28,11 +28,14 @@ const DRY_RUN = !/^(0|false|no)$/i.test(process.env.DRY_RUN ?? '1')
 const REST = `${SUPABASE_URL}/rest/v1/items`
 const HEADERS = { apikey: ANON, Authorization: `Bearer ${ANON}`, 'Content-Type': 'application/json' }
 
-const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32 }
+// Bay Area bounding box (SFRATS is Bay-Area-wide, not SF-only). An SF-only box
+// here would treat every legitimate Oakland / Berkeley / San Jose / Vallejo pin
+// as out-of-area and clear it — corrupting correct data on every run.
+const BAY_BBOX = { latMin: 37.1, latMax: 38.5, lngMin: -122.8, lngMax: -121.5 }
 const SCRAPER_SOURCES = new Set(['funcheap', 'eventbrite', 'dothebay'])
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
-const inSfBbox = (lat, lng) =>
-  lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
+const inBayBbox = (lat, lng) =>
+  lat >= BAY_BBOX.latMin && lat <= BAY_BBOX.latMax && lng >= BAY_BBOX.lngMin && lng <= BAY_BBOX.lngMax
 
 // ── JSON-LD extraction (mirrors scrape.mjs) ──
 function extractLdJson(html) {
@@ -91,9 +94,10 @@ async function fetchEventDetails(url) {
 
 // ── Geocoding (mirrors scrape.mjs: SF-bounded, no double city) ──
 async function geocode(address) {
-  const hasCity = /san\s*francisco|,\s*ca\b|california/i.test(address)
-  const q = hasCity ? address : `${address}, San Francisco, CA`
-  const viewbox = `${SF_BBOX.lngMin},${SF_BBOX.latMax},${SF_BBOX.lngMax},${SF_BBOX.latMin}`
+  // Don't force "San Francisco" — Bay Area events can be anywhere in the box.
+  const hasState = /,\s*ca\b|california/i.test(address)
+  const q = hasState ? address : `${address}, CA`
+  const viewbox = `${BAY_BBOX.lngMin},${BAY_BBOX.latMax},${BAY_BBOX.lngMax},${BAY_BBOX.latMin}`
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}`
     + `&format=json&limit=1&countrycodes=us&viewbox=${viewbox}&bounded=1`
   const res = await fetch(url, { headers: { 'User-Agent': 'sfrats-scraper/1.0' } })
@@ -149,13 +153,13 @@ async function run() {
     }
 
     // --- LOCATION: prefer source geo, else geocode the source address ---
-    let lat = inSfBbox(det.lat, det.lng) ? det.lat : null
-    let lng = inSfBbox(det.lat, det.lng) ? det.lng : null
+    let lat = inBayBbox(det.lat, det.lng) ? det.lat : null
+    let lng = inBayBbox(det.lat, det.lng) ? det.lng : null
     let address = det.address ?? r.location_address ?? null
     if ((lat == null || lng == null) && address) {
       const geo = await geocode(address)
       await sleep(1100) // Nominatim TOS rate limit
-      if (geo && inSfBbox(geo.lat, geo.lng)) { lat = geo.lat; lng = geo.lng }
+      if (geo && inBayBbox(geo.lat, geo.lng)) { lat = geo.lat; lng = geo.lng }
     }
 
     if (lat != null && lng != null) {

@@ -16,7 +16,11 @@ const HEADERS = {
   'Content-Type': 'application/json',
 }
 
-const SF_BBOX = { latMin: 37.62, latMax: 37.85, lngMin: -122.55, lngMax: -122.32 }
+// Bay Area bounding box. SFRATS expanded from SF-only to the whole Bay Area,
+// so geocoding + validation must accept the East Bay, North Bay, Peninsula and
+// South Bay — not just the city. The old SF-only box silently nulled the
+// coordinates of every Oakland / Berkeley / San Jose / Vallejo event.
+const BAY_BBOX = { latMin: 37.1, latMax: 38.5, lngMin: -122.8, lngMax: -121.5 }
 
 // Many sources (Funcheap especially) re-post recurring events once per
 // occurrence — 3x "Pay-What-You-Can Taco Day", 5x "HellaSecret Comedy",
@@ -158,13 +162,29 @@ async function alreadyInDb(url) {
   return Array.isArray(rows) && rows.length > 0
 }
 
+// A "placeable" address has a street number or a venue name — something more
+// specific than a bare city. Geocoding "San Francisco, CA" only returns the
+// city centroid, which stacks unrelated events on one fake point. We'd rather
+// leave such events unpinned (they still show in the list).
+function isPlaceable(address = '') {
+  const a = address.trim()
+  if (!a) return false
+  if (/\d{2,}\s+\w/.test(a)) return true // has a street number
+  // strip city/state/country tokens; anything left is a venue/street name
+  const rest = a
+    .replace(/\b(san\s*francisco|oakland|berkeley|san\s*jose|bay\s*area|ca|california|usa|united states)\b/gi, '')
+    .replace(/[\s,]+/g, '')
+  return rest.length > 0
+}
+
 async function geocode(address) {
-  // Don't double-append the city/state if the address already names it.
-  const hasCity = /san\s*francisco|,\s*ca\b|california/i.test(address)
-  const q = hasCity ? address : `${address}, San Francisco, CA`
-  // Bias + restrict results to the SF bounding box so a bare street name
+  // Don't double-append the state if the address already names it. We no longer
+  // force "San Francisco" — the event may be anywhere in the Bay Area.
+  const hasState = /,\s*ca\b|california/i.test(address)
+  const q = hasState ? address : `${address}, CA`
+  // Bias + restrict results to the Bay Area box so a bare street name
   // ("123 Main St") can't match an identically-named street elsewhere.
-  const viewbox = `${SF_BBOX.lngMin},${SF_BBOX.latMax},${SF_BBOX.lngMax},${SF_BBOX.latMin}`
+  const viewbox = `${BAY_BBOX.lngMin},${BAY_BBOX.latMax},${BAY_BBOX.lngMax},${BAY_BBOX.latMin}`
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}`
     + `&format=json&limit=1&countrycodes=us&viewbox=${viewbox}&bounded=1`
   const res = await fetch(url, { headers: { 'User-Agent': 'sfrats-scraper/1.0' } })
@@ -174,8 +194,8 @@ async function geocode(address) {
   return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
 }
 
-function inSfBbox(lat, lng) {
-  return lat >= SF_BBOX.latMin && lat <= SF_BBOX.latMax && lng >= SF_BBOX.lngMin && lng <= SF_BBOX.lngMax
+function inBayBbox(lat, lng) {
+  return lat >= BAY_BBOX.latMin && lat <= BAY_BBOX.latMax && lng >= BAY_BBOX.lngMin && lng <= BAY_BBOX.lngMax
 }
 
 async function tryInsert(source, row) {
@@ -204,8 +224,10 @@ async function tryInsert(source, row) {
     return 'dup'
   }
 
-  // Geocode if needed
-  if ((!row.location_lat || !row.location_lng) && row.location_address) {
+  // Geocode if needed — but ONLY for placeable addresses. A city-only address
+  // ("San Francisco, CA") would geocode to the city centroid and fake-pin the
+  // event there, which is exactly the bug we're avoiding.
+  if ((!row.location_lat || !row.location_lng) && isPlaceable(row.location_address)) {
     const geo = await geocode(row.location_address)
     if (geo) {
       row.location_lat = geo.lat
@@ -213,7 +235,7 @@ async function tryInsert(source, row) {
     }
     await sleep(1100) // Nominatim TOS rate limit
   }
-  if (row.location_lat && row.location_lng && !inSfBbox(row.location_lat, row.location_lng)) {
+  if (row.location_lat && row.location_lng && !inBayBbox(row.location_lat, row.location_lng)) {
     row.location_lat = null
     row.location_lng = null
   }
