@@ -7,9 +7,17 @@ export const api = {
     categories?: string[]
     dates?: { start: Date | null; end: Date | null }
   }) {
+    // Keep archive/junk rows in Supabase, but do not download them into the public feed.
+    const now = new Date()
+    const graceStart = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
     let query = supabase
       .from('items')
       .select('*')
+      .eq('category', 'Events')
+      .eq('status', 'available')
+      .not('available_from', 'is', null)
+      .or(`available_until.gte.${now.toISOString()},and(available_until.is.null,available_from.gte.${graceStart.toISOString()})`)
       .order('created_at', { ascending: false })
 
     if (filters) {
