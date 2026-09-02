@@ -121,9 +121,8 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                 className="z-0"
               >
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; OSM &copy; CARTO'
-                  subdomains="abcd"
+                  url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   detectRetina
                 />
                 <Marker
