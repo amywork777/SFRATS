@@ -8,7 +8,7 @@ import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
 import ListingPreview from './ListingPreview'
 import { inferEmoji } from '../utils/categoryIcons'
-import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
+import { visibleEvents, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { eventType } from '../utils/eventTypes'
 import TypeChips from './TypeChips'
 import { DbItem as DbItemRow } from '../types/supabase'
@@ -22,7 +22,7 @@ import DatePicker from './DatePicker'
 import { presetToRange, rangeToPreset, dayToRange, rangeToDay, rangeFromKeys, rangeToDays, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
 // Create custom marker icons for each category. When several events share a
-// venue they collapse into one pin (see groupByVenue) — `count` renders a
+// venue they collapse into one pin (see groupByVenue) â `count` renders a
 // badge so people know there's more than one event behind it.
 const createMarkerIcon = (
   item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>,
@@ -40,13 +40,13 @@ const createMarkerIcon = (
 }
 
 // Events frequently share a venue, which geocodes to identical coordinates.
-// Leaflet would stack those pins exactly on top of each other — that both
+// Leaflet would stack those pins exactly on top of each other â that both
 // piles their drop shadows into a dark blob and makes every event but the
 // top one unclickable. Collapse co-located events into a single pin instead.
 type Venue = { lat: number; lng: number; items: DbItem[] }
 
 const groupByVenue = (items: DbItem[]): Venue[] => {
-  // NB: a plain object, not a Map — the `Map` identifier is shadowed by this
+  // NB: a plain object, not a Map â the `Map` identifier is shadowed by this
   // file's own `Map` component, so `new Map()` wouldn't resolve to the builtin.
   const venues: Record<string, Venue> = {}
   for (const item of items) {
@@ -94,7 +94,7 @@ function VenueListPopup({ items }: { items: DbItem[] }) {
                   {it.title}
                 </span>
                 <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
-                  {formatEventDate(it.available_from, 'MMM d · h:mm a')}
+                  {formatEventDate(it.available_from, 'MMM d Â· h:mm a')}
                 </span>
               </span>
               <ArrowRight size={13} strokeWidth={2.5} className="text-ink-mute mt-1 shrink-0" />
@@ -121,8 +121,8 @@ function FitToRadius({ location, radiusKm }: { location: { lat: number; lng: num
 
 // Renders Leaflet markers (imperatively, since they live on the Leaflet map)
 // and the currently-open popup (declaratively, via a portal that stays inside
-// the React tree). Keeping the popup in the tree — instead of hand-managing
-// createRoot/unmount — avoids the React 18 "unmount during render" race that
+// the React tree). Keeping the popup in the tree â instead of hand-managing
+// createRoot/unmount â avoids the React 18 "unmount during render" race that
 // used to leave empty popup cards stranded on the map.
 function MarkerLayer({ items }: { items: DbItem[] }) {
   const map = useMap()
@@ -243,7 +243,7 @@ function Map() {
   })
   const [view, setView] = useState<'map' | 'list'>('map')
 
-  // Keep the URL in sync with the filters that make sense to share —
+  // Keep the URL in sync with the filters that make sense to share â
   // selected day (or weekend preset) + search. Location / radius stay local.
   useEffect(() => {
     const rd = rangeToDays(filters.dates)
@@ -288,7 +288,7 @@ function Map() {
     }))
   }
 
-  // How many filter groups are active — drives the toolbar's "Clear all".
+  // How many filter groups are active â drives the toolbar's "Clear all".
   const activeFilterCount =
     (filters.dates.start || filters.dates.end ? 1 : 0) +
     (filters.types.length ? 1 : 0) +
@@ -298,19 +298,13 @@ function Map() {
   const clearAllFilters = () =>
     handleFiltersChange({ search: '', dates: { start: null, end: null }, types: [], userLocation: null, radiusMiles: 2 })
 
-  const filteredItems = items.filter(item => {
-    if (item.category !== 'Events') return false
-
-    // Auto-expire: hide events past their end (or +24h after start).
-    // See utils/listingFilters.ts for the rules.
-    if (!isActive(item)) return false
-
+  const filteredItems = visibleEvents(items).filter(item => {
     const eventDate = new Date(item.available_from)
 
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false
     }
-    // Type filter (derived from emoji — see utils/eventTypes.ts).
+    // Type filter (derived from emoji â see utils/eventTypes.ts).
     if (filters.types.length && !filters.types.includes(eventType(item))) return false
     if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
     if (filters.dates.end   && eventDate.getTime() > filters.dates.end.getTime()) return false
@@ -452,12 +446,12 @@ function Map() {
             {(loading || error || !filteredItems.length) && (
               <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
                 <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
-                  {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
+                  {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loadingâ¦</span>}
                   {!loading && error && (
                     <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
                   )}
                   {!loading && !error && !filteredItems.length && (
-                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No events posted yet — be the first.</span>
+                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No events posted yet â be the first.</span>
                   )}
                 </div>
               </div>
@@ -470,7 +464,7 @@ function Map() {
         )}
       </div>
 
-      {/* Recent Submissions Panel — only relevant in map mode */}
+      {/* Recent Submissions Panel â only relevant in map mode */}
       {view === 'map' && (
         <div className="hidden md:block">
           <SubmissionsList category="Events" />
