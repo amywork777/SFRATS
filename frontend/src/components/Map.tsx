@@ -214,6 +214,11 @@ function MarkerLayer({ items }: { items: DbItem[] }) {
 }
 
 function Map() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -298,7 +303,7 @@ function Map() {
   const clearAllFilters = () =>
     handleFiltersChange({ search: '', dates: { start: null, end: null }, types: [], userLocation: null, radiusMiles: 2 })
 
-  const filteredItems = visibleEvents(items).filter(item => {
+  const filteredItems = visibleEvents(items, now).filter(item => {
     const eventDate = new Date(item.available_from)
 
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {

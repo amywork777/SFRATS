@@ -1,6 +1,8 @@
-import { DbItem } from '../types/supabase'
+import type { DbItem } from '../types/supabase'
 
-const DAY_MS = 24 * 60 * 60 * 1000
+import { projectOccurrence } from './recurrence'
+
+const DAY_MS = 12 * 60 * 60 * 1000
 
 export const MILE_KM = 1.609344
 
@@ -34,9 +36,10 @@ export function withinRadius(
  * - Only available Events are public listings.
  * - Every event needs a valid start date.
  * - If `available_until` exists and has passed, the event is expired.
- * - Otherwise hide it 24 hours after its start.
+ * - Otherwise hide it 12 hours after its start.
  */
 export function isActive(item: DbItem, now: Date = new Date()): boolean {
+  if (item.title === '__SCRAPER_RUN__') return false
   if (item.category !== 'Events' || item.status !== 'available') return false
   const start = new Date(item.available_from ?? '').getTime()
   if (!Number.isFinite(start)) return false
@@ -54,7 +57,7 @@ const eventDay = (item: DbItem) =>
 
 /** Display-only quality rules; rows remain archived in Supabase. */
 export function visibleEvents(items: DbItem[], now: Date = new Date()): DbItem[] {
-  const newestFirst = items.filter(item => isActive(item, now)).sort((a, b) => {
+  const newestFirst = items.map(item => projectOccurrence(item, now)).filter((item): item is DbItem => item !== null && isActive(item, now)).sort((a, b) => {
     const created = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     if (Number.isFinite(created) && created !== 0) return created
     return Number(b.id) - Number(a.id)

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { format, isToday, isTomorrow, isYesterday } from 'date-fns'
+import { formatEventDate } from '../utils/dates'
 import { ArrowUpRight } from 'lucide-react'
 import { DbItem } from '../types/supabase'
 import { inferEmoji } from '../utils/categoryIcons'
@@ -22,22 +22,26 @@ const SOURCE_LABEL: Record<string, string> = {
 
 function dateKey(iso: string | null | undefined) {
   if (!iso) return null
-  return format(new Date(iso), 'yyyy-MM-dd')
+  return formatEventDate(iso, 'yyyy-MM-dd')
 }
 
 function dateHeader(d: Date) {
-  const day = isToday(d) ? 'Today' : isTomorrow(d) ? 'Tomorrow' : isYesterday(d) ? 'Yesterday' : format(d, 'EEEE')
-  const sub = format(d, 'MMM d')
-  return { day, sub, todayLike: isToday(d) }
+  const key = formatEventDate(d, 'yyyy-MM-dd')
+  const today = new Date()
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1)
+  const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1)
+  const todayLike = key === formatEventDate(today, 'yyyy-MM-dd')
+  const day = todayLike ? 'Today' : key === formatEventDate(tomorrow, 'yyyy-MM-dd') ? 'Tomorrow' : key === formatEventDate(yesterday, 'yyyy-MM-dd') ? 'Yesterday' : formatEventDate(d, 'EEEE')
+  return { day, sub: formatEventDate(d, 'MMM d'), todayLike }
 }
 
 function timeLabel(item: DbItem) {
   if (!item.available_from) return null
   const start = new Date(item.available_from)
-  const startStr = format(start, 'h:mm a').toLowerCase()
+  const startStr = formatEventDate(start, 'h:mm a').toLowerCase()
   if (item.available_until) {
     const end = new Date(item.available_until)
-    const endStr = format(end, 'h:mm a').toLowerCase()
+    const endStr = formatEventDate(end, 'h:mm a').toLowerCase()
     return `${startStr} – ${endStr}`
   }
   return startStr

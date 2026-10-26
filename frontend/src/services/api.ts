@@ -1,3 +1,4 @@
+import { projectOccurrence } from '../utils/recurrence'
 import { supabase } from '../utils/supabase'
 import { DbItem } from '../types/supabase'
 
@@ -8,29 +9,29 @@ export const api = {
     dates?: { start: Date | null; end: Date | null }
   }) {
     // Keep archive/junk rows in Supabase, but do not download them into the public feed.
-    const now = new Date()
-    const graceStart = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-
     let query = supabase
       .from('items')
       .select('*')
       .eq('category', 'Events')
       .eq('status', 'available')
       .not('available_from', 'is', null)
-      .or(`available_until.gte.${now.toISOString()},and(available_until.is.null,available_from.gte.${graceStart.toISOString()})`)
       .order('created_at', { ascending: false })
 
     if (filters) {
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
       if (filters.categories?.length) query = query.in('category', filters.categories)
-      if (filters.dates?.start) query = query.gte('available_from', filters.dates.start.toISOString())
-      if (filters.dates?.end)   query = query.lte('available_from', filters.dates.end.toISOString())
+
     }
 
     const { data, error } = await query
     if (error) throw new Error(`Supabase error: ${error.message || JSON.stringify(error)}`)
     if (!data) throw new Error('No data returned from Supabase')
-    return data as DbItem[]
+    return (data as DbItem[]).filter(item => {
+      if (!filters?.dates) return true
+      const next = projectOccurrence(item)
+      return next !== null && (!filters.dates.start || new Date(next.available_from) >= filters.dates.start) &&
+        (!filters.dates.end || new Date(next.available_from) <= filters.dates.end)
+    })
   },
 
   async getItem(id: string) {

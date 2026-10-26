@@ -21,5 +21,5 @@ export function formatEventDate(
   fallback = 'Date TBA',
 ): string {
   const d = safeDate(value)
-  return d ? format(d, fmt) : fallback
+  return d ? format(new Date(d.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })), fmt) : fallback
 }

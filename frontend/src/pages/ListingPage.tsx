@@ -1,3 +1,4 @@
+import { projectOccurrence } from '../utils/recurrence'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import 'leaflet/dist/leaflet.css'
@@ -16,7 +17,7 @@ export default function ListingPage() {
     try {
       if (!id) throw new Error('No listing ID provided')
       const data = await api.getItem(id)
-      setListing(data)
+      setListing(projectOccurrence(data))
       setError(null)
     } catch (err) {
       console.error('Error fetching listing:', err)
