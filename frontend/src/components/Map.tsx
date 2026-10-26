@@ -16,6 +16,7 @@ import ListView from './ListView'
 import SubmissionsList from './SubmissionsList'
 import { Map as MapIconLucide, List as ListIcon, X } from 'lucide-react'
 import { formatEventDate } from '../utils/dates'
+import { formatEventWhen, stripTimeTba } from '../utils/timeTba'
 import SearchFilter from './SearchFilter'
 import NearMeFilter from './NearMeFilter'
 import DatePicker from './DatePicker'
@@ -193,15 +194,15 @@ function MarkerLayer({ items, selectedId, highlightedId, onSelect, onHighlight }
       style={isMobile ? undefined : { left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}>
       <button className="event-preview-close" onClick={() => onSelect(null)} aria-label="Close event preview"><X size={18} /></button>
       <div className="event-preview-title"><EventIcon type={eventType(selected)} emoji={eventEmoji(selected)} size={26} /><h3>{selected.title}</h3></div>
-      <p className="event-preview-time">{formatEventDate(selected.available_from)}</p>
+      <p className="event-preview-time">{formatEventWhen(selected.available_from, selected.description)}</p>
       {selected.location_address && <p className="event-preview-place">{selected.location_address}</p>}
-      {selected.description && <p className="event-preview-description">{selected.description}</p>}
+      {stripTimeTba(selected.description) && <p className="event-preview-description">{stripTimeTba(selected.description)}</p>}
       <a className="event-preview-open" href={`/listing/${selected.id}`}>View event</a>
       {others.length > 0 && <div className="event-preview-others">
         <h4>Also here</h4>
         <ul>{others.map(item => <li key={item.id}><button onClick={() => onSelect(item.id)}>
           <EventIcon type={eventType(item)} emoji={eventEmoji(item)} size={20} />
-          <span><strong>{item.title}</strong><small>{formatEventDate(item.available_from, 'MMM d · h:mm a')}</small></span>
+          <span><strong>{item.title}</strong><small>{formatEventWhen(item.available_from, item.description, 'MMM d · h:mm a')}</small></span>
         </button></li>)}</ul>
       </div>}
     </div>, document.body,

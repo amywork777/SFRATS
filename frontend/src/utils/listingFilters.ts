@@ -1,6 +1,7 @@
 import type { DbItem } from '../types/supabase'
 
 import { projectOccurrence } from './recurrence'
+import { isTimeTba, endOfPtDay } from './timeTba'
 
 const DAY_MS = 12 * 60 * 60 * 1000
 
@@ -43,6 +44,11 @@ export function isActive(item: DbItem, now: Date = new Date()): boolean {
   if (item.category !== 'Events' || item.status !== 'available') return false
   const start = new Date(item.available_from ?? '').getTime()
   if (!Number.isFinite(start)) return false
+  if (isTimeTba(item.description)) {
+    const dayEnd = endOfPtDay(start)
+    const until = item.available_until ? new Date(item.available_until).getTime() : NaN
+    return Math.max(dayEnd, Number.isFinite(until) ? until : 0) > now.getTime()
+  }
   if (item.available_until) {
     const end = new Date(item.available_until).getTime()
     return Number.isFinite(end) && end >= now.getTime()

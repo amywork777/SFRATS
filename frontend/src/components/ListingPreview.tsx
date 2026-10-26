@@ -1,4 +1,4 @@
-import { formatEventDate } from '../utils/dates'
+import { formatEventWhen, stripTimeTba } from '../utils/timeTba'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
@@ -92,7 +92,7 @@ function ListingPreview({
       {/* Description */}
       {description && (
         <p className="text-[13px] leading-snug text-ink-soft line-clamp-3">
-          {description}
+          {stripTimeTba(description)}
         </p>
       )}
 
@@ -108,7 +108,7 @@ function ListingPreview({
         )}
         <div className="flex items-start gap-1.5">
 
-          <span>{formatEventDate(available_from)}</span>
+          <span>{formatEventWhen(available_from, description)}</span>
         </div>
       </div>
 

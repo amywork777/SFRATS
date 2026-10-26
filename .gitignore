@@ -31,3 +31,5 @@ yarn-error.log*
 *.sw?
 
 .claude/scheduled_tasks.lock
+.vercel
+.env*

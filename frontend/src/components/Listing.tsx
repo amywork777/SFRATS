@@ -3,7 +3,7 @@ import RatMark from './RatMark'
 import QuietBasemap from './QuietBasemap'
 import InterestButton from './InterestButton'
 import { DbItem } from '../types/supabase'
-import { formatEventDate } from '../utils/dates'
+import { formatEventWhen, stripTimeTba } from '../utils/timeTba'
 import { MapContainer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -46,7 +46,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
   }
 
   const formatDate = (date: string | Date | null | undefined) =>
-    formatEventDate(date, 'MMM d, yyyy · h:mm a')
+    formatEventWhen(date, listing.description, 'MMM d, yyyy · h:mm a')
 
   const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -92,7 +92,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
         <section>
           <span className="label">Notes</span>
           <p className="mt-2 font-display text-[19px] leading-[1.55] text-ink-soft whitespace-pre-wrap">
-            {listing.description}
+            {stripTimeTba(listing.description)}
           </p>
         </section>
       )}

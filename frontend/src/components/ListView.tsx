@@ -1,6 +1,7 @@
 import RatMark from './RatMark'
 import { useMemo, useEffect, useRef } from 'react'
 import { formatEventDate } from '../utils/dates'
+import { isTimeTba, stripTimeTba } from '../utils/timeTba'
 import { ArrowUpRight, Clock, MapPin } from 'lucide-react'
 import { DbItem } from '../types/supabase'
 import { EventIcon, eventEmoji } from './EventIcon'
@@ -44,6 +45,7 @@ function dateHeader(d: Date) {
 
 function timeLabel(item: DbItem) {
   if (!item.available_from) return null
+  if (isTimeTba(item.description)) return 'Time TBA'
   const start = new Date(item.available_from)
   const startStr = formatEventDate(start, 'h:mm a').toLowerCase()
   if (item.available_until) {
@@ -195,9 +197,9 @@ export default function ListView({ items, loading, error, compact = false, selec
                             </div>
                           )}
 
-                          {item.description && !compact && (
+                          {stripTimeTba(item.description) && !compact && (
                             <p className="text-[13px] leading-snug text-ink-soft line-clamp-2">
-                              {item.description}
+                              {stripTimeTba(item.description)}
                             </p>
                           )}
                         </div>
@@ -226,7 +228,7 @@ export default function ListView({ items, loading, error, compact = false, selec
                           {isEvent && (
                             <AddToCalendar
                               title={item.title}
-                              description={item.description}
+                              description={stripTimeTba(item.description)}
                               location={item.location_address}
                               startsAt={item.available_from!}
                               endsAt={item.available_until}
