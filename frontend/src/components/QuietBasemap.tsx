@@ -6,7 +6,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import neighborhoods from '../data/sf-neighborhoods.json'
 
 // Authored SF Rats style using OpenFreeMap's OpenMapTiles schema.
-// https://openfreemap.org/quick_start/ — attribution is retained below.
+// https://openfreemap.org/quick_start/ - attribution is retained below.
 const source = { source: 'city', 'source-layer': 'transportation' }
 const labels: NonNullable<SymbolLayerSpecification['layout']> = { 'text-field': ['coalesce', ['get', 'name:en'], ['get', 'name']], 'text-font': ['Noto Sans Regular'] }
 const style: StyleSpecification = {

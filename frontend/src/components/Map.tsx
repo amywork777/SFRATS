@@ -34,7 +34,7 @@ const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description
 type Venue = { lat: number; lng: number; items: DbItem[] }
 
 const groupByVenue = (items: DbItem[]): Venue[] => {
-  // NB: a plain object, not a Map — the `Map` identifier is shadowed by this
+  // NB: a plain object, not a Map - the `Map` identifier is shadowed by this
   // file's own `Map` component, so `new Map()` wouldn't resolve to the builtin.
   const venues: Record<string, Venue> = {}
   for (const item of items) {
@@ -253,7 +253,7 @@ function Map() {
   const [highlightedId, setHighlightedId] = useState<number | null>(null)
   const [view, setView] = useState<'map' | 'list'>('map')
 
-  // Keep the URL in sync with the filters that make sense to share —
+  // Keep the URL in sync with the filters that make sense to share -
   // selected day (or weekend preset) + search. Location / radius stay local.
   useEffect(() => {
     const rd = rangeToDays(filters.dates)
@@ -296,7 +296,7 @@ function Map() {
     }))
   }
 
-  // How many filter groups are active — drives the toolbar's "Clear all".
+  // How many filter groups are active - drives the toolbar's "Clear all".
   const activeFilterCount =
     (filters.dates.start || filters.dates.end ? 1 : 0) +
     (filters.types.length ? 1 : 0) +
@@ -314,7 +314,7 @@ function Map() {
     if (filters.search && !item.title.toLowerCase().includes(filters.search.toLowerCase())) {
       return false
     }
-    // Type filter (derived from emoji — see utils/eventTypes.ts).
+    // Type filter (derived from emoji - see utils/eventTypes.ts).
     if (filters.types.length && !filters.types.includes(eventType(item))) return false
     if (filters.dates.start && eventDate.getTime() < filters.dates.start.getTime()) return false
     if (filters.dates.end   && eventDate.getTime() > filters.dates.end.getTime()) return false

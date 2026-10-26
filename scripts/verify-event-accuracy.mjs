@@ -30,7 +30,7 @@ const HEADERS = { apikey: ANON, Authorization: `Bearer ${ANON}`, 'Content-Type':
 
 // Bay Area bounding box (SFRATS is Bay-Area-wide, not SF-only). An SF-only box
 // here would treat every legitimate Oakland / Berkeley / San Jose / Vallejo pin
-// as out-of-area and clear it — corrupting correct data on every run.
+// as out-of-area and clear it - corrupting correct data on every run.
 const BAY_BBOX = { latMin: 37.1, latMax: 38.5, lngMin: -122.8, lngMax: -121.5 }
 const SCRAPER_SOURCES = new Set(['funcheap', 'eventbrite', 'dothebay'])
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
@@ -94,7 +94,7 @@ async function fetchEventDetails(url) {
 
 // ── Geocoding (mirrors scrape.mjs: SF-bounded, no double city) ──
 async function geocode(address) {
-  // Don't force "San Francisco" — Bay Area events can be anywhere in the box.
+  // Don't force "San Francisco" - Bay Area events can be anywhere in the box.
   const hasState = /,\s*ca\b|california/i.test(address)
   const q = hasState ? address : `${address}, CA`
   const viewbox = `${BAY_BBOX.lngMin},${BAY_BBOX.latMax},${BAY_BBOX.lngMax},${BAY_BBOX.latMin}`
@@ -190,7 +190,7 @@ async function run() {
   console.log(
     `\nchecked=${c.checked} dateFix=${c.dateFix} locFix=${c.locFix} locCleared=${c.locCleared} ` +
     `unreachable=${c.unreachable} noEvent=${c.noEvent} unchanged=${c.skipped} ` +
-    `${DRY_RUN ? '(dry run — nothing written)' : `patched=${c.patched}`}`
+    `${DRY_RUN ? '(dry run - nothing written)' : `patched=${c.patched}`}`
   )
 }
 

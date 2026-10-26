@@ -1,5 +1,5 @@
 // URL <-> filter state. The date filter is encoded either as a single
-// day (`?day=2026-06-04`) or — for the multi-day "This weekend" shortcut —
+// day (`?day=2026-06-04`) or - for the multi-day "This weekend" shortcut -
 // a preset slug (`?d=weekend`). Search is a raw query (`?q=…`). Links stay
 // short and human-readable.
 
@@ -41,7 +41,7 @@ export function rangeFromKeys(fromKey: string, toKey: string): { start: Date | n
   const b = dayToRange(toKey).end
   if (!a || !b) return { start: null, end: null }
   if (a <= b) return { start: a, end: b }
-  // keys out of order — swap so start ≤ end
+  // keys out of order - swap so start ≤ end
   return { start: dayToRange(toKey).start, end: dayToRange(fromKey).end }
 }
 

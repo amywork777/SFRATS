@@ -44,7 +44,7 @@ export default function ManagePage() {
             Listing controls<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
           </h1>
           <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-ink-fade mt-3">
-            Anyone can update or remove a listing — no code needed.
+            Anyone can update or remove a listing - no code needed.
           </p>
         </div>
 

@@ -1,7 +1,7 @@
 name: Verify event accuracy
 
 # Re-checks dates + locations of existing scraped events against their source
-# pages and corrects the DB. Manual trigger only. Defaults to a dry run —
+# pages and corrects the DB. Manual trigger only. Defaults to a dry run -
 # flip the `dry_run` input to false to actually write changes.
 on:
   workflow_dispatch:

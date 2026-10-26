@@ -1,6 +1,6 @@
 import { PartyPopper, Pizza, Wrench, MapPin, type LucideIcon } from 'lucide-react'
 
-// Events is the only user-facing category. Old data uses Food/Services/Items —
+// Events is the only user-facing category. Old data uses Food/Services/Items -
 // kept here in the lookup so historical rows still render with a sensible icon.
 const map: Record<string, LucideIcon> = {
   Events:   PartyPopper,
@@ -22,7 +22,7 @@ export function CategoryIcon({ category, size = 16, strokeWidth = 2.2, ...rest }
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// EMOJI INFERENCE — pick a contextual emoji from a listing's title + body.
+// EMOJI INFERENCE - pick a contextual emoji from a listing's title + body.
 // Order matters: more specific keywords first, generic fall-throughs last.
 // Used by both the scraper (server-side) and SubmitForm (client-side hint).
 // ─────────────────────────────────────────────────────────────────────────

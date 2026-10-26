@@ -18,7 +18,7 @@ interface AddToCalendarProps {
 
 const DEFAULT_DURATION_MS = 2 * 60 * 60 * 1000
 
-// YYYYMMDDTHHMMSSZ — the format Google Calendar and iCal both want
+// YYYYMMDDTHHMMSSZ - the format Google Calendar and iCal both want
 function toCalDate(d: Date) {
   const pad = (n: number) => String(n).padStart(2, '0')
   return (

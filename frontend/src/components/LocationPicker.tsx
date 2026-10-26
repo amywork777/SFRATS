@@ -66,7 +66,7 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
       )
       if (!res.ok) throw new Error('Search failed')
       const data = await res.json()
-      if (data.length === 0) throw new Error('No results — try a different search.')
+      if (data.length === 0) throw new Error('No results - try a different search.')
       const { lat, lon } = data[0]
       const next: [number, number] = [parseFloat(lat), parseFloat(lon)]
       setPosition(next)

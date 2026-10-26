@@ -13,7 +13,7 @@ interface State {
  * the whole tree and leaves a blank white screen. This catches render-phase
  * errors (a component blowing up on unexpected data, a bad popup, etc.) and
  * shows a recoverable fallback instead. (Note: it can't catch errors thrown
- * at module-import time, before React mounts — those need to be prevented at
+ * at module-import time, before React mounts - those need to be prevented at
  * the source.)
  */
 export default class ErrorBoundary extends Component<Props, State> {
@@ -40,7 +40,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             This page hit a snag.
           </h1>
           <p className="text-[14px] leading-snug text-ink-soft mt-3">
-            Sorry — something went wrong rendering this view. Reloading usually
+            Sorry - something went wrong rendering this view. Reloading usually
             fixes it. If it keeps happening, let us know on Discord.
           </p>
           <pre className="mt-4 max-h-32 overflow-auto bg-paper border border-ink/20 p-2 font-sans text-[11px] text-ink-mute whitespace-pre-wrap">

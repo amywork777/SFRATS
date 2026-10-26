@@ -29,7 +29,7 @@ create index if not exists idx_items_status     on public.items(status);
 create index if not exists idx_items_created_at on public.items(created_at);
 
 -- ============================================================
--- 2. RLS — open policies that match the original app's design
+-- 2. RLS - open policies that match the original app's design
 --    (anonymous public posting; client-side edit_code check)
 --    Tighten these later if you add real auth.
 -- ============================================================
@@ -92,6 +92,6 @@ create policy "item_images_public_update" on storage.objects
 create policy "item_images_public_delete" on storage.objects
   for delete using (bucket_id = 'item-images');
 
--- (Demo seed rows used to live here — removed so re-running this
+-- (Demo seed rows used to live here - removed so re-running this
 -- file doesn't repopulate them. Real data flows in from the
 -- weekly GitHub Actions scraper.)

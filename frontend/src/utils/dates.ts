@@ -13,7 +13,7 @@ export function safeDate(value: string | number | Date | null | undefined): Date
 
 /**
  * Format an event date, falling back to a placeholder when the date is
- * missing or invalid (events without a known date — see scraper accuracy).
+ * missing or invalid (events without a known date - see scraper accuracy).
  */
 export function formatEventDate(
   value: string | number | Date | null | undefined,

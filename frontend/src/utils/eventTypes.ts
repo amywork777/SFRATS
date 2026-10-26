@@ -2,7 +2,7 @@ import { DbItem } from '../types/supabase'
 import { inferEmoji } from './categoryIcons'
 
 // User-facing event types for the map/list filter. Type is DERIVED from each
-// event's emoji (item.emoji, or the inferred one) — no DB column needed, so
+// event's emoji (item.emoji, or the inferred one) - no DB column needed, so
 // this works on every existing row instantly. Keep in sync with the emoji
 // rules in categoryIcons.tsx.
 export interface EventType {
@@ -28,7 +28,7 @@ const GLYPH_TO_TYPE: Record<string, string> = {}
 const assign = (key: string, glyphs: string[]) =>
   glyphs.forEach(g => { GLYPH_TO_TYPE[strip(g)] = key })
 
-// Keep these glyphs in sync with the "Emoji guide" in pages/Agents.tsx — that
+// Keep these glyphs in sync with the "Emoji guide" in pages/Agents.tsx - that
 // guide is what the scraper agents pick from, so every glyph they can emit must
 // roll up to a chip here or the event silently lands in 'other'.
 assign('music',     ['🎵', '💃', '🪩', '⚡', '🥁', '🔊', '🖤', '🏭']) // music, dance, disco, techno, dnb, bass, goth, warehouse/rave

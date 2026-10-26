@@ -56,11 +56,11 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
 
   const onDayClick = (d: Date, close: () => void) => {
     if (!rangeAnchor) {
-      // First click — start a range (also a valid single-day filter for now).
+      // First click - start a range (also a valid single-day filter for now).
       setRangeAnchor(d)
       onChange(rangeFromKeys(dayKey(d), dayKey(d)))
     } else {
-      // Second click — commit the span and close.
+      // Second click - commit the span and close.
       onChange(rangeFromKeys(dayKey(rangeAnchor), dayKey(d)))
       setRangeAnchor(null)
       setHoverDay(null)
@@ -116,7 +116,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
             ))}
           </div>
 
-          {/* Calendar — pick any specific day */}
+          {/* Calendar - pick any specific day */}
           <div className="border-t border-ink/15 px-3 pt-2 pb-3 mt-1">
             <div className="flex items-center justify-between mb-2">
               <button

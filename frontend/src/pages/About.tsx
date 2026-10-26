@@ -26,7 +26,7 @@ export default function About() {
 
       <div className="space-y-7 text-[16px] leading-[1.7] text-ink-soft">
         <p className="font-display text-[20px] leading-[1.5] text-ink">
-          A real-time map of free and free-ish events around the Bay Area —
+          A real-time map of free and free-ish events around the Bay Area -
           built so neighbors can find what's happening and share it with the people who'd want to be there.
         </p>
 
@@ -34,7 +34,7 @@ export default function About() {
           <h2 className="font-display font-bold text-2xl text-ink mb-2">What is SF RATS?</h2>
           <p>
             SF RATS (San Francisco Really Awesome Things Sharing) is a community
-            map of free and free-ish events across the Bay Area — concerts,
+            map of free and free-ish events across the Bay Area - concerts,
             markets, workshops, comedy, meetups and more. Build community and
             make it easier for everyone to find great things to do without
             spending a dime.
@@ -45,7 +45,7 @@ export default function About() {
           <h2 className="font-display font-bold text-2xl text-ink mb-3">Features</h2>
           <ul className="space-y-2 font-sans text-[13px] uppercase tracking-[0.08em] text-ink">
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free events across the Bay Area</li>
-            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission — post an event in seconds</li>
+            <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission - post an event in seconds</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly, no account required</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Listings auto-expire when events pass</li>
           </ul>
@@ -54,7 +54,7 @@ export default function About() {
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">Why rats?</h2>
           <p>
-            Rats are expert urban scavengers — they know where the good stuff is
+            Rats are expert urban scavengers - they know where the good stuff is
             happening, and they share that with their crew. We do the same with
             the Bay Area's free events.
           </p>
@@ -63,7 +63,7 @@ export default function About() {
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-2">About the creators</h2>
           <p>
-            Hey! I'm Amy and I love a good free event — gallery openings,
+            Hey! I'm Amy and I love a good free event - gallery openings,
             warehouse shows, park festivals, free workshops, the whole calendar
             of it. At Stanford I ran a free-food club to help students find
             campus events with leftover catering. SF RATS is the same idea,
@@ -96,7 +96,7 @@ export default function About() {
           <h2 className="font-display font-bold text-2xl text-ink mb-2">Join the community</h2>
           <p>
             SF RATS gets better the more people use it. Whether you're hosting a
-            show, running a workshop, or just spotted a free event worth sharing —
+            show, running a workshop, or just spotted a free event worth sharing -
             posting helps build a more connected Bay Area.
           </p>
           <p className="mt-3">

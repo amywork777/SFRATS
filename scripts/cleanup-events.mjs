@@ -1,4 +1,4 @@
-// One-off DB hygiene pass. Idempotent — re-run as often as you like.
+// One-off DB hygiene pass. Idempotent - re-run as often as you like.
 //
 // For every row in the Events category:
 //   - Parse "M/D/YY:" date prefixes from the title into available_from.
@@ -6,7 +6,7 @@
 //   - Delete rows whose event date has clearly passed.
 //   - Delete rows that obviously aren't free SF events:
 //       · posted_by=reddit (the keyword search drags in conversation
-//         posts that aren't events — quality is too low to keep).
+//         posts that aren't events - quality is too low to keep).
 //       · titles with a "$<price>" tail (paid events).
 //       · titles that name a non-SF city (Oakland, San Jose, Berkeley).
 //
@@ -27,7 +27,7 @@ const HEADERS = {
   Prefer: 'return=minimal',
 }
 
-const TITLE_DATE_RE = /^\s*(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[:\-–—]?\s*/
+const TITLE_DATE_RE = /^\s*(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[:\-–-]?\s*/
 
 function parseTitleDate(title = '', fallbackYear = new Date().getFullYear()) {
   const m = TITLE_DATE_RE.exec(title)

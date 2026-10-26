@@ -283,7 +283,7 @@ async function insertItem(item) {
   console.log('\n' + summary)
 
   // Run summary is logged to stdout only. We intentionally do NOT write a
-  // "__SCRAPER_RUN__" heartbeat row into `items` — nothing reads it, and it
+  // "__SCRAPER_RUN__" heartbeat row into `items` - nothing reads it, and it
   // pollutes the events table (and the app's event count) with non-events.
 
   process.exit(0)

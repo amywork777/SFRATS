@@ -2,7 +2,7 @@
 // centroid) by recovering their real venue from the source page + title, then
 // geocoding against a Bay-Area bounding box.
 //
-//   node scripts/fix-locations.mjs        # dry run — prints proposed changes
+//   node scripts/fix-locations.mjs        # dry run - prints proposed changes
 //   APPLY=1 node scripts/fix-locations.mjs  # writes updates to Supabase
 //
 const URL = process.env.SUPABASE_URL || "https://uflkltmvzvhziysheccd.supabase.co";
@@ -73,7 +73,7 @@ function localityHint(url = "", title = "") {
     return { locality: `${name}, CA`, isSf: c === "san-francisco" };
   }
   for (const h of SF_HOODS) if (hay.includes(h)) return { locality: `${deslug(h)}, San Francisco, CA`, isSf: true };
-  return { locality: "San Francisco, CA", isSf: true }; // default — most events are SF
+  return { locality: "San Francisco, CA", isSf: true }; // default - most events are SF
 }
 
 // High-confidence landmark / venue / neighborhood phrases. First match wins;
@@ -108,13 +108,13 @@ function venueFromTitle(title = "") {
     const dateLike = /^(summer|winter|spring|fall|autumn)\b/i.test(v) || /\b(19|20)\d{2}\b/.test(v) || /^\d/.test(v);
     if (v.length >= 3 && !dateLike) return v;
   }
-  const at = title.match(/\bat\s+([A-Z][\w'’&.\- ]{2,40}?)(?:\s*[\-–—(]|$)/);
+  const at = title.match(/\bat\s+([A-Z][\w'’&.\- ]{2,40}?)(?:\s*[\-–-(]|$)/);
   if (at) return at[1].trim();
   for (const [re, q] of LANDMARKS) if (re.test(title)) return q;
   return null;
 }
 
-// True when the venue is intentionally undisclosed — don't fabricate a pin.
+// True when the venue is intentionally undisclosed - don't fabricate a pin.
 const isSecret = (title = "") => /\b(hellasecret|secret guest list|secret location)\b/i.test(title);
 
 // Geocode within a box; SF-scoped when the locality is inside the city so an
@@ -156,7 +156,7 @@ async function main() {
   const proposals = [];
 
   for (const r of groupDepin) {
-    proposals.push({ r, action: "DEPIN", reason: isIllinois(r) ? "address is in Illinois, not the Bay Area" : "online/virtual event — no physical pin" });
+    proposals.push({ r, action: "DEPIN", reason: isIllinois(r) ? "address is in Illinois, not the Bay Area" : "online/virtual event - no physical pin" });
   }
 
   for (const r of groupA) {
@@ -190,7 +190,7 @@ async function main() {
         if (g) { lat = g.lat; lng = g.lng; via = `title-venue: ${q}`; }
       }
     }
-    const reason = isSecret(r.title) ? "secret/undisclosed venue — left unpinned" : "no venue found on page or title";
+    const reason = isSecret(r.title) ? "secret/undisclosed venue - left unpinned" : "no venue found on page or title";
     proposals.push(lat != null
       ? { r, action: "MOVE", lat, lng, via, address }
       : { r, action: "SKIP", reason, via: r.url });
@@ -206,7 +206,7 @@ async function main() {
   }
   console.log(`\nMOVE=${byAction("MOVE").length}  DEPIN=${byAction("DEPIN").length}  SKIP=${byAction("SKIP").length}`);
 
-  if (!APPLY) { console.log("\n(dry run — set APPLY=1 to write)"); return; }
+  if (!APPLY) { console.log("\n(dry run - set APPLY=1 to write)"); return; }
 
   console.log("\n=== APPLYING ===");
   let ok = 0, fail = 0;

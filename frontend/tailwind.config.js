@@ -19,7 +19,7 @@ export default {
           dark:    '#e9e9e5',
         },
         ink: {
-          DEFAULT: '#171717',  // not pure black — newsprint ink
+          DEFAULT: '#171717',  // not pure black - newsprint ink
           soft:    '#414141',
           mute:    '#626262',
           fade:    '#686868',

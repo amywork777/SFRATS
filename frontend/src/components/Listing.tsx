@@ -16,7 +16,7 @@ import { displayItem } from '../utils/displayText'
 import { eventEmoji, markerGlyph } from './EventIcon'
 
 // Vite doesn't auto-bundle Leaflet's default marker assets, so we
-// build our own divIcon with the listing's emoji — matches the main
+// build our own divIcon with the listing's emoji - matches the main
 // map's marker style.
 const buildEmojiIcon = (glyph: string) =>
   L.divIcon({
@@ -187,7 +187,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
               <img
                 key={i}
                 src={url}
-                alt={`${listing.title} — ${i + 1}`}
+                alt={`${listing.title} - ${i + 1}`}
                 className="w-full h-64 object-cover border-2 border-ink"
               />
             ))}

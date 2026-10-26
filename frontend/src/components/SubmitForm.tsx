@@ -32,7 +32,7 @@ interface FormData {
 const inputCls =
   'system-field w-full px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade'
 
-// Hidden internal token — never shown to users. The DB column is NOT NULL,
+// Hidden internal token - never shown to users. The DB column is NOT NULL,
 // so we generate a unique value per submission. With open-edit (no edit
 // code gate) it's effectively just an internal id we don't act on.
 const codeAlphabet = customAlphabet('abcdefghjkmnpqrstuvwxyz23456789', 14)
@@ -93,11 +93,11 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
 
       const submitData = { ...formData, images: [...existingImages, ...newImageUrls] }
 
-      if (!submitData.title.trim()) throw new Error('Add a title — even a short one.')
+      if (!submitData.title.trim()) throw new Error('Add a title - even a short one.')
       if (!submitData.location_lat || !submitData.location_lng || !submitData.location_address)
         throw new Error('Pick a location on the map or search for an address.')
       if (submitData.category === 'Events' && !submitData.available_from)
-        throw new Error('Events need a start date — when does it kick off?')
+        throw new Error('Events need a start date - when does it kick off?')
 
       let data: DbItem
       if (editMode && initialData?.id) {
@@ -130,7 +130,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             Event live<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
-            Your event is on the map. Anyone in the Bay Area can see it now — and anyone can update or take it down when it's done.
+            Your event is on the map. Anyone in the Bay Area can see it now - and anyone can update or take it down when it's done.
           </p>
         </div>
 
@@ -233,7 +233,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
           className="w-full flex items-center justify-between py-2 group"
         >
           <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-ink-mute group-hover:text-ink transition-colors">
-            {moreOpen ? '— Hide details' : '+ Add description, photos, link, contact'}
+            {moreOpen ? '- Hide details' : '+ Add description, photos, link, contact'}
           </span>
           <span className="font-sans text-[10px] text-ink-fade">
             {moreOpen ? 'optional' : 'all optional'}

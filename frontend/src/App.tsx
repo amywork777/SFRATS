@@ -15,7 +15,7 @@ function App() {
       <TopBar />
       <div className="flex-1">
         <Routes>
-          {/* Events are the whole experience — a community map of free
+          {/* Events are the whole experience - a community map of free
               and free-ish events across the Bay Area. */}
           <Route path="/" element={<Map />} />
 
@@ -47,7 +47,7 @@ function App() {
           <Route path="/about"  element={<About />} />
           <Route path="/agents" element={<Agents />} />
 
-          {/* Guidelines used to live here — they're now part of /about */}
+          {/* Guidelines used to live here - they're now part of /about */}
           <Route path="/guidelines" element={<Navigate to="/about#guidelines" replace />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

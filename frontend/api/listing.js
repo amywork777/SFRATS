@@ -4,7 +4,7 @@
 // React app exactly as before.
 //
 // The shell is fetched from the same deployment's static /index.html
-// rather than read off disk — Vercel's lambda fs layout varies, but
+// rather than read off disk - Vercel's lambda fs layout varies, but
 // the static asset always lives at the public URL.
 
 const SUPABASE_URL = 'https://uflkltmvzvhziysheccd.supabase.co'
@@ -52,7 +52,7 @@ function buildOgTags(item, canonicalUrl) {
   }
   const meta = parts.join(' · ')
   const body = item.description ? truncate(item.description, 200) : ''
-  const description = truncate([meta, body].filter(Boolean).join(' — '), 240)
+  const description = truncate([meta, body].filter(Boolean).join(' - '), 240)
     || 'A free event in the Bay Area. Posted on SF Rats.'
 
   const image = (item.images && item.images[0]) || DEFAULT_IMAGE
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('og listing handler failed', err)
     // Don't crash. Redirect into the SPA via the homepage with a hint
-    // — the React router will pick up the actual /listing/:id path
+    // - the React router will pick up the actual /listing/:id path
     // once the user is back in the app.
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
     res.status(200).send(`<!doctype html>

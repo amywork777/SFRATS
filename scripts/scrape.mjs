@@ -18,15 +18,15 @@ const HEADERS = {
 
 // Bay Area bounding box. SFRATS expanded from SF-only to the whole Bay Area,
 // so geocoding + validation must accept the East Bay, North Bay, Peninsula and
-// South Bay — not just the city. The old SF-only box silently nulled the
+// South Bay - not just the city. The old SF-only box silently nulled the
 // coordinates of every Oakland / Berkeley / San Jose / Vallejo event.
 const BAY_BBOX = { latMin: 37.1, latMax: 38.5, lngMin: -122.8, lngMax: -121.5 }
 
 // Many sources (Funcheap especially) re-post recurring events once per
-// occurrence — 3x "Pay-What-You-Can Taco Day", 5x "HellaSecret Comedy",
+// occurrence - 3x "Pay-What-You-Can Taco Day", 5x "HellaSecret Comedy",
 // etc. We dedupe on the title-after-the-date-prefix so the user sees
 // each event once.
-const TITLE_DATE_RE = /^\s*(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[:\-–—]?\s*/
+const TITLE_DATE_RE = /^\s*(?:[A-Za-z]{3,9},?\s+)?(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s*[:\-–-]?\s*/
 
 const normalizeTitle = (t = '') => t
   .replace(TITLE_DATE_RE, '')
@@ -34,7 +34,7 @@ const normalizeTitle = (t = '') => t
   .trim()
   .toLowerCase()
 
-// Funcheap prefixes recurring posts with the actual event date — e.g.
+// Funcheap prefixes recurring posts with the actual event date - e.g.
 // "7/10/26: Free Comedy Night …". Lift that into a real ISO date so we
 // stop conflating "post date" with "event date" on the map. Returns
 // midnight local (we don't get a time of day from the prefix alone).
@@ -70,7 +70,7 @@ let totalInserted = 0
 const sleep = (ms) => new Promise(r => setTimeout(r, ms))
 
 // Pick a contextual emoji based on title + description keywords.
-// Mirror of inferEmoji() in frontend/src/utils/categoryIcons.tsx — keep in sync.
+// Mirror of inferEmoji() in frontend/src/utils/categoryIcons.tsx - keep in sync.
 const EMOJI_RULES = [
   [/\b(pottery|ceram(ic|ist)|clay)\b/i,                                '🏺'],
   [/\b(market|marketplace|flea\s*market|bazaar|swap\s*meet|vendor)\b/i, '🛒'],
@@ -162,7 +162,7 @@ async function alreadyInDb(url) {
   return Array.isArray(rows) && rows.length > 0
 }
 
-// A "placeable" address has a street number or a venue name — something more
+// A "placeable" address has a street number or a venue name - something more
 // specific than a bare city. Geocoding "San Francisco, CA" only returns the
 // city centroid, which stacks unrelated events on one fake point. We'd rather
 // leave such events unpinned (they still show in the list).
@@ -179,7 +179,7 @@ function isPlaceable(address = '') {
 
 async function geocode(address) {
   // Don't double-append the state if the address already names it. We no longer
-  // force "San Francisco" — the event may be anywhere in the Bay Area.
+  // force "San Francisco" - the event may be anywhere in the Bay Area.
   const hasState = /,\s*ca\b|california/i.test(address)
   const q = hasState ? address : `${address}, CA`
   // Bias + restrict results to the Bay Area box so a bare street name
@@ -224,7 +224,7 @@ async function tryInsert(source, row) {
     return 'dup'
   }
 
-  // Geocode if needed — but ONLY for placeable addresses. A city-only address
+  // Geocode if needed - but ONLY for placeable addresses. A city-only address
   // ("San Francisco, CA") would geocode to the city centroid and fake-pin the
   // event there, which is exactly the bug we're avoiding.
   if ((!row.location_lat || !row.location_lng) && isPlaceable(row.location_address)) {
@@ -247,7 +247,7 @@ async function tryInsert(source, row) {
     counts[source].nolocation++
   }
 
-  // POST — tries with emoji first; if the column doesn't exist on the
+  // POST - tries with emoji first; if the column doesn't exist on the
   // target schema (e.g. migration not yet applied) we retry without it.
   const baseBody = {
     title: row.title.slice(0, 255),
@@ -315,7 +315,7 @@ function extractLdJson(html) {
 }
 
 // Look up an Event's location AND date on its full page (Funcheap embeds
-// schema.org Event JSON-LD per post — that's the authoritative source for
+// schema.org Event JSON-LD per post - that's the authoritative source for
 // when the event actually starts/ends, vs the RSS pubDate which is just
 // when the post was published).
 async function fetchEventDetails(url) {
@@ -385,7 +385,7 @@ async function scrapeFuncheap() {
 
       // Date precedence: ld+json startDate (most accurate), then the
       // "M/D/YY:" prefix in the title. We deliberately do NOT fall back to
-      // the RSS pubDate — that's when the *post* went up, not when the
+      // the RSS pubDate - that's when the *post* went up, not when the
       // event happens. Undated events are skipped in tryInsert.
       const titleDate = parseTitleDate(rawTitle)
       const startDate = ev?.startDate ?? titleDate ?? null
@@ -410,7 +410,7 @@ async function scrapeFuncheap() {
 // ──────────────── 2) Reddit r/sanfrancisco JSON ────────────────
 async function scrapeReddit() {
   console.log('--- Reddit ---')
-  // Reddit gates JSON behind a User-Agent — they want this exact shape.
+  // Reddit gates JSON behind a User-Agent - they want this exact shape.
   // Try old.reddit.com first (more permissive), then www.
   const UA = 'web:sfrats-scraper:v1.0 (by /u/amywork777)'
   const urls = [
@@ -533,7 +533,7 @@ async function scrapeLdJsonPage(source, pageUrl) {
   }
 
   await scrapeFuncheap()
-  // Reddit r/sanfrancisco search for "free" is too noisy — most hits
+  // Reddit r/sanfrancisco search for "free" is too noisy - most hits
   // are conversation posts, not events. Keeping the function around
   // in case we want to point it at a tighter query later.
   // await scrapeReddit()
@@ -551,7 +551,7 @@ async function scrapeLdJsonPage(source, pageUrl) {
   console.log('\n' + summary)
 
   // Run summary is logged to stdout only. We intentionally do NOT write a
-  // "__SCRAPER_RUN__" heartbeat row into `items` — nothing reads it, and it
+  // "__SCRAPER_RUN__" heartbeat row into `items` - nothing reads it, and it
   // pollutes the events table (and the app's event count) with non-events.
 
   process.exit(0)
