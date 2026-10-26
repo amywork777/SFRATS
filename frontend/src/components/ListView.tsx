@@ -228,7 +228,7 @@ export default function ListView({ items, loading, error, compact = false, selec
                           {isEvent && (
                             <AddToCalendar
                               title={item.title}
-                              description={stripTimeTba(item.description)}
+                              description={item.description}
                               location={item.location_address}
                               startsAt={item.available_from!}
                               endsAt={item.available_until}
