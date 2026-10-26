@@ -65,3 +65,26 @@ database/
   schema.sql           original Postgres schema (legacy)
   supabase-setup.sql   what to paste into Supabase SQL editor
 ```
+
+## Recurring events and expiry
+
+`items.recurrence` is nullable JSON: `{"freq":"weekly","byday":[2,4,6],"time":"18:00"}`.
+Weekdays are ISO Monday=1 through Sunday=7. Use `daily` for nightly events,
+`monthly` with `ordinal: 1` for a first-Sunday market. All wall-clock times are
+America/Los_Angeles, including DST. `available_from` is the first occurrence;
+`available_until` is the series cutoff, NOT an individual occurrence's end.
+Do not bump stored dates every scrape. Leave recurrence null for one-off events.
+The map projects the next start every minute, hides ended events and undated
+rows, and hides one-off starts older than 12 hours when no end is known.
+
+Apply `database/recurrence-migration.sql` in Supabase SQL Editor. As of Oct 25,
+2026 this migration is prepared but NOT applied: dashboard login requires 2FA
+enrollment and no management/PG credential is available. The frontend temporarily
+uses `legacyRecurrences.json` for 18 exact ID/title-matched birby rows, superseded
+by a real recurrence value after migration. Three rows with no verifiable schedule
+(Bow Bow karaoke, Panhandle pickup basketball, SFBV) are deliberately not guessed.
+The earlier estimate of 41 did not match the 21 remaining birby rows at inspection.
+Backups are under `/home/kit/files/sfrats-*-recurrence*-oct25.json`.
+`__SCRAPER_RUN__` log rows must never be scheduled, displayed or modified here.
+
+Run `cd frontend && npm run build && npm run type-check && npm test`.

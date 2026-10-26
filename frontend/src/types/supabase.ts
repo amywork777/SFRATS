@@ -1,3 +1,5 @@
+import type { Recurrence } from '../utils/recurrence'
+
 export interface DbItem {
   id: number;
   created_at: string;
@@ -8,6 +10,7 @@ export interface DbItem {
   location_lat?: number;
   location_lng?: number;
   available_from: string;
+  recurrence?: Recurrence | null;
   available_until?: string | null;
   url?: string;
   contact_info?: string;

@@ -1,6 +1,8 @@
-import { DbItem } from '../types/supabase'
+import type { DbItem } from '../types/supabase'
 
-const DAY_MS  = 24 * 60 * 60 * 1000
+import { projectOccurrence } from './recurrence'
+
+const DAY_MS = 12 * 60 * 60 * 1000
 
 export const MILE_KM = 1.609344
 
@@ -31,22 +33,40 @@ export function withinRadius(
  * Whether a listing should still appear on the map / in lists.
  *
  * Auto-expiry rules:
- * - If `available_until` exists and has passed → expired.
- * - Otherwise, for Events: hide once `available_from + 24 h` is in the past
- *   (most events are single-day; we give a one-day grace window).
- * - Anything else (no dates at all) stays visible.
+ * - Only available Events are public listings.
+ * - Every event needs a valid start date.
+ * - If `available_until` exists and has passed, the event is expired.
+ * - Otherwise hide it 12 hours after its start.
  */
 export function isActive(item: DbItem, now: Date = new Date()): boolean {
-  const t = now.getTime()
-
+  if (item.title === '__SCRAPER_RUN__') return false
+  if (item.category !== 'Events' || item.status !== 'available') return false
+  const start = new Date(item.available_from ?? '').getTime()
+  if (!Number.isFinite(start)) return false
   if (item.available_until) {
-    return new Date(item.available_until).getTime() >= t
+    const end = new Date(item.available_until).getTime()
+    return Number.isFinite(end) && end >= now.getTime()
   }
+  return start + DAY_MS >= now.getTime()
+}
 
-  if (item.category === 'Events' && item.available_from) {
-    const start = new Date(item.available_from).getTime()
-    return start + DAY_MS >= t
-  }
+const normalizedTitle = (title: string) =>
+  title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+const eventDay = (item: DbItem) =>
+  new Date(item.available_from as string).toISOString().slice(0, 10)
 
-  return true
+/** Display-only quality rules; rows remain archived in Supabase. */
+export function visibleEvents(items: DbItem[], now: Date = new Date()): DbItem[] {
+  const newestFirst = items.map(item => projectOccurrence(item, now)).filter((item): item is DbItem => item !== null && isActive(item, now)).sort((a, b) => {
+    const created = new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    if (Number.isFinite(created) && created !== 0) return created
+    return Number(b.id) - Number(a.id)
+  })
+  const seen = new Set<string>()
+  return newestFirst.filter(item => {
+    const key = `${normalizedTitle(item.title)}|${eventDay(item)}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }

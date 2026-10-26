@@ -8,7 +8,7 @@ import { api } from '../services/api'
 import { displayItem } from '../utils/displayText'
 import QuietBasemap from './QuietBasemap'
 import { EventIcon, markerGlyph, eventEmoji } from './EventIcon'
-import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
+import { visibleEvents, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { eventType } from '../utils/eventTypes'
 import TypeChips from './TypeChips'
 import { DbItem as DbItemRow } from '../types/supabase'
@@ -217,6 +217,11 @@ function MapZoom() {
 }
 
 function Map() {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [items, setItems] = useState<DbItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -268,7 +273,7 @@ function Map() {
       const data = await api.getItems()
 
       // No need to process dates as they're already in the correct format
-      setItems(data.map(displayItem))
+      setItems(data)
       setError(null)
     } catch (err) {
       console.error('Error fetching items:', err)
@@ -301,14 +306,8 @@ function Map() {
   const clearAllFilters = () =>
     handleFiltersChange({ search: '', dates: { start: null, end: null }, types: [], userLocation: null, radiusMiles: 2 })
 
-  const filteredItems = useMemo(() => items.filter(item => {
-    if (item.category !== 'Events' || item.posted_by === 'scraper-meta') return false
-    // Exclude imported directory pages with neither an event date nor a venue.
-    if (!item.available_from && !item.location_address && item.location_lat == null) return false
-
-    // Auto-expire: hide events past their end (or +24h after start).
-    // See utils/listingFilters.ts for the rules.
-    if (!isActive(item)) return false
+  const filteredItems = useMemo(() => visibleEvents(items, now).map(displayItem).filter(item => {
+    if (item.posted_by === 'scraper-meta') return false
 
     const eventDate = new Date(item.available_from)
 
@@ -329,7 +328,7 @@ function Map() {
     }
 
     return true
-  }), [items, filters])
+  }), [items, filters, now])
 
   useEffect(() => {
     if (selectedId !== null && !filteredItems.some(item => item.id === selectedId)) setSelectedId(null)

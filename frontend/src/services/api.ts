@@ -1,3 +1,4 @@
+import { projectOccurrence } from '../utils/recurrence'
 import { supabase } from '../utils/supabase'
 import { DbItem } from '../types/supabase'
 
@@ -7,22 +8,36 @@ export const api = {
     categories?: string[]
     dates?: { start: Date | null; end: Date | null }
   }) {
+    // Project recurrence client-side; do not exclude series by their old seed dates.
+    // Category/status/date checks exclude scraper logs without modifying them.
     let query = supabase
       .from('items')
       .select('*')
+      .eq('category', 'Events')
+      .eq('status', 'available')
+      .not('available_from', 'is', null)
       .order('created_at', { ascending: false })
 
     if (filters) {
       if (filters.search) query = query.ilike('title', `%${filters.search}%`)
       if (filters.categories?.length) query = query.in('category', filters.categories)
-      if (filters.dates?.start) query = query.gte('available_from', filters.dates.start.toISOString())
-      if (filters.dates?.end)   query = query.lte('available_from', filters.dates.end.toISOString())
+
     }
 
-    const { data, error } = await query
-    if (error) throw new Error(`Supabase error: ${error.message || JSON.stringify(error)}`)
-    if (!data) throw new Error('No data returned from Supabase')
-    return data as DbItem[]
+    const data: DbItem[] = []
+    for (let offset = 0; ; offset += 1000) {
+      const { data: page, error } = await query.range(offset, offset + 999)
+      if (error) throw new Error(`Supabase error: ${error.message || JSON.stringify(error)}`)
+      if (!page) throw new Error('No data returned from Supabase')
+      data.push(...page as DbItem[])
+      if (page.length < 1000) break
+    }
+    return (data as DbItem[]).filter(item => {
+      if (!filters?.dates) return true
+      const next = projectOccurrence(item)
+      return next !== null && (!filters.dates.start || new Date(next.available_from) >= filters.dates.start) &&
+        (!filters.dates.end || new Date(next.available_from) <= filters.dates.end)
+    })
   },
 
   async getItem(id: string) {
