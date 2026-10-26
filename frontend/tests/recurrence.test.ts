@@ -64,3 +64,17 @@ import { isActive } from '../src/utils/listingFilters'
   if (!allDay || allDay.available_from !== row.available_from) throw new Error('all day must block projection')
   console.log('legacy marker guard tests passed')
 }
+{
+  const L: any = legacyRulesForTest
+  const now = new Date('2026-10-26T12:00:00-07:00')
+  const mk = (id: string, desc: string) => ({ id, title: L[id].title, category: 'Events', status: 'available', posted_by: 'birby', description: desc, available_from: '2026-10-28T07:00:00.000Z', available_until: null, created_at: '2026-10-01T00:00:00Z' }) as any
+  const fr = projectOccurrence(mk('2532', 'run'), now)!
+  if (fr.available_from !== '2026-10-28T01:30:00.000Z' && fr.available_from !== '2026-10-28T01:30:00+00:00') throw new Error('FrontRunners Tue 18:30 PDT expected, got ' + fr.available_from)
+  const castro = projectOccurrence(mk('2524', 'art'), new Date('2026-10-26T12:00:00-07:00'))!
+  if (castro.available_from !== '2026-11-01T19:00:00.000Z') throw new Error('Castro Nov 1 11am PST expected, got ' + castro.available_from)
+  for (const id of ['2516','2518','2522','2523','2525','2527','2529','2533','2534','2535','2536','2537','2538'].filter(i => L[i])) {
+    const out = projectOccurrence(mk(id, 'x [Time TBA]'), now)!
+    if (out.available_from !== '2026-10-28T07:00:00.000Z') throw new Error('marker bypass failed ' + id)
+  }
+  console.log('legacy 2524/2532 + marker bypass ids passed')
+}
