@@ -78,3 +78,12 @@ import { isActive } from '../src/utils/listingFilters'
   }
   console.log('legacy 2524/2532 + marker bypass ids passed')
 }
+{
+  const base: any = { title: 't', category: 'Events', status: 'available', description: 'x [Time TBA]', available_from: '2026-11-07T08:00:00.000Z', available_until: null, created_at: '2026-10-01T00:00:00Z' }
+  const n = new Date('2026-11-07T12:00:00-08:00')
+  for (const id of ['2516','2518','2522','2523','2525','2527','2529','2533','2534','2535','2536','2537','2538']) {
+    if (isActive({ ...base, id }, n)) throw new Error('pending-verification id should be hidden ' + id)
+  }
+  if (!isActive({ ...base, id: '3309' }, n)) throw new Error('3309 must stay visible')
+  console.log('pending verification hide tests passed')
+}

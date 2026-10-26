@@ -5,6 +5,14 @@ import { hasNoClock, isAllDay, isTimeTba, endOfPtDay } from './timeTba'
 
 const DAY_MS = 12 * 60 * 60 * 1000
 
+/**
+ * Legacy birby series rows whose stored dates are retained placeholders, not
+ * verified occurrences (source audit Oct 26 2026). Hidden from upcoming lists,
+ * map and calendar until a source verifies a real date. Remove an id once its
+ * row is re-verified.
+ */
+export const HIDDEN_PENDING_VERIFICATION: ReadonlySet<string> = new Set(["2516","2518","2522","2523","2525","2527","2529","2533","2534","2535","2536","2537","2538"])
+
 export const MILE_KM = 1.609344
 
 /** Haversine distance between two lat/lng points, in km. */
@@ -41,6 +49,7 @@ export function withinRadius(
  */
 export function isActive(item: DbItem, now: Date = new Date()): boolean {
   if (item.title === '__SCRAPER_RUN__') return false
+  if (HIDDEN_PENDING_VERIFICATION.has(String(item.id))) return false
   if (item.category !== 'Events' || item.status !== 'available') return false
   const start = new Date(item.available_from ?? '').getTime()
   if (!Number.isFinite(start)) return false
