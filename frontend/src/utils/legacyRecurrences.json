@@ -1,0 +1,204 @@
+{
+  "2522": {
+    "title": "Club 1220 Free Karaoke Night (Every Wednesday)",
+    "seed": "2026-08-27T04:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "21:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2524": {
+    "title": "Castro Art Mart (Every 1st Sunday)",
+    "seed": "2026-09-06T18:00:00+00:00",
+    "recurrence": {
+      "freq": "monthly",
+      "time": "11:00",
+      "byday": [
+        7
+      ],
+      "ordinal": 1
+    }
+  },
+  "2515": {
+    "title": "Free Trivia Night at The Liberties (Every Monday)",
+    "seed": "2026-09-01T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        1
+      ]
+    }
+  },
+  "2516": {
+    "title": "Free Trivia at Connecticut Yankee (Every Tuesday)",
+    "seed": "2026-08-26T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        2
+      ]
+    }
+  },
+  "2517": {
+    "title": "Free Trivia at Shotwell's Saloon (Every Tuesday)",
+    "seed": "2026-08-26T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        2
+      ]
+    }
+  },
+  "2518": {
+    "title": "Sporcle Trivia at SPARK Social SF (Every Wednesday)",
+    "seed": "2026-08-27T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2519": {
+    "title": "Trivia at The Bitter End (Tues & Wed)",
+    "seed": "2026-08-26T03:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "20:00",
+      "byday": [
+        2,
+        3
+      ]
+    }
+  },
+  "2520": {
+    "title": "Hopped Up Trivia Night (Every Wednesday)",
+    "seed": "2026-08-27T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2521": {
+    "title": "Karaokiki at El Rio (Free Queer Karaoke Thursdays)",
+    "seed": "2026-08-28T04:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "21:00",
+      "byday": [
+        4
+      ]
+    }
+  },
+  "2523": {
+    "title": "Big Gay Trivia at The Neighbor's Pub",
+    "seed": "2026-08-27T03:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "20:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2525": {
+    "title": "The Mint Karaoke Lounge (Free, Nightly)",
+    "seed": "2026-08-26T03:00:00+00:00",
+    "recurrence": {
+      "freq": "daily",
+      "time": "20:00"
+    }
+  },
+  "2526": {
+    "title": "Bottom's Up Free Karaoke (Every Thursday)",
+    "seed": "2026-08-28T05:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "22:00",
+      "byday": [
+        4
+      ]
+    }
+  },
+  "2534": {
+    "title": "Midnight Runners SF (Wednesdays)",
+    "seed": "2026-08-27T02:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "19:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2536": {
+    "title": "Marina Run Club (Tues/Thurs/Sat)",
+    "seed": "2026-08-26T01:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "18:00",
+      "byday": [
+        2,
+        4,
+        6
+      ]
+    }
+  },
+  "2532": {
+    "title": "SF FrontRunners (LGBTQ+ Run Club)",
+    "seed": "2026-08-26T01:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "18:00",
+      "byday": [
+        2,
+        4,
+        6
+      ]
+    }
+  },
+  "2529": {
+    "title": "Inner Circle Dance Party at White Rabbit (Thursdays)",
+    "seed": "2026-08-28T04:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "21:00",
+      "byday": [
+        4
+      ]
+    }
+  },
+  "2533": {
+    "title": "Queer Run SF (Wednesdays)",
+    "seed": "2026-08-27T01:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "18:00",
+      "byday": [
+        3
+      ]
+    }
+  },
+  "2535": {
+    "title": "Fat Boys Run Club (Tues/Sat)",
+    "seed": "2026-08-26T01:00:00+00:00",
+    "recurrence": {
+      "freq": "weekly",
+      "time": "18:00",
+      "byday": [
+        2,
+        6
+      ]
+    }
+  }
+}
