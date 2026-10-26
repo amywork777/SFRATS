@@ -1,3 +1,4 @@
+import { HIDDEN_PENDING_VERIFICATION } from '../utils/listingFilters'
 import { formatEventWhen, stripTimeTba } from '../utils/timeTba'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
@@ -115,7 +116,7 @@ function ListingPreview({
       {/* Actions */}
       {showActions && (
         <div className="pt-2 space-y-2">
-          {category === 'Events' && available_from && (
+          {category === 'Events' && available_from && !HIDDEN_PENDING_VERIFICATION.has(String(id)) && (
             <AddToCalendar
               title={title}
               description={description}

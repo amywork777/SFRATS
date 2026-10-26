@@ -1,3 +1,4 @@
+import { HIDDEN_PENDING_VERIFICATION } from '../utils/listingFilters'
 import { Link } from 'react-router-dom'
 import RatMark from './RatMark'
 import QuietBasemap from './QuietBasemap'
@@ -73,7 +74,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
             itemId={listing.id}
             initialCount={listing.interest_count}
           />
-          {listing.category === 'Events' && listing.available_from && (
+          {listing.category === 'Events' && listing.available_from && !HIDDEN_PENDING_VERIFICATION.has(String(listing.id)) && (
             <AddToCalendar
               title={listing.title}
               description={listing.description}
