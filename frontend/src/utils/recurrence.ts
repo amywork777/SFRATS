@@ -1,3 +1,4 @@
+import { hasNoClock } from './timeTba'
 import legacyRules from './legacyRecurrences.json'
 import type { DbItem } from '../types/supabase'
 
@@ -54,6 +55,8 @@ export function nextOccurrence(item: DbItem, now = new Date()): Date | null {
 
 /** A series cutoff is not the end time of its next individual occurrence. */
 export function projectOccurrence(item: DbItem, now = new Date()): DbItem | null {
+  // Explicit no-clock marker wins: never project a known-time rule over it.
+  if (hasNoClock(item.description)) return item
   const legacy = (legacyRules as Record<string, { title: string; seed: string; recurrence: Recurrence }>)[item.id]
   const series = !item.recurrence && item.posted_by === 'birby' && legacy?.title === item.title
     ? { ...item, recurrence: legacy.recurrence, available_from: legacy.seed } : item

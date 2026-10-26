@@ -1,3 +1,5 @@
+import legacyRulesForTest from '../src/utils/legacyRecurrences.json'
+import { projectOccurrence } from '../src/utils/recurrence'
 import { strict as assert } from 'node:assert'
 import { nextOccurrence, projectOccurrence } from '../src/utils/recurrence'
 import { visibleEvents, isActive } from '../src/utils/listingFilters'
@@ -49,4 +51,16 @@ import { isActive } from '../src/utils/listingFilters'
   if (formatEventWhen('2026-11-07T08:00:00.000Z', a) !== 'Nov 7 · All day') throw new Error('all day label')
   if (stripTimeTba(a) !== 'Fair free') throw new Error('all day strip')
   console.log('all day tests passed')
+}
+{
+  const legacy = JSON.parse(JSON.stringify(legacyRulesForTest))
+  const id = Object.keys(legacy)[0]
+  const row: any = { id, title: legacy[id].title, category: 'Events', status: 'available', posted_by: 'birby', description: 'x', available_from: '2026-11-07T08:00:00.000Z', available_until: null, created_at: '2026-10-01T00:00:00Z' }
+  const projected = projectOccurrence(row, new Date('2026-10-26T12:00:00-07:00'))
+  if (!projected || projected.available_from === row.available_from) throw new Error('legacy should project without marker')
+  const marked = projectOccurrence({ ...row, description: 'x [Time TBA]' }, new Date('2026-10-26T12:00:00-07:00'))
+  if (!marked || marked.available_from !== row.available_from) throw new Error('marker must block legacy projection')
+  const allDay = projectOccurrence({ ...row, description: '[All Day] x' }, new Date('2026-10-26T12:00:00-07:00'))
+  if (!allDay || allDay.available_from !== row.available_from) throw new Error('all day must block projection')
+  console.log('legacy marker guard tests passed')
 }
