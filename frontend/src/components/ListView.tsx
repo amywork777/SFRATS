@@ -1,7 +1,7 @@
 import RatMark from './RatMark'
 import { useMemo, useEffect, useRef } from 'react'
 import { formatEventDate } from '../utils/dates'
-import { isTimeTba, stripTimeTba } from '../utils/timeTba'
+import { hasNoClock, isAllDay, stripTimeTba } from '../utils/timeTba'
 import { ArrowUpRight, Clock, MapPin } from 'lucide-react'
 import { DbItem } from '../types/supabase'
 import { EventIcon, eventEmoji } from './EventIcon'
@@ -45,7 +45,7 @@ function dateHeader(d: Date) {
 
 function timeLabel(item: DbItem) {
   if (!item.available_from) return null
-  if (isTimeTba(item.description)) return 'Time TBA'
+  if (hasNoClock(item.description)) return isAllDay(item.description) ? 'All day' : 'Time TBA'
   const start = new Date(item.available_from)
   const startStr = formatEventDate(start, 'h:mm a').toLowerCase()
   if (item.available_until) {

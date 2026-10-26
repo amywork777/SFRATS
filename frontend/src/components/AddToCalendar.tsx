@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { isTimeTba, stripTimeTba, ptDay, nextPtDay } from '../utils/timeTba'
+import { hasNoClock, isTimeTba, stripTimeTba, ptDay, nextPtDay } from '../utils/timeTba'
 import { Calendar, ChevronDown, ExternalLink, Download } from 'lucide-react'
 
 interface AddToCalendarProps {
@@ -47,14 +47,14 @@ function icsEscape(s: string) {
 const compact = (ymd: string) => ymd.replace(/-/g, '')
 
 function buildGoogleUrl(p: AddToCalendarProps, start: Date, end: Date) {
-  const allDay = isTimeTba(p.description)
+  const allDay = hasNoClock(p.description)
   const params = new URLSearchParams({
     action: 'TEMPLATE',
     text:   p.title,
     dates:  allDay ? `${compact(ptDay(start))}/${compact(nextPtDay(start))}` : `${toCalDate(start)}/${toCalDate(end)}`,
   })
   const details = stripTimeTba(p.description)
-  const note = allDay ? 'Time TBA - check the event page for the start time.' : ''
+  const note = isTimeTba(p.description) ? 'Time TBA - check the event page for the start time.' : ''
   const detailText = [details, note].filter(Boolean).join('\n\n')
   if (detailText) params.set('details', detailText)
   if (p.location)    params.set('location', p.location)
@@ -63,8 +63,8 @@ function buildGoogleUrl(p: AddToCalendarProps, start: Date, end: Date) {
 
 function buildIcs(p: AddToCalendarProps, start: Date, end: Date) {
   const uid = `${start.getTime()}-${p.title.replace(/\s+/g, '-').toLowerCase().slice(0, 40)}@sfrats.com`
-  const allDay = isTimeTba(p.description)
-  const desc = [stripTimeTba(p.description), allDay ? 'Time TBA - check the event page for the start time.' : '', p.url].filter(Boolean).join('\n\n')
+  const allDay = hasNoClock(p.description)
+  const desc = [stripTimeTba(p.description), isTimeTba(p.description) ? 'Time TBA - check the event page for the start time.' : '', p.url].filter(Boolean).join('\n\n')
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',

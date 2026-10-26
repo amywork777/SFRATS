@@ -1,12 +1,22 @@
 import { formatEventDate } from './dates'
 
 export const TIME_TBA_MARKER = '[Time TBA]'
-const MARKER_RE = /\s*\[Time TBA\]\s*/gi
+const MARKER_RE = /\s*\[(?:Time TBA|All Day)\]\s*/gi
 const PT = 'America/Los_Angeles'
 
 /** Convention: description contains [Time TBA]; available_from is PT midnight. */
 export function isTimeTba(description: string | null | undefined): boolean {
   return !!description && /\[Time TBA\]/i.test(description)
+}
+
+/** Explicit all-day marker; same PT-midnight convention as Time TBA. */
+export function isAllDay(description: string | null | undefined): boolean {
+  return !!description && /\[All Day\]/i.test(description)
+}
+
+/** Either marker means no clock time is known or applicable. */
+export function hasNoClock(description: string | null | undefined): boolean {
+  return isTimeTba(description) || isAllDay(description)
 }
 
 /** Description with the marker removed, for display and calendar export. */
@@ -20,11 +30,12 @@ export function formatEventWhen(
   description: string | null | undefined,
   fmt = 'MMM d · h:mm a',
 ): string {
-  if (!isTimeTba(description)) return formatEventDate(value, fmt)
+  if (!hasNoClock(description)) return formatEventDate(value, fmt)
+  const label = isAllDay(description) ? 'All day' : 'Time TBA'
   const dateFmt = fmt.replace(/\s*[·,–-]?\s*h:mm a/, '').trim()
-  if (!dateFmt) return 'Time TBA'
+  if (!dateFmt) return label
   const d = formatEventDate(value, dateFmt, '')
-  return d ? `${d} · Time TBA` : 'Date TBA'
+  return d ? `${d} · ${label}` : 'Date TBA'
 }
 
 /** YYYY-MM-DD of an instant in Pacific time. */

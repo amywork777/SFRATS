@@ -44,3 +44,9 @@ import { isActive } from '../src/utils/listingFilters'
   eq(isActive({ ...item, description: 'x' }, new Date('2026-11-07T23:00:00-08:00')), false, 'known-time 12h rule unchanged')
   console.log('time TBA tests passed')
 }
+{
+  const a = 'Fair [All Day] free'
+  if (formatEventWhen('2026-11-07T08:00:00.000Z', a) !== 'Nov 7 · All day') throw new Error('all day label')
+  if (stripTimeTba(a) !== 'Fair free') throw new Error('all day strip')
+  console.log('all day tests passed')
+}
