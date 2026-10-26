@@ -1,3 +1,4 @@
+import RatMark from '../components/RatMark'
 import { Link } from 'react-router-dom'
 
 const RULES = [
@@ -11,13 +12,15 @@ const RULES = [
 
 export default function About() {
   return (
-    <div className="pt-24 pb-20 px-4 md:px-8 max-w-3xl mx-auto">
+    <div className="content-page pt-24 pb-20 px-4 md:px-8 max-w-3xl mx-auto">
       {/* Hero */}
       <div className="mb-10">
-        <span className="label">A Field Guide · Editor's Note</span>
+        <div className="brand-page-heading">
+          <RatMark tone="blue" />
         <h1 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-3 tracking-tight">
-          About SF&nbsp;RATS<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+          About SF&nbsp;RATS<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
         </h1>
+        </div>
         <div className="rule-thick mt-6" />
       </div>
 
@@ -40,7 +43,7 @@ export default function About() {
 
         <section>
           <h2 className="font-display font-bold text-2xl text-ink mb-3">Features</h2>
-          <ul className="space-y-2 font-mono text-[13px] uppercase tracking-[0.08em] text-ink">
+          <ul className="space-y-2 font-sans text-[13px] uppercase tracking-[0.08em] text-ink">
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Real-time map of free events across the Bay Area</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Easy submission — post an event in seconds</li>
             <li className="flex gap-3"><span className="text-bridge-500">▸</span> Mobile-friendly, no account required</li>
@@ -114,13 +117,13 @@ export default function About() {
       <div className="rule-thick mt-12 pt-6 flex flex-wrap items-center justify-between gap-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
+          className="inline-flex items-center gap-2 font-sans text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
         >
           <span aria-hidden>←</span> Back to map
         </Link>
         <Link
           to="/agents"
-          className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
+          className="font-sans text-[11px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
         >
           AI agent? Read the contributor guide →
         </Link>

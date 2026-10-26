@@ -29,7 +29,7 @@ export default function TypeChips({
             type="button"
             onClick={() => toggle(t.key)}
             aria-pressed={on}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-left transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-3 py-2 font-sans text-[11px] uppercase tracking-[0.1em] text-left transition-colors ${
               on ? 'bg-ink text-paper-light' : 'text-ink-mute hover:bg-paper hover:text-ink'
             }`}
           >
@@ -43,7 +43,7 @@ export default function TypeChips({
         <button
           type="button"
           onClick={() => onChange([])}
-          className="w-full px-3 py-2 border-t border-ink/15 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 hover:bg-paper text-left transition-colors"
+          className="w-full px-3 py-2 border-t border-ink/15 font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 hover:bg-paper text-left transition-colors"
         >
           Clear all
         </button>

@@ -40,12 +40,12 @@ export default function FilterDropdown({
   }, [open])
 
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div ref={ref} className="filter-dropdown relative shrink-0">
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors whitespace-nowrap ${
+        className={`filter-trigger shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 border border-ink font-sans text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors whitespace-nowrap ${
           active
             ? 'bg-bridge-500 text-paper-light shadow-stamp'
             : 'bg-paper-light text-ink-mute hover:text-ink hover:bg-paper'
@@ -60,7 +60,7 @@ export default function FilterDropdown({
       </button>
 
       {open && (
-        <div className={`absolute top-full left-0 mt-2 z-[1500] max-w-[calc(100vw-2rem)] bg-paper-light border border-ink shadow-stamp ${panelClassName}`}>
+        <div className={`filter-panel absolute top-full left-0 mt-2 z-[1500] max-w-[calc(100vw-2rem)] bg-paper-light border border-ink shadow-stamp ${panelClassName}`}>
           {typeof children === 'function' ? children(() => setOpen(false)) : children}
         </div>
       )}

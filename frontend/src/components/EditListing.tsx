@@ -73,7 +73,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                 <Pencil size={11} strokeWidth={2.5} /> Editing · № {String(item.id).padStart(4, '0')}
               </span>
               <h2 className="font-display font-black text-3xl md:text-4xl text-ink mt-1 leading-tight">
-                Edit listing<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+                Edit listing<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
               </h2>
             </div>
             <button
@@ -88,7 +88,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
           {error && (
             <div className="border border-bridge-700 bg-bridge-50 p-3 mb-5 flex items-start gap-2">
               <AlertTriangle size={14} strokeWidth={2.2} className="text-bridge-700 mt-0.5 shrink-0" />
-              <span className="font-mono text-[12px] text-bridge-700">{error}</span>
+              <span className="font-sans text-[12px] text-bridge-700">{error}</span>
             </div>
           )}
 
@@ -98,7 +98,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                className={`mt-1.5 ${inputCls} font-mono`}
+                className={`mt-1.5 ${inputCls} font-sans`}
               >
                 <option value="available">Available</option>
                 <option value="gone">Gone</option>
@@ -153,7 +153,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   type="datetime-local"
                   value={new Date(formData.available_from).toISOString().slice(0, 16)}
                   onChange={(e) => setFormData({ ...formData, available_from: e.target.value })}
-                  className={`mt-1.5 ${inputCls} font-mono`}
+                  className={`mt-1.5 ${inputCls} font-sans`}
                 />
               </label>
               <label className="block">
@@ -162,7 +162,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   type="datetime-local"
                   value={formData.available_until ? new Date(formData.available_until).toISOString().slice(0, 16) : ''}
                   onChange={(e) => setFormData({ ...formData, available_until: e.target.value || null })}
-                  className={`mt-1.5 ${inputCls} font-mono`}
+                  className={`mt-1.5 ${inputCls} font-sans`}
                 />
               </label>
             </div>
@@ -184,7 +184,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                   type="url"
                   value={formData.url}
                   onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                  className={`mt-1.5 ${inputCls} font-mono`}
+                  className={`mt-1.5 ${inputCls} font-sans`}
                   placeholder="https://"
                 />
               </label>
@@ -220,7 +220,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-3 w-full py-2 px-3 border-2 border-dashed border-ink/40 hover:border-ink bg-paper-light font-mono text-[11px] uppercase tracking-[0.14em] text-ink transition-colors inline-flex items-center justify-center gap-2"
+                className="mt-3 w-full py-2 px-3 border-2 border-dashed border-ink/40 hover:border-ink bg-paper-light font-sans text-[11px] uppercase tracking-[0.14em] text-ink transition-colors inline-flex items-center justify-center gap-2"
               >
                 <Plus size={13} strokeWidth={2.5} /> Add images
               </button>
@@ -238,7 +238,7 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
               <button
                 type="button"
                 onClick={handleDelete}
-                className="inline-flex items-center gap-1.5 px-4 py-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp font-sans text-[11px] uppercase tracking-[0.14em] font-semibold    transition-all"
               >
                 <Trash2 size={13} strokeWidth={2.2} /> Delete
               </button>
@@ -246,13 +246,13 @@ export default function EditListing({ item, onClose, onSave }: EditListingProps)
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 bg-paper-light text-ink border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
+                  className="px-4 py-2 bg-paper-light text-ink border border-ink font-sans text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-paper transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-ink text-paper-light border border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-ink text-paper-light border border-ink shadow-stamp font-sans text-[11px] uppercase tracking-[0.14em] font-semibold    transition-all"
                 >
                   <Save size={13} strokeWidth={2.2} /> Save
                 </button>

@@ -33,7 +33,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     return (
       <div className="min-h-screen flex items-center justify-center bg-paper px-6">
         <div className="max-w-md w-full bg-paper-light border border-ink shadow-stamp p-6 -rotate-1">
-          <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-bridge-700">
+          <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-bridge-700">
             Something broke
           </span>
           <h1 className="font-display font-black text-3xl text-ink leading-tight mt-2">
@@ -43,12 +43,12 @@ export default class ErrorBoundary extends Component<Props, State> {
             Sorry — something went wrong rendering this view. Reloading usually
             fixes it. If it keeps happening, let us know on Discord.
           </p>
-          <pre className="mt-4 max-h-32 overflow-auto bg-paper border border-ink/20 p-2 font-mono text-[11px] text-ink-mute whitespace-pre-wrap">
+          <pre className="mt-4 max-h-32 overflow-auto bg-paper border border-ink/20 p-2 font-sans text-[11px] text-ink-mute whitespace-pre-wrap">
             {this.state.error.message}
           </pre>
           <button
             onClick={() => window.location.reload()}
-            className="mt-4 inline-flex items-center gap-1.5 bg-ink text-paper-light px-4 py-2 border border-ink font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
+            className="mt-4 inline-flex items-center gap-1.5 bg-ink text-paper-light px-4 py-2 border border-ink font-sans text-[11px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
           >
             Reload
           </button>

@@ -43,13 +43,13 @@ export default function NearMe({ location, radiusMiles, onChange }: NearMeProps)
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-paper-light text-ink border border-ink hover:bg-paper font-mono text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors disabled:opacity-50"
+          className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-paper-light text-ink border border-ink hover:bg-paper font-sans text-[11px] uppercase tracking-[0.14em] font-semibold transition-colors disabled:opacity-50"
         >
           {locating ? <Loader2 size={13} strokeWidth={2.2} className="animate-spin" /> : <LocateFixed size={13} strokeWidth={2.2} />}
           {locating ? 'Locating…' : 'Use my location'}
         </button>
         {error && (
-          <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-bridge-700">⚠ {error}</p>
+          <p className="font-sans text-[10px] uppercase tracking-[0.12em] text-bridge-700">⚠ {error}</p>
         )}
       </div>
     )
@@ -58,13 +58,13 @@ export default function NearMe({ location, radiusMiles, onChange }: NearMeProps)
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-mute">
+        <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-ink-mute">
           📍 Located · {radiusMiles} mi radius
         </span>
         <button
           type="button"
           onClick={clear}
-          className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 inline-flex items-center gap-1"
+          className="font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 inline-flex items-center gap-1"
         >
           <X size={10} strokeWidth={2.5} /> Clear
         </button>
@@ -81,7 +81,7 @@ export default function NearMe({ location, radiusMiles, onChange }: NearMeProps)
         aria-label="Radius in miles"
       />
 
-      <div className="flex justify-between font-mono text-[9px] uppercase tracking-[0.14em] text-ink-fade">
+      <div className="flex justify-between font-sans text-[9px] uppercase tracking-[0.14em] text-ink-fade">
         <span>0.5 mi</span>
         <span>5 mi</span>
         <span>10 mi</span>

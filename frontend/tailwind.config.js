@@ -7,47 +7,35 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Display = editorial serif with optical-size variation
-        display: ['"Fraunces"', 'ui-serif', 'Georgia', 'serif'],
-        // Body = warm humanist sans (NOT Inter)
-        sans:    ['"IBM Plex Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        // Mono for labels, dates, civic stamps
-        mono:    ['"IBM Plex Mono"', 'ui-monospace', 'Menlo', 'monospace'],
+        display: ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        sans: ['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        mono: ['ui-monospace', 'Menlo', 'monospace'],
       },
       colors: {
-        // Bulletin-board paper palette
+        // Shared surfaces; brand aliases resolve to the CSS design tokens.
         paper: {
-          DEFAULT: '#f3eee2',  // base cream
-          light:   '#faf6ec',
-          dark:    '#e6dfcd',
+          DEFAULT: '#f7f7f4',  // base cream
+          light:   '#ffffff',
+          dark:    '#e9e9e5',
         },
         ink: {
-          DEFAULT: '#181613',  // not pure black — newsprint ink
-          soft:    '#3a342c',
-          mute:    '#6b6457',
-          fade:    '#9c9382',
+          DEFAULT: '#171717',  // not pure black — newsprint ink
+          soft:    '#414141',
+          mute:    '#626262',
+          fade:    '#686868',
         },
-        // International Orange — the literal Golden Gate Bridge color
-        bridge: {
-          50:  '#fff1ea',
-          100: '#ffd9c2',
-          200: '#ffb38a',
-          300: '#ff8a52',
-          400: '#ff6627',
-          500: '#FF4F00',  // canonical IO
-          600: '#d23d00',
-          700: '#a02e00',
-        },
+        // One brand scale across buttons, links and active states.
+        bridge: Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700].map(step => [step, `rgb(var(--accent-${step}) / <alpha-value>)`])),
         // Used very sparingly as a 2nd ink color (for hover / focus accents)
         teal: {
-          DEFAULT: '#0F4C5C',
-          soft:    '#2a6776',
+          DEFAULT: '#171717',
+          soft:    '#414141',
         },
       },
       boxShadow: {
-        // Hard newsprint shadow (no soft Apple-style blur)
-        stamp: '3px 3px 0 0 rgba(24, 22, 19, 1)',
-        pin:   '0 2px 0 rgba(24, 22, 19, 0.5), 0 6px 16px rgba(24, 22, 19, 0.18)',
+        // Flat structure; soft elevation only for overlays.
+        stamp: 'none',
+        pin: '0 3px 10px rgba(0,0,0,0.12)',
         paper: '0 1px 0 rgba(0,0,0,0.04), 0 12px 32px rgba(24, 22, 19, 0.10)',
       },
     },

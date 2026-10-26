@@ -17,4 +17,8 @@ build
 .idea
 
 # OS files
-.DS_Store 
+.DS_Store
+.rivet/
+
+# Local visual verification captures
+.impeccable/review/

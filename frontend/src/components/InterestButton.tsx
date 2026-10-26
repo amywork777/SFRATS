@@ -33,7 +33,7 @@ export default function InterestButton({ itemId, initialCount }: InterestButtonP
     <button
       onClick={handleInterestClick}
       disabled={loading || hasInteracted}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 border border-ink font-mono text-[11px] uppercase tracking-[0.12em] font-semibold transition-colors
+      className={`inline-flex items-center gap-2 px-3 py-1.5 border border-ink font-sans text-[11px] uppercase tracking-[0.12em] font-semibold transition-colors
         ${hasInteracted
           ? 'bg-bridge-500 text-paper-light cursor-default'
           : 'bg-paper-light text-ink hover:bg-paper'

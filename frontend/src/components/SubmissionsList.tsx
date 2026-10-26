@@ -1,54 +1,38 @@
-import { useEffect, useState } from 'react'
+import RatMark from './RatMark'
+import { useState } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { DbItem } from '../types/supabase'
-import { api } from '../services/api'
 import { format } from 'date-fns'
 import { Link } from 'react-router-dom'
-import { inferEmoji, type Category } from '../utils/categoryIcons'
-import { isActive } from '../utils/listingFilters'
+import { EventIcon, eventEmoji } from './EventIcon'
+import { eventType } from '../utils/eventTypes'
 
 interface SubmissionsListProps {
-  category: Category
+  items: DbItem[]
+  loading: boolean
+  error: string | null
 }
 
-export default function SubmissionsList({ category }: SubmissionsListProps) {
+export default function SubmissionsList({ items: events, loading, error }: SubmissionsListProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [items, setItems] = useState<DbItem[]>([])
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!isOpen) return
-    setLoading(true)
-    api.getItems()
-      .then((data) => {
-        // Hide scraper-meta diagnostic rows + expired listings, and only
-        // show entries matching the page's category.
-        const visible = data.filter(r =>
-          r.posted_by !== 'scraper-meta' &&
-          r.category === category &&
-          isActive(r)
-        )
-        setItems(visible.slice(0, 6))
-      })
-      .catch((err) => console.error('Error fetching items:', err))
-      .finally(() => setLoading(false))
-  }, [isOpen, category])
+  const items = events.slice(0, 6)
 
   return (
-    <div className="fixed bottom-5 right-5 w-[320px] z-[1000] pointer-events-none">
-      <div className="pointer-events-auto bg-paper-light border-2 border-ink shadow-stamp">
-        {/* Header — toggleable. Looks like a punched card. */}
+    <div className="recent-events fixed bottom-7 right-6 w-[320px] z-[1000] pointer-events-none">
+      <div className="pointer-events-auto bg-paper-light border border-ink/20">
+        {/* Toggle the latest events. */}
         <button
+          aria-expanded={isOpen}
           onClick={() => setIsOpen(v => !v)}
           className="w-full flex items-center justify-between px-4 py-3 hover:bg-paper transition-colors text-left"
         >
           <div className="flex items-center gap-2.5">
-            <span className="inline-block w-2 h-2 bg-bridge-500 animate-pulse" aria-hidden />
-            <span className="font-mono text-[11px] uppercase tracking-[0.14em] font-semibold text-ink">
+            <RatMark size={32} />
+            <span className="font-sans text-[11px] uppercase tracking-[0.14em] font-semibold text-ink">
               Just&nbsp;Posted
             </span>
             {items.length > 0 && (
-              <span className="font-mono text-[10px] text-ink-fade">
+              <span className="font-sans text-[10px] text-ink-fade">
                 · {items.length}
               </span>
             )}
@@ -61,11 +45,11 @@ export default function SubmissionsList({ category }: SubmissionsListProps) {
         </button>
 
         {isOpen && (
-          <div className="max-h-[60vh] overflow-y-auto border-t-2 border-ink">
+          <div className="max-h-[60vh] overflow-y-auto border-t border-ink/20">
             {loading ? (
-              <div className="p-4 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</div>
-            ) : items.length === 0 ? (
-              <div className="p-4 font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute">No listings yet.</div>
+              <div className="p-4 font-sans text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</div>
+            ) : error ? (<p className="p-4 text-sm text-ink-mute">Events could not load.</p>) : items.length === 0 ? (
+              <div className="p-4 font-sans text-[11px] uppercase tracking-[0.14em] text-ink-mute">No listings yet.</div>
             ) : (
               <ul>
                 {items.map((item, i) => (
@@ -78,13 +62,13 @@ export default function SubmissionsList({ category }: SubmissionsListProps) {
                         className="mt-0.5 inline-flex w-9 h-9 items-center justify-center bg-paper-light border border-ink/30 text-[18px] shrink-0 leading-none"
                         aria-hidden
                       >
-                        {item.emoji || inferEmoji(item.title, item.description, item.category)}
+                        <EventIcon type={eventType(item)} emoji={eventEmoji(item)} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-display font-bold text-[15px] leading-tight text-ink truncate">
                           {item.title}
                         </h3>
-                        <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-fade mt-1">
+                        <p className="font-sans text-[10px] uppercase tracking-[0.12em] text-ink-fade mt-1">
                           {format(new Date(item.created_at), 'MMM d · h:mm a')} · {item.category}
                         </p>
                       </div>

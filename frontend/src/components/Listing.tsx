@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom'
+import RatMark from './RatMark'
+import QuietBasemap from './QuietBasemap'
 import InterestButton from './InterestButton'
 import { DbItem } from '../types/supabase'
 import { formatEventDate } from '../utils/dates'
-import { MapContainer, TileLayer, Marker } from 'react-leaflet'
+import { MapContainer, Marker } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useState } from 'react'
@@ -9,7 +12,8 @@ import { Pencil, ArrowUpRight } from 'lucide-react'
 import EditListing from './EditListing'
 import AddToCalendar from './AddToCalendar'
 import { api } from '../services/api'
-import { inferEmoji } from '../utils/categoryIcons'
+import { displayItem } from '../utils/displayText'
+import { eventEmoji, markerGlyph } from './EventIcon'
 
 // Vite doesn't auto-bundle Leaflet's default marker assets, so we
 // build our own divIcon with the listing's emoji — matches the main
@@ -17,9 +21,9 @@ import { inferEmoji } from '../utils/categoryIcons'
 const buildEmojiIcon = (glyph: string) =>
   L.divIcon({
     className: 'custom-marker',
-    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span></div>`,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28],
+    html: `<div class="marker-pin"><span class="marker-emoji">${markerGlyph('other', glyph)}</span></div>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
   })
 
 interface ListingProps {
@@ -28,13 +32,13 @@ interface ListingProps {
 }
 
 export default function Listing({ listing: initialListing, onRefresh }: ListingProps) {
-  const [listing, setListing] = useState(initialListing)
+  const [listing, setListing] = useState(() => displayItem(initialListing))
   const [showEditModal, setShowEditModal] = useState(false)
 
   const fetchItem = async () => {
     try {
       const updated = await api.getItem(listing.id.toString())
-      setListing(updated)
+      setListing(displayItem(updated))
       onRefresh?.()
     } catch (err) {
       console.error('Error fetching item:', err)
@@ -47,14 +51,14 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
   const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
   return (
-    <div className="space-y-8 p-4 md:p-8 max-w-3xl mx-auto relative">
+    <div className="event-detail space-y-8 p-4 md:p-8 max-w-3xl mx-auto relative">
       {/* Title block */}
       <header className="space-y-4">
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center justify-center w-11 h-11 text-[24px] bg-paper border border-ink/30 leading-none">
-            {listing.emoji || inferEmoji(listing.title, listing.description, listing.category)}
+          <span className="detail-emoji inline-flex items-center justify-center w-11 h-11 text-[24px] bg-paper border border-ink/30 leading-none">
+            {eventEmoji(listing)}
           </span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink-mute">
+          <span className="font-sans text-[11px] uppercase tracking-[0.16em] text-ink-mute">
             {listing.category}
           </span>
         </div>
@@ -106,7 +110,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                 href={`https://www.google.com/maps?q=${listing.location_lat},${listing.location_lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-2"
+                className="inline-flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-2"
               >
                 Open in Google Maps <ArrowUpRight size={12} strokeWidth={2.5} />
               </a>
@@ -120,15 +124,10 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                 style={{ height: '100%', width: '100%' }}
                 className="z-0"
               >
-                <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; OSM &copy; CARTO'
-                  subdomains="abcd"
-                  detectRetina
-                />
+                <QuietBasemap />
                 <Marker
                   position={[listing.location_lat, listing.location_lng]}
-                  icon={buildEmojiIcon(listing.emoji || inferEmoji(listing.title, listing.description, listing.category))}
+                  icon={buildEmojiIcon(eventEmoji(listing))}
                 />
               </MapContainer>
             </div>
@@ -140,11 +139,11 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="bg-paper-light border-2 border-ink p-4 space-y-1">
           <span className="label">When</span>
-          <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink mt-1">
+          <p className="font-sans text-[12px] uppercase tracking-[0.08em] text-ink mt-1">
             From&nbsp;&nbsp;{formatDate(listing.available_from)}
           </p>
           {listing.available_until && (
-            <p className="font-mono text-[12px] uppercase tracking-[0.08em] text-ink">
+            <p className="font-sans text-[12px] uppercase tracking-[0.08em] text-ink">
               Until&nbsp;{formatDate(listing.available_until)}
             </p>
           )}
@@ -156,7 +155,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
             {listing.posted_by || 'Anonymous'}
           </p>
           {listing.contact_info && (
-            <p className="font-mono text-[11px] tracking-[0.05em] text-ink-mute">
+            <p className="font-sans text-[11px] tracking-[0.05em] text-ink-mute">
               {listing.contact_info}
             </p>
           )}
@@ -170,7 +169,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
                 href={listing.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[12px] text-bridge-600 hover:text-bridge-700 break-all underline underline-offset-4 decoration-2"
+                className="font-sans text-[12px] text-bridge-600 hover:text-bridge-700 break-all underline underline-offset-4 decoration-2"
               >
                 {listing.url}
               </a>
@@ -200,7 +199,7 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
       <div className="rule-thick pt-5">
         <button
           onClick={() => setShowEditModal(true)}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-paper-light border border-ink px-4 py-3 sm:py-2 font-mono text-[12px] sm:text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-paper-light border border-ink px-4 py-3 sm:py-2 font-sans text-[12px] sm:text-[11px] uppercase tracking-[0.14em] font-semibold text-ink shadow-stamp hover:bg-paper    transition-all"
         >
           <Pencil size={14} strokeWidth={2.2} /> Edit listing
         </button>
@@ -216,7 +215,10 @@ export default function Listing({ listing: initialListing, onRefresh }: ListingP
         </div>
       )}
 
-      <div className="h-12" />
+      <Link to="/" className="brand-signoff">
+        <RatMark size={44} />
+        <span>Back to exploring</span>
+      </Link>
     </div>
   )
 }

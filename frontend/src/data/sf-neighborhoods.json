@@ -1,0 +1,538 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Western Addition"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.43063,
+          37.781831
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "West of Twin Peaks"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.459937,
+          37.735181
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Visitacion Valley"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.410104,
+          37.712867
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Twin Peaks"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.449797,
+          37.752113
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "South of Market"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.405928,
+          37.777249
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Treasure Island"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.36954,
+          37.820655
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Presidio Heights"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.451658,
+          37.786313
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Presidio"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.46637,
+          37.797377
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Potrero Hill"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.393602,
+          37.758872
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Portola"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.408993,
+          37.726792
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Pacific Heights"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.434827,
+          37.791019
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Outer Richmond"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.491823,
+          37.778065
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Outer Mission"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.443921,
+          37.720649
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Sunset/Parkside"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.49255,
+          37.748385
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Oceanview/Merced/Ingleside"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.460915,
+          37.716998
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "North Beach"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.409641,
+          37.804645
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Noe Valley"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.433324,
+          37.748918
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lone Mountain/USF"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.4496,
+          37.777619
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lincoln Park"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.501408,
+          37.784484
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Seacliff"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.486868,
+          37.786685
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Nob Hill"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.414951,
+          37.791803
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mission Bay"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.393564,
+          37.771658
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Mission"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.415504,
+          37.760126
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Russian Hill"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.419811,
+          37.800438
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Marina"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.436367,
+          37.801442
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Lakeshore"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.490352,
+          37.720209
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Tenderloin"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.415263,
+          37.783157
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "McLaren Park"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.418694,
+          37.717937
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Japantown"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.434135,
+          37.785092
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Inner Sunset"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.464732,
+          37.758473
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Hayes Valley"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.429044,
+          37.774787
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Haight Ashbury"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.444467,
+          37.768374
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Golden Gate Park"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.481922,
+          37.769029
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Inner Richmond"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.465434,
+          37.78095
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Glen Park"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.436326,
+          37.739605
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Financial District/South Beach"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.397053,
+          37.790418
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Excelsior"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.431807,
+          37.718562
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Chinatown"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.407081,
+          37.79614
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Castro/Upper Market"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.435217,
+          37.762319
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bernal Heights"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.415664,
+          37.740364
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Bayview Hunters Point"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.386016,
+          37.730889
+        ]
+      }
+    }
+  ]
+}

@@ -26,16 +26,17 @@ export default function SearchFilter({
       <input
         autoFocus
         type="text"
+        aria-label="Search events"
         value={value}
         placeholder="concerts, markets, comedy…"
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2.5 bg-paper border border-ink/30 font-mono text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:border-ink focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
+        className="w-full px-3 py-2.5 bg-paper border border-ink/30 font-sans text-[13px] placeholder:text-ink-fade outline-none focus:bg-paper-light focus:border-ink focus:ring-1 focus:ring-ink transition-shadow"
       />
       {active && (
         <button
           type="button"
           onClick={() => onChange('')}
-          className="mt-2 w-full px-1 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 text-left transition-colors"
+          className="mt-2 w-full px-1 py-1 font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 text-left transition-colors"
         >
           Clear
         </button>

@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-25T22:03:11.388426+00:00",
+  "title": "Design System: SF Rats",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "White surface",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Secondary surface",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Soft ink",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Muted ink",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(61% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Signal red",
+        "tonalRamp": [
+          "#9d2619",
+          "#b62b1b",
+          "#c93624",
+          "#db503e",
+          "#ed8170",
+          "#f7ada0",
+          "#ffd8d0",
+          "#fff2ef"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Deep signal red",
+        "tonalRamp": [
+          "#9d2619",
+          "#b62b1b",
+          "#c93624",
+          "#db503e",
+          "#ed8170",
+          "#f7ada0",
+          "#ffd8d0",
+          "#fff2ef"
+        ]
+      },
+      "location-blue": {
+        "displayName": "User location blue",
+        "tonalRamp": [
+          "oklch(15% 0.1 260)",
+          "oklch(26% 0.1 260)",
+          "oklch(38% 0.1 260)",
+          "oklch(49% 0.1 260)",
+          "oklch(61% 0.1 260)",
+          "oklch(72% 0.1 260)",
+          "oklch(84% 0.1 260)",
+          "oklch(95% 0.1 260)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Explore heading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Date-group headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Event-row titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default interface text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Metadata and compact labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "filter-overlay",
+        "value": "0 8px 28px #00000016",
+        "purpose": "Filter dropdowns."
+      },
+      {
+        "name": "event-popup",
+        "value": "0 10px 32px #00000022",
+        "purpose": "Floating listing previews."
+      },
+      {
+        "name": "venue-pin",
+        "value": "0 2px 5px #00000020",
+        "purpose": "Map event markers."
+      },
+      {
+        "name": "location-pin",
+        "value": "0 2px 6px #0003",
+        "purpose": "User location marker."
+      }
+    ],
+    "motion": [
+      {
+        "name": "marker-color",
+        "value": "background 120ms ease-out",
+        "purpose": "Venue marker hover and focus."
+      },
+      {
+        "name": "map-flight",
+        "value": "0.6s",
+        "purpose": "Fly to event bounds; zero when reduced motion is requested."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Global animation and transition duration override, with one animation iteration and automatic scroll behavior."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-intro-max",
+        "value": "1100px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "767px"
+      },
+      {
+        "name": "narrow-phone-max",
+        "value": "370px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Masthead posting action.",
+      "html": "<button class=\"ds-primary\">Post an event</button>",
+      "css": ".ds-primary{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);min-height:38px;padding:0 16px;border:0;border-radius:0;background:var(--accent,#c93624);color:var(--surface,#fff);font-size:13px;cursor:pointer}.ds-primary:hover{background:var(--accent-ink,#9d2619)}.ds-primary:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White icon action from the listing preview.",
+      "html": "<button class=\"ds-secondary\" aria-label=\"Edit listing\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" aria-hidden=\"true\"><path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497zM15 5l4 4\"/></svg></button>",
+      "css": ".ds-secondary{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);padding:10px 12px;border:1px solid var(--ink,#171717);border-radius:0;background:var(--surface,#fff);color:var(--ink,#171717);cursor:pointer}.ds-secondary:hover{background:var(--bg,#f7f7f4)}.ds-secondary:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Filter trigger",
+      "kind": "chip",
+      "refersTo": "filter-trigger",
+      "description": "Unified dropdown trigger; active fill denotes an applied filter.",
+      "html": "<button class=\"ds-filter\" aria-expanded=\"false\">Date <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button>",
+      "css": ".ds-filter{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;font-size:13px;font-weight:500;border:1px solid var(--rule,#d7d7d2);border-radius:0;background:var(--surface,#fff);color:var(--ink,#171717);cursor:pointer;transition:color 150ms,background-color 150ms}.ds-filter[aria-expanded=\"true\"]{border-color:var(--ink,#171717)}.ds-filter:hover{background:var(--bg,#f7f7f4)}.ds-filter:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Active filter",
+      "kind": "chip",
+      "refersTo": "filter-trigger-active",
+      "description": "Unified dropdown trigger; active fill denotes an applied filter.",
+      "html": "<button class=\"ds-filter-active\" aria-expanded=\"false\">Date <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" aria-hidden=\"true\"><path d=\"m6 9 6 6 6-6\"/></svg></button>",
+      "css": ".ds-filter-active{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:8px 14px;font-size:13px;font-weight:500;border:1px solid var(--accent,#c93624);border-radius:0;background:var(--accent,#c93624);color:var(--surface,#fff);cursor:pointer;transition:color 150ms,background-color 150ms}.ds-filter-active[aria-expanded=\"true\"]{border-color:var(--ink,#171717)}.ds-filter-active:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Search field",
+      "kind": "input",
+      "refersTo": "search-input",
+      "description": "Search input inside the shared filter dropdown.",
+      "html": "<input class=\"ds-search\" aria-label=\"Search events\" placeholder=\"Search events\"/>",
+      "css": ".ds-search{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);width:220px;padding:10px 12px;font-size:13px;color:var(--ink,#171717);background:var(--bg,#f7f7f4);border:1px solid rgba(23,23,23,.3);border-radius:0;outline:none;caret-color:var(--accent,#c93624)}.ds-search::placeholder{color:#686868}.ds-search:focus{background:var(--surface,#fff);border-color:var(--ink,#171717)}.ds-search:focus-visible{outline:none;box-shadow:0 0 0 1px var(--ink,#171717)}"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Text navigation excerpt; the actual fixed masthead also carries the logo and posting action.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><a class=\"ds-nav-link\" href=\"/about\">About</a><a class=\"ds-nav-link\" href=\"/agents\">For AI</a></nav>",
+      "css": ".ds-nav{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);display:flex;align-items:center;gap:26px;padding:0 32px;min-height:64px;background:var(--surface,#fff);border-bottom:1px solid var(--ink,#171717);font-size:13px}.ds-nav-link{display:flex;align-items:center;min-height:44px;color:var(--ink,#171717);text-decoration:none}.ds-nav-link:hover,.ds-nav-link[aria-current=\"page\"]{color:var(--accent,#c93624)}.ds-nav-link:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Event row",
+      "kind": "card",
+      "refersTo": "event-row",
+      "description": "Flat listing structure. Preview text is an interface placeholder, not event data.",
+      "html": "<article class=\"ds-row\"><a class=\"ds-row-link\" href=\"#event-preview\"><h3 class=\"ds-row-title\">Event title</h3><p class=\"ds-row-meta\">Date and venue</p></a></article>",
+      "css": ".ds-row{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);max-width:520px;border-bottom:1px solid var(--rule,#d7d7d2);background:transparent}.ds-row:hover{background:var(--surface,#fff)}.ds-row-link{display:block;padding:22px 16px 16px;color:var(--ink,#171717);text-decoration:none}.ds-row-title{margin:0;font-size:20px;line-height:1.25;font-weight:550;letter-spacing:-.03em}.ds-row-meta{margin:8px 0 0;font-size:12px;color:var(--ink-muted,#626262)}.ds-row-link:focus-visible{outline:2px solid var(--accent,#c93624);outline-offset:3px;}"
+    },
+    {
+      "name": "Event popup",
+      "kind": "card",
+      "refersTo": "event-popup",
+      "description": "Floating detail container. Preview text is a placeholder.",
+      "html": "<section class=\"ds-popup\"><h3 class=\"ds-popup-title\">Event details</h3><p class=\"ds-popup-meta\">Venue and date</p></section>",
+      "css": ".ds-popup{font-family:var(--font-sans,'Helvetica Neue',Helvetica,Arial,sans-serif);width:280px;padding:20px;background:var(--surface,#fff);color:var(--ink,#171717);border:1px solid var(--rule,#d7d7d2);border-radius:0;box-shadow:0 10px 32px #00000022}.ds-popup-title{margin:0;font-size:21px;letter-spacing:-.03em}.ds-popup-meta{font-size:12px;color:var(--ink-muted,#626262)}"
+    },
+    {
+      "name": "Venue marker",
+      "kind": "custom",
+      "refersTo": "venue-marker",
+      "description": "White venue marker with a red category icon and inline event count; selected markers fill red.",
+      "html": "<button class=\"ds-marker\" aria-label=\"Example venue with 2 events\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M16 3v4M8 3v4M3 11h18\"/></svg><span class=\"ds-count\">2</span></button>",
+      "css": ".ds-marker{font-family:Helvetica Neue,Helvetica,Arial,sans-serif;display:flex;gap:6px;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 8px;border:1px solid #d1d5ce;border-radius:18px;background:#fff;color:#a42b1d;box-shadow:0 2px 4px #273b3212;cursor:pointer}.ds-marker:hover{border-color:#c93624;background:#fff4f0}.ds-marker:focus-visible{outline:2px solid #c93624;outline-offset:3px}.ds-count{padding-left:6px;border-left:1px solid #deded7;color:#414141;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Swiss city guide",
+    "overview": "The confirmed direction is a light Swiss city guide: Helvetica typography, clear grids, flat structural regions, thin rules, and one signal-red accent. The existing rat-on-bridge mark is the single handmade detail. The signature interaction is exploring grouped venue markers, opening event detail, then planning a visit.\n\nThis refresh preserves the established direction contract. The tool route remains the starting kit, with its dark palette, rounded controls, and display-font suggestions explicitly overridden. Precedence is explicit user request, this file, taste/SIGNATURE.md, then Impeccable defaults. Product context is limited to the README and current routes: SF Rats supports local discovery and sharing, while the current application foregrounds Bay Area events. PRODUCT.md is absent; no additional audience or brand preferences are assumed. Amy rejected the dense grayscale map. Use authored vector cartography with blue water, green parks, golden main roads, sparse neighborhood labels, white venue markers and clickable event-count clusters. Reserve filled red for selected venues. Amy subsequently rejected the washed-out palette and oversized title: keep visible geographic color. Amy subsequently removed the explore heading entirely; do not restore it.",
+    "keyCharacteristics": [
+      "Helvetica throughout the interface.",
+      "Near-white canvas, white surfaces, dark ink, and signal red.",
+      "Flat event rows and compact filters organized by rules and alignment.",
+      "Grouped venue markers and a distinct blue user-location indicator."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Rule",
+        "body": "Use the red accent to make actions, selected state, and event locations legible. The blue location indicator retains a separate meaning.",
+        "section": "colors"
+      },
+      {
+        "name": "The Flat Structure Rule",
+        "body": "Use alignment, tonal surfaces, and rules for the page structure. Soft shadows belong to floating overlays and map markers.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the existing rat-on-bridge mark as the single handmade detail.",
+      "Do use red for event markers, primary actions, and selected state; reserve blue for user location.",
+      "Do preserve visible keyboard focus, stable control geometry, and reduced-motion interactions.",
+      "Do keep date, type, nearby, and search filters in the unified toolbar.",
+      "Do verify the map, dropdowns, and stacked event list at 390px without horizontal overflow."
+    ],
+    "donts": [
+      "Don't reintroduce paper grain, slanted stamps, decorative serif type, monospace interface labels, emoji icons, or hard offset shadows.",
+      "Don't turn flat list rows into a grid of elevated cards.",
+      "Don't fabricate event data or change persistent records as part of visual work.",
+      "Don't treat legacy tracked uppercase labels in secondary controls as a new visual direction."
+    ]
+  }
+}

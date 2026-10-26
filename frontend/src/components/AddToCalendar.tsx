@@ -128,7 +128,7 @@ export default function AddToCalendar(props: AddToCalendarProps) {
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen(v => !v) }}
         aria-expanded={open}
-        className={`${fullWidth ? 'w-full justify-center' : ''} inline-flex items-center gap-1.5 ${buttonTone} border border-ink shadow-stamp px-3 py-2 font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all`}
+        className={`calendar-trigger ${fullWidth ? 'w-full justify-center' : ''} inline-flex items-center gap-1.5 ${buttonTone} border border-ink shadow-stamp px-3 py-2 font-sans text-[11px] uppercase tracking-[0.14em] font-semibold    transition-all`}
       >
         <Calendar size={13} strokeWidth={2.2} />
         Add to calendar
@@ -136,7 +136,7 @@ export default function AddToCalendar(props: AddToCalendarProps) {
       </button>
 
       {open && (
-        <div className={`absolute z-50 left-0 ${props.dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-[240px] bg-paper-light border border-ink shadow-stamp`}>
+        <div className={`calendar-menu absolute z-50 left-0 ${props.dropUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-[240px] bg-paper-light border border-ink shadow-stamp`}>
           <a
             href={buildGoogleUrl(props, start, safeEnd)}
             target="_blank"
@@ -147,7 +147,7 @@ export default function AddToCalendar(props: AddToCalendarProps) {
             <span aria-hidden className="text-[16px] leading-none shrink-0">📅</span>
             <span className="flex-1 min-w-0">
               <span className="block font-display font-bold text-[13px] text-ink">Google Calendar</span>
-              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-ink-fade">opens in a new tab</span>
+              <span className="block font-sans text-[10px] uppercase tracking-[0.12em] text-ink-fade">opens in a new tab</span>
             </span>
             <ExternalLink size={11} strokeWidth={2.2} className="text-ink-fade shrink-0" />
           </a>
@@ -159,7 +159,7 @@ export default function AddToCalendar(props: AddToCalendarProps) {
             <span aria-hidden className="text-[16px] leading-none shrink-0">🗓️</span>
             <span className="flex-1 min-w-0">
               <span className="block font-display font-bold text-[13px] text-ink">Apple / Outlook / iCal</span>
-              <span className="block font-mono text-[10px] uppercase tracking-[0.12em] text-ink-fade">downloads .ics</span>
+              <span className="block font-sans text-[10px] uppercase tracking-[0.12em] text-ink-fade">downloads .ics</span>
             </span>
             <Download size={11} strokeWidth={2.2} className="text-ink-fade shrink-0" />
           </button>

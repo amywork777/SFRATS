@@ -1,48 +1,36 @@
-import { useEffect, useState, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMap, Circle } from 'react-leaflet'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { MapContainer, Marker, useMap, Circle } from 'react-leaflet'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 import { DbItem } from '../types/supabase'
 import { api } from '../services/api'
-import ListingPreview from './ListingPreview'
-import { inferEmoji } from '../utils/categoryIcons'
+import { displayItem } from '../utils/displayText'
+import QuietBasemap from './QuietBasemap'
+import { EventIcon, markerGlyph, eventEmoji } from './EventIcon'
 import { isActive, withinRadius, MILE_KM } from '../utils/listingFilters'
 import { eventType } from '../utils/eventTypes'
 import TypeChips from './TypeChips'
 import { DbItem as DbItemRow } from '../types/supabase'
 import ListView from './ListView'
-import { Map as MapIconLucide, List as ListIcon, ArrowRight, X } from 'lucide-react'
-import { formatEventDate } from '../utils/dates'
 import SubmissionsList from './SubmissionsList'
+import { Map as MapIconLucide, List as ListIcon, X } from 'lucide-react'
+import { formatEventDate } from '../utils/dates'
 import SearchFilter from './SearchFilter'
 import NearMeFilter from './NearMeFilter'
 import DatePicker from './DatePicker'
 import { presetToRange, rangeToPreset, dayToRange, rangeToDay, rangeFromKeys, rangeToDays, readUrlFilters, writeUrlFilters } from '../utils/urlFilters'
 
-// Create custom marker icons for each category. When several events share a
-// venue they collapse into one pin (see groupByVenue) — `count` renders a
-// badge so people know there's more than one event behind it.
-const createMarkerIcon = (
-  item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>,
-  count: number,
-) => {
-  const glyph = item.emoji || inferEmoji(item.title, item.description ?? null, item.category)
-  const badge = count > 1 ? `<span class="marker-count">${count}</span>` : ''
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `<div class="marker-pin"><span class="marker-emoji">${glyph}</span>${badge}</div>`,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28],
-    popupAnchor: [0, -22],
-  })
-}
+// Pins always show an event, never an aggregate count.
+const createMarkerIcon = (item: Pick<DbItemRow, 'emoji' | 'title' | 'description' | 'category'>) => L.divIcon({
+  className: 'custom-marker',
+  html: `<div class="marker-pin" data-type="${eventType(item)}"><span class="marker-symbol">${markerGlyph(eventType(item), eventEmoji(item))}</span></div>`,
+  iconSize: [44, 44],
+  iconAnchor: [22, 22],
+})
 
-// Events frequently share a venue, which geocodes to identical coordinates.
-// Leaflet would stack those pins exactly on top of each other — that both
-// piles their drop shadows into a dark blob and makes every event but the
-// top one unclickable. Collapse co-located events into a single pin instead.
+// Shared coordinates retain their real location. The preview exposes each
+// event by name instead of stacking unreachable pins or moving locations.
 type Venue = { lat: number; lng: number; items: DbItem[] }
 
 const groupByVenue = (items: DbItem[]): Venue[] => {
@@ -60,52 +48,6 @@ const groupByVenue = (items: DbItem[]): Venue[] => {
   return Object.values(venues)
 }
 
-// Popup body for a venue that hosts more than one event: a compact, scrollable
-// list. Tapping a row opens that event's detail page.
-function VenueListPopup({ items }: { items: DbItem[] }) {
-  const address = items.find(i => i.location_address)?.location_address
-  return (
-    <div className="w-[260px]">
-      <div className="mb-2">
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
-          {items.length} events here
-        </span>
-        {address && (
-          <h3 className="font-display font-bold text-[15px] leading-tight text-ink mt-0.5">
-            {address}
-          </h3>
-        )}
-      </div>
-      <div className="rule-hair mb-2" />
-      <div className="max-h-[280px] overflow-y-auto -mr-1 pr-1 space-y-1.5">
-        {items.map(it => {
-          const glyph = it.emoji || inferEmoji(it.title, it.description ?? null, it.category)
-          return (
-            <button
-              key={it.id}
-              onClick={() => { window.location.href = `/listing/${it.id}` }}
-              className="w-full flex items-start gap-2 text-left p-2 border border-ink/20 bg-paper-light hover:bg-paper hover:border-ink/40 transition-colors"
-            >
-              <span className="inline-flex items-center justify-center w-7 h-7 text-[15px] bg-paper border border-ink/30 leading-none shrink-0">
-                {glyph}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block font-display font-bold text-[13px] leading-tight text-ink truncate">
-                  {it.title}
-                </span>
-                <span className="block font-mono text-[10px] uppercase tracking-[0.08em] text-ink-mute mt-0.5">
-                  {formatEventDate(it.available_from, 'MMM d · h:mm a')}
-                </span>
-              </span>
-              <ArrowRight size={13} strokeWidth={2.5} className="text-ink-mute mt-1 shrink-0" />
-            </button>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 // When the user enables "Near me", pan + zoom the map so the radius
 // circle fills the view. Otherwise the circle is drawn but might sit
 // off-screen, which makes the feature feel broken on first use.
@@ -114,103 +56,164 @@ function FitToRadius({ location, radiusKm }: { location: { lat: number; lng: num
   useEffect(() => {
     const center = L.latLng(location.lat, location.lng)
     const bounds = center.toBounds(radiusKm * 2 * 1000) // diameter in metres
-    map.flyToBounds(bounds, { padding: [40, 40], duration: 0.6 })
+    map.flyToBounds(bounds, { padding: [40, 40], duration: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.6 })
   }, [location.lat, location.lng, radiusKm, map])
   return null
 }
 
-// Renders Leaflet markers (imperatively, since they live on the Leaflet map)
-// and the currently-open popup (declaratively, via a portal that stays inside
-// the React tree). Keeping the popup in the tree — instead of hand-managing
-// createRoot/unmount — avoids the React 18 "unmount during render" race that
-// used to leave empty popup cards stranded on the map.
-function MarkerLayer({ items }: { items: DbItem[] }) {
+function MarkerLayer({ items, selectedId, highlightedId, onSelect, onHighlight }: {
+  items: DbItem[]
+  selectedId: number | null
+  highlightedId: number | null
+  onSelect: (id: number | null) => void
+  onHighlight: (id: number | null) => void
+}) {
   const map = useMap()
-  const navigate = useNavigate()
-  const [open, setOpen] = useState<{ key: number; venue: Venue } | null>(null)
+  const venues = useMemo(() => groupByVenue(items), [items])
+  const markerRefs = useRef<{ venue: Venue; marker: L.Marker }[]>([])
+  const popupRef = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
-  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 767px)').matches)
+  const selected = items.find(item => item.id === selectedId)
+  const venue = venues.find(v => v.items.some(item => item.id === selectedId))
 
-  // One marker per venue (co-located events collapse into a single pin).
-  // Clicking a marker opens its popup; we only remove the markers we added.
   useEffect(() => {
-    const markers: L.Marker[] = []
-    groupByVenue(items).forEach(venue => {
-      const key = venue.items[0].id
+    const query = window.matchMedia('(max-width: 767px)')
+    const update = () => setIsMobile(query.matches)
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  useEffect(() => {
+    const layer = L.layerGroup().addTo(map)
+    markerRefs.current = venues.map(venue => {
+      const event = venue.items[0]
       const marker = L.marker([venue.lat, venue.lng], {
-        icon: createMarkerIcon(venue.items[0], venue.items.length),
-      })
-      marker.on('click', () => setOpen({ key, venue }))
-      marker.addTo(map)
-      markers.push(marker)
+        icon: createMarkerIcon(event), title: event.title, alt: event.title,
+        bubblingMouseEvents: false,
+      }).addTo(layer)
+      marker.on('click', () => onSelect(event.id))
+      marker.on('mouseover', () => onHighlight(event.id))
+      marker.on('mouseout', () => onHighlight(null))
+      const tooltip = document.createElement('span')
+      tooltip.textContent = event.title
+      marker.bindTooltip(tooltip, { direction: 'top', offset: [0, -20], className: 'event-tooltip' })
+      return { venue, marker }
     })
-    return () => { markers.forEach(m => map.removeLayer(m)) }
-  }, [items, map])
-
-  // If the open venue drops out of the filtered set, close its popup.
-  useEffect(() => {
-    if (open && !groupByVenue(items).some(v => v.items[0].id === open.key)) {
-      setOpen(null)
+    const connectors = L.layerGroup().addTo(map)
+    const arrange = () => {
+      connectors.clearLayers()
+      const occupied: L.Point[] = []
+      markerRefs.current.forEach(({ venue, marker }) => {
+        const origin = map.latLngToLayerPoint([venue.lat, venue.lng])
+        let point = origin
+        // Keep nearby emoji targets separately clickable. A leader line keeps
+        // displaced pins connected to their real coordinates; no fake venues.
+        for (let step = 0; occupied.some(p => p.distanceTo(point) < 46); step++) {
+          const radius = 46 * (1 + Math.floor(step / 12))
+          const angle = (step % 12) * Math.PI / 6
+          point = origin.add(L.point(Math.cos(angle) * radius, Math.sin(angle) * radius))
+        }
+        occupied.push(point)
+        const position = map.layerPointToLatLng(point)
+        marker.setLatLng(position)
+        if (!point.equals(origin)) {
+          L.polyline([[venue.lat, venue.lng], position], { color: '#687469', weight: 1, opacity: 0.65, interactive: false }).addTo(connectors)
+        }
+      })
     }
-  }, [items, open])
+    arrange()
+    map.on('zoomend', arrange)
+    return () => { map.off('zoomend', arrange); connectors.remove(); layer.remove(); markerRefs.current = [] }
+  }, [venues, map, onSelect, onHighlight])
 
-  // Desktop: glue the popup next to its marker as the map pans/zooms.
-  // Mobile: CSS pins it to the bottom as a sheet, so no positioning needed.
   useEffect(() => {
-    if (!open || isMobile) { setPos(null); return }
+    markerRefs.current.forEach(({ venue, marker }) => {
+      const selected = venue.items.find(item => item.id === selectedId)
+      const event = selected || venue.items[0]
+      marker.setIcon(createMarkerIcon(event))
+      const el = marker.getElement()
+      el?.classList.toggle('is-selected', !!selected)
+      el?.setAttribute('aria-pressed', String(!!selected))
+      el?.setAttribute('aria-label', event.title)
+      el?.setAttribute('title', event.title)
+      const tooltip = document.createElement('span')
+      tooltip.textContent = event.title
+      marker.setTooltipContent(tooltip)
+      marker.off('click').on('click', () => onSelect(event.id))
+      marker.setZIndexOffset(selected ? 2000 : 0)
+    })
+  }, [selectedId, venues, onSelect])
+
+  useEffect(() => {
+    markerRefs.current.forEach(({ venue, marker }) => {
+      const highlighted = venue.items.some(item => item.id === highlightedId)
+      marker.getElement()?.classList.toggle('is-highlighted', highlighted)
+      marker.setZIndexOffset(venue.items.some(item => item.id === selectedId) ? 2000 : highlighted ? 1000 : 0)
+    })
+  }, [highlightedId, selectedId, venues])
+
+  useEffect(() => {
+    if (venue) map.panInside([venue.lat, venue.lng], { padding: [70, 70], animate: !window.matchMedia('(prefers-reduced-motion: reduce)').matches })
+  }, [venue, map])
+
+  useEffect(() => {
+    if (!venue || isMobile) { setPos(null); return }
     const place = () => {
-      const pt = map.latLngToContainerPoint(L.latLng(open.venue.lat, open.venue.lng))
+      const pin = markerRefs.current.find(entry => entry.venue === venue)?.marker
+      const pt = map.latLngToContainerPoint(pin?.getLatLng() || [venue.lat, venue.lng])
       const r = map.getContainer().getBoundingClientRect()
-      setPos({ left: r.left + pt.x + 20, top: r.top + pt.y - 20 })
+      const popup = popupRef.current
+      const width = popup?.offsetWidth || 320
+      const height = popup?.offsetHeight || 380
+      const right = r.left + pt.x + 26
+      const left = right + width <= r.right - 12 ? right : r.left + pt.x - width - 26
+      setPos({ left: Math.max(r.left + 12, Math.min(left, r.right - width - 12)), top: Math.max(r.top + 12, Math.min(r.top + pt.y - 30, r.bottom - height - 12)) })
     }
     place()
-    map.on('move', place)
-    map.on('zoom', place)
-    return () => { map.off('move', place); map.off('zoom', place) }
-  }, [open, isMobile, map])
+    const observer = new ResizeObserver(place)
+    if (popupRef.current) observer.observe(popupRef.current)
+    map.on('move zoom zoomend resize', place)
+    return () => { map.off('move zoom zoomend resize', place); observer.disconnect() }
+  }, [venue, isMobile, map])
 
-  // Clicking empty map space closes the popup; clicking a marker does not.
   useEffect(() => {
-    const onMapClick = (e: L.LeafletMouseEvent) => {
-      if (!(e.originalEvent.target as Element)?.closest?.('.marker-pin')) setOpen(null)
-    }
-    map.on('click', onMapClick)
-    return () => { map.off('click', onMapClick) }
-  }, [map])
+    const close = () => onSelect(null)
+    const escape = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+    map.on('click', close)
+    window.addEventListener('keydown', escape)
+    return () => { map.off('click', close); window.removeEventListener('keydown', escape) }
+  }, [map, onSelect])
 
-  if (!open) return null
-  const { key, venue } = open
-  const close = () => setOpen(null)
-
+  if (!selected || !venue) return null
+  const others = venue.items.filter(item => item.id !== selected.id)
   return createPortal(
-    <div
-      id={`popup-${key}`}
+    <div ref={popupRef} id={`popup-${selected.id}`} className="event-map-preview" role="region" aria-label="Selected event"
       data-mobile={isMobile ? 'true' : undefined}
-      // Render off-screen until positioned (desktop) so it never flashes at 0,0.
-      style={isMobile ? undefined : { left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}
-    >
-      <div className="relative">
-        <button
-          onClick={close}
-          aria-label="Close"
-          className="absolute top-1 right-1 w-9 h-9 sm:w-7 sm:h-7 flex items-center justify-center text-ink-mute hover:text-ink hover:bg-paper-dark transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        {venue.items.length === 1 ? (
-          <ListingPreview
-            {...venue.items[0]}
-            showDirections={true}
-            inPopup={true}
-            onViewDetails={() => { close(); navigate(`/listing/${venue.items[0].id}`) }}
-          />
-        ) : (
-          <VenueListPopup items={venue.items} />
-        )}
-      </div>
-    </div>,
-    document.body,
+      style={isMobile ? undefined : { left: pos?.left ?? -9999, top: pos?.top ?? -9999 }}>
+      <button className="event-preview-close" onClick={() => onSelect(null)} aria-label="Close event preview"><X size={18} /></button>
+      <div className="event-preview-title"><EventIcon type={eventType(selected)} emoji={eventEmoji(selected)} size={26} /><h3>{selected.title}</h3></div>
+      <p className="event-preview-time">{formatEventDate(selected.available_from)}</p>
+      {selected.location_address && <p className="event-preview-place">{selected.location_address}</p>}
+      {selected.description && <p className="event-preview-description">{selected.description}</p>}
+      <a className="event-preview-open" href={`/listing/${selected.id}`}>View event</a>
+      {others.length > 0 && <div className="event-preview-others">
+        <h4>Also here</h4>
+        <ul>{others.map(item => <li key={item.id}><button onClick={() => onSelect(item.id)}>
+          <EventIcon type={eventType(item)} emoji={eventEmoji(item)} size={20} />
+          <span><strong>{item.title}</strong><small>{formatEventDate(item.available_from, 'MMM d · h:mm a')}</small></span>
+        </button></li>)}</ul>
+      </div>}
+    </div>, document.body,
   )
+}
+
+function MapZoom() {
+  const map = useMap()
+  return <div className="map-zoom" ref={node => { if (node) L.DomEvent.disableClickPropagation(node) }}>
+    <button aria-label="Zoom in" onClick={() => map.zoomIn()}>+</button>
+    <button aria-label="Zoom out" onClick={() => map.zoomOut()}>−</button>
+  </div>
 }
 
 function Map() {
@@ -241,6 +244,8 @@ function Map() {
       types: [],
     }
   })
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [highlightedId, setHighlightedId] = useState<number | null>(null)
   const [view, setView] = useState<'map' | 'list'>('map')
 
   // Keep the URL in sync with the filters that make sense to share —
@@ -258,14 +263,12 @@ function Map() {
 
   const fetchItems = useCallback(async () => {
     try {
-      console.log('Fetching items with filters:', filters)
       
       // Use the api service instead of direct fetch
       const data = await api.getItems()
-      console.log('Received data:', data)
 
       // No need to process dates as they're already in the correct format
-      setItems(data)
+      setItems(data.map(displayItem))
       setError(null)
     } catch (err) {
       console.error('Error fetching items:', err)
@@ -274,7 +277,7 @@ function Map() {
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [])
 
   // Update useEffect to use fetchItems
   useEffect(() => {
@@ -298,8 +301,10 @@ function Map() {
   const clearAllFilters = () =>
     handleFiltersChange({ search: '', dates: { start: null, end: null }, types: [], userLocation: null, radiusMiles: 2 })
 
-  const filteredItems = items.filter(item => {
-    if (item.category !== 'Events') return false
+  const filteredItems = useMemo(() => items.filter(item => {
+    if (item.category !== 'Events' || item.posted_by === 'scraper-meta') return false
+    // Exclude imported directory pages with neither an event date nor a venue.
+    if (!item.available_from && !item.location_address && item.location_lat == null) return false
 
     // Auto-expire: hide events past their end (or +24h after start).
     // See utils/listingFilters.ts for the rules.
@@ -324,25 +329,27 @@ function Map() {
     }
 
     return true
-  })
+  }), [items, filters])
+
+  useEffect(() => {
+    if (selectedId !== null && !filteredItems.some(item => item.id === selectedId)) setSelectedId(null)
+    setHighlightedId(null)
+  }, [filteredItems, selectedId])
 
   return (
-    <div className="fixed inset-0 top-14 md:top-16">
+    <main className="explore-page original-map-page">
       {/* Full-width column: unified filter bar, then either Map or List */}
       <div className="relative h-full flex flex-col">
         {/* Unified filter bar: when / type / near-me / search on the left,
             view toggle on the right. Replaces the old sidebar + mobile sheet. */}
-        <div className="relative z-[1200] bg-paper-light border-b border-ink/15 shrink-0">
-          <div className="flex items-center justify-between gap-3 px-3 md:px-5 pt-2.5 pb-2.5">
-          <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+        <div className="filter-bar">
+          <div className="filter-bar-inner">
+          <div className="filter-group">
             <DatePicker
               value={filters.dates}
               onChange={(dates) => handleFiltersChange({ dates })}
             />
-            <TypeChips
-              value={filters.types}
-              onChange={(types) => handleFiltersChange({ types })}
-            />
+            <TypeChips value={filters.types} onChange={(types) => handleFiltersChange({ types })} />
             <NearMeFilter
               location={filters.userLocation}
               radiusMiles={filters.radiusMiles}
@@ -357,35 +364,35 @@ function Map() {
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 transition-colors"
+                className="shrink-0 inline-flex items-center gap-1 px-2 py-1.5 font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-700 hover:text-bridge-500 transition-colors"
               >
                 <X size={12} strokeWidth={2.4} />
                 Clear{activeFilterCount > 1 ? ` (${activeFilterCount})` : ''}
               </button>
             )}
           </div>
-          <div className="flex items-center border border-ink/30 bg-paper shrink-0">
+          <div className="view-switch">
             <button
               onClick={() => setView('map')}
               aria-pressed={view === 'map'}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-sans text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
                 view === 'map' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
               }`}
               aria-label="Map view"
             >
               <MapIconLucide size={14} strokeWidth={2.2} />
-              <span className="hidden sm:inline">Map</span>
+              <span>Map</span>
             </button>
             <button
               onClick={() => setView('list')}
               aria-pressed={view === 'list'}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 md:py-1.5 font-sans text-[10px] uppercase tracking-[0.14em] font-semibold transition-colors ${
                 view === 'list' ? 'bg-ink text-paper-light' : 'text-ink-mute hover:text-ink'
               }`}
               aria-label="List view"
             >
               <ListIcon size={14} strokeWidth={2.2} />
-              <span className="hidden sm:inline">List</span>
+              <span>List</span>
             </button>
           </div>
           </div>
@@ -397,17 +404,15 @@ function Map() {
             <MapContainer
               center={[37.7749, -122.4194]}
               zoom={13}
+              minZoom={3}
+              maxZoom={19}
+              maxBounds={[[-85, -180], [85, 180]]}
+              maxBoundsViscosity={1}
               style={{ height: '100%', width: '100%' }}
               zoomControl={false}
             >
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                attribution='&copy; OpenStreetMap &copy; CARTO'
-                subdomains="abcd"
-                maxZoom={20}
-                detectRetina={true}
-              />
-              <MarkerLayer items={filteredItems} />
+              <QuietBasemap />
+              <MarkerLayer items={filteredItems} selectedId={selectedId} highlightedId={highlightedId} onSelect={setSelectedId} onHighlight={setHighlightedId} />
 
               {/* User location + radius circle */}
               {filters.userLocation && (
@@ -436,33 +441,26 @@ function Map() {
                   <FitToRadius location={filters.userLocation} radiusKm={filters.radiusMiles * MILE_KM} />
                 </>
               )}
+              <MapZoom />
             </MapContainer>
 
-            {/* Counter stamp */}
-            <div className="pointer-events-none absolute top-3 left-3 md:top-4 md:left-4 z-[1000]">
-              <div className="bg-paper-light border border-ink px-2.5 py-1 md:px-3 md:py-1.5 shadow-stamp -rotate-2">
-                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none">Active</div>
-                <div className="font-display font-black text-[22px] md:text-[28px] leading-none text-ink mt-0.5 tabular-nums">
-                  {String(filteredItems.length).padStart(3, '0')}
-                </div>
-                <div className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.2em] text-ink-mute leading-none mt-0.5">events</div>
-              </div>
-            </div>
 
             {/* Status overlay */}
             {(loading || error || !filteredItems.length) && (
-              <div className="pointer-events-none absolute top-3 md:top-4 left-1/2 -translate-x-1/2 z-[1000] max-w-[80%]">
-                <div className="pointer-events-auto bg-paper-light border border-ink shadow-stamp px-3 py-1.5 md:px-4 md:py-2 rotate-[-1deg]">
-                  {loading && <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
+              <div className="map-status">
+                <div className="map-status-content">
+                  {loading && <span className="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink-mute">Loading…</span>}
                   {!loading && error && (
-                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Couldn't load: {error}</span>
+                    <span className="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-bridge-700">Events could not load. {error}</span>
                   )}
                   {!loading && !error && !filteredItems.length && (
-                    <span className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">No events posted yet — be the first.</span>
+                    <span className="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.14em] text-ink">{activeFilterCount ? 'No matching events. Try clearing your filters.' : 'No upcoming events yet. Post one to get things started.'}</span>
                   )}
                 </div>
               </div>
             )}
+            {!loading && !error && filteredItems.length > 0 && <div className="map-caption" aria-live="polite">{filteredItems.length} events</div>}
+            <div className="hidden md:block"><SubmissionsList items={filteredItems} loading={loading} error={error} /></div>
           </div>
         ) : (
           <div className="flex-1 min-h-0 overflow-y-auto bg-paper">
@@ -471,13 +469,7 @@ function Map() {
         )}
       </div>
 
-      {/* Recent Submissions Panel — only relevant in map mode */}
-      {view === 'map' && (
-        <div className="hidden md:block">
-          <SubmissionsList category="Events" />
-        </div>
-      )}
-    </div>
+    </main>
   )
 }
 

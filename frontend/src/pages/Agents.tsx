@@ -316,7 +316,7 @@ function FormatChip({ format }: { format: Source['format'] }) {
     API:            'bg-paper text-ink-mute border-ink/20',
   }
   return (
-    <span className={`font-mono text-[9px] uppercase tracking-[0.16em] font-semibold border px-1.5 py-0.5 ${tone[format]}`}>
+    <span className={`font-sans text-[9px] uppercase tracking-[0.16em] font-semibold border px-1.5 py-0.5 ${tone[format]}`}>
       {format}
     </span>
   )
@@ -335,12 +335,12 @@ export default function Agents() {
   }
 
   return (
-    <div className="pt-24 pb-20 px-4 md:px-8 max-w-3xl mx-auto">
+    <div className="content-page pt-24 pb-20 px-4 md:px-8 max-w-3xl mx-auto">
       {/* Hero */}
       <div className="mb-10">
         <span className="label">For AI Agents</span>
         <h1 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-3 tracking-tight">
-          Bring your own scraper<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+          Bring your own scraper<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
         </h1>
         <p className="font-display text-[20px] leading-[1.5] text-ink-soft mt-5 max-w-[55ch]">
           SFRATS is an open map of free events across the Bay Area. AI assistants can contribute
@@ -380,7 +380,7 @@ export default function Agents() {
           <span className="label">The prompt</span>
           <button
             onClick={copy}
-            className="inline-flex items-center gap-1.5 bg-ink text-paper-light border border-ink shadow-stamp px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            className="inline-flex items-center gap-1.5 bg-ink text-paper-light border border-ink shadow-stamp px-3 py-1.5 font-sans text-[10px] uppercase tracking-[0.14em] font-semibold    transition-all"
           >
             {copied ? <><Check size={12} strokeWidth={2.5} /> Copied</> : <><Copy size={12} strokeWidth={2.2} /> Copy</>}
           </button>
@@ -419,14 +419,14 @@ export default function Agents() {
                         <ArrowUpRight size={11} strokeWidth={2.5} className="text-ink-fade" />
                       </a>
                       <FormatChip format={s.format} />
-                      <span className="font-mono text-[10px] text-ink-fade ml-auto">
+                      <span className="font-sans text-[10px] text-ink-fade ml-auto">
                         posted_by: <span className="text-ink-mute">{s.slug}</span>
                       </span>
                     </div>
                     <div className="text-[13px] text-ink-soft leading-snug">
                       {s.best}
                     </div>
-                    <div className="font-mono text-[10px] text-ink-fade truncate">
+                    <div className="font-sans text-[10px] text-ink-fade truncate">
                       {s.url}
                     </div>
                   </li>
@@ -506,7 +506,7 @@ export default function Agents() {
               className="flex items-center gap-2 px-3 py-2 bg-paper-light border border-ink/15 hover:border-ink/40 transition-colors"
             >
               <span className="text-[18px] leading-none shrink-0">{glyph}</span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-mute truncate">
+              <span className="font-sans text-[10px] uppercase tracking-[0.1em] text-ink-mute truncate">
                 {label}
               </span>
             </div>
@@ -529,8 +529,8 @@ export default function Agents() {
             ['Geocoder', 'nominatim.openstreetmap.org · UA required · 1.1s gap'],
           ].map(([k, v]) => (
             <div key={k} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3 px-4 py-3">
-              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute shrink-0 sm:w-44">{k}</span>
-              <span className="font-mono text-[12px] text-ink break-all">{v}</span>
+              <span className="font-sans text-[10px] uppercase tracking-[0.16em] text-ink-mute shrink-0 sm:w-44">{k}</span>
+              <span className="font-sans text-[12px] text-ink break-all">{v}</span>
             </div>
           ))}
         </div>
@@ -540,7 +540,7 @@ export default function Agents() {
       <div className="rule-thick pt-6 mt-10 flex flex-wrap items-center justify-between gap-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
+          className="inline-flex items-center gap-2 font-sans text-[12px] uppercase tracking-[0.14em] text-ink hover:text-bridge-600"
         >
           <span aria-hidden>←</span> Back to map
         </Link>
@@ -548,7 +548,7 @@ export default function Agents() {
           href="https://github.com/amywork777/SFRATS"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
+          className="inline-flex items-center gap-1.5 font-sans text-[12px] uppercase tracking-[0.14em] text-ink-mute hover:text-bridge-600"
         >
           Source on GitHub <ArrowUpRight size={13} strokeWidth={2.2} />
         </a>

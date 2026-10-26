@@ -106,7 +106,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
                 type="button"
                 onClick={() => { q.apply(); close() }}
                 aria-pressed={q.on}
-                className={`w-full flex items-center justify-between px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-left transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2 font-sans text-[11px] uppercase tracking-[0.1em] text-left transition-colors ${
                   q.on ? 'bg-ink text-paper-light' : 'text-ink-mute hover:bg-paper hover:text-ink'
                 }`}
               >
@@ -142,7 +142,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
 
             <div className="grid grid-cols-7 mb-1">
               {WEEKDAYS.map((w, i) => (
-                <span key={i} className="text-center font-mono text-[9px] uppercase tracking-[0.1em] text-ink-fade py-1">
+                <span key={i} className="text-center font-sans text-[9px] uppercase tracking-[0.1em] text-ink-fade py-1">
                   {w}
                 </span>
               ))}
@@ -161,7 +161,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
                     type="button"
                     onClick={() => onDayClick(d, close)}
                     onMouseEnter={() => { if (rangeAnchor) setHoverDay(d) }}
-                    className={`aspect-square flex items-center justify-center font-mono text-[12px] border transition-colors ${
+                    className={`aspect-square flex items-center justify-center font-sans text-[12px] border transition-colors ${
                       isEnd
                         ? 'bg-bridge-500 text-paper-light border-ink font-bold'
                         : inRange
@@ -177,7 +177,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
               })}
             </div>
             {rangeAnchor && (
-              <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.12em] text-bridge-700">
+              <p className="mt-2 font-sans text-[9px] uppercase tracking-[0.12em] text-bridge-700">
                 Pick an end day…
               </p>
             )}

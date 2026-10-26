@@ -1,5 +1,6 @@
+import QuietBasemap from './QuietBasemap'
 import { useState, useEffect, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { LocateFixed, AlertTriangle } from 'lucide-react'
@@ -123,14 +124,15 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); searchAddress(address) } }}
+          aria-label="Search for a location"
           placeholder="Search an address or neighborhood…"
-          className="flex-1 bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow"
+          className="system-field flex-1 min-w-0"
         />
         <button
           type="button"
           onClick={() => searchAddress(address)}
           disabled={searching || !address}
-          className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-mono text-[11px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          className="px-4 py-2 bg-ink text-paper-light border-2 border-ink shadow-stamp font-sans text-[11px] uppercase tracking-[0.14em] font-semibold    disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           {searching ? '…' : 'Find'}
         </button>
@@ -142,18 +144,18 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           type="button"
           onClick={useMyLocation}
           disabled={locating}
-          className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-600 hover:text-bridge-700 underline underline-offset-4 decoration-1 disabled:opacity-50"
         >
           <LocateFixed size={12} strokeWidth={2.2} />
           {locating ? 'Locating…' : 'Use my location'}
         </button>
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade">
+        <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-ink-fade">
           or click the map
         </span>
       </div>
 
       {error && (
-        <div className="inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-bridge-700">
+        <div className="inline-flex items-center gap-1.5 font-sans text-[11px] uppercase tracking-[0.12em] text-bridge-700">
           <AlertTriangle size={12} strokeWidth={2.2} /> {error}
         </div>
       )}
@@ -167,12 +169,7 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
           ref={mapRef}
           className="z-0"
         >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            attribution='&copy; OSM &copy; CARTO'
-            subdomains="abcd"
-            detectRetina
-          />
+          <QuietBasemap />
           <MapClickHandler />
           {position && (
             <Marker position={position} icon={createMarkerIcon()} interactive={false} />
@@ -183,7 +180,7 @@ function LocationPicker({ initialAddress, initialLat, initialLng, onLocationSele
       {/* Confirmed address chip */}
       {position && address && (
         <div className="bg-paper-light border border-ink p-2.5 flex items-start gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-bridge-600 mt-0.5 shrink-0">Pinned</span>
+          <span className="font-sans text-[10px] uppercase tracking-[0.16em] text-bridge-600 mt-0.5 shrink-0">Pinned</span>
           <span className="text-[12px] leading-snug text-ink truncate">{address}</span>
         </div>
       )}

@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { Pencil, Share2, Map as MapIcon, Check, ArrowRight } from 'lucide-react'
 import EditListing from './EditListing'
 import AddToCalendar from './AddToCalendar'
-import { inferEmoji } from '../utils/categoryIcons'
+import { EventIcon, eventEmoji } from './EventIcon'
+import { eventType } from '../utils/eventTypes'
 
 interface ListingPreviewProps {
   id: number
@@ -47,7 +48,7 @@ function ListingPreview({
   available_until,
   created_at,
 }: ListingPreviewProps) {
-  const glyph = emoji || inferEmoji(title, description, category)
+  const type = eventType({ emoji, title, description, category: category as any })
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -77,9 +78,9 @@ function ListingPreview({
       <div>
         <div className="flex items-center gap-2 mb-1.5">
           <span className="inline-flex items-center justify-center w-8 h-8 text-[18px] bg-paper-light border border-ink/30 leading-none">
-            {glyph}
+            <EventIcon type={type} emoji={eventEmoji({ emoji, title, description, category: category as any })} />
           </span>
-          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink-mute">
+          <span className="font-sans text-[10px] uppercase tracking-[0.16em] text-ink-mute">
             {category}
           </span>
         </div>
@@ -98,15 +99,15 @@ function ListingPreview({
       <div className="rule-hair" />
 
       {/* Metadata */}
-      <div className="space-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-ink-mute">
+      <div className="space-y-1 font-sans text-[11px] uppercase tracking-[0.08em] text-ink-mute">
         {location_address && (
           <div className="flex items-start gap-1.5">
-            <span className="text-bridge-500">▸</span>
+
             <span className="truncate flex-1">{location_address}</span>
           </div>
         )}
         <div className="flex items-start gap-1.5">
-          <span className="text-bridge-500">▸</span>
+
           <span>{formatEventDate(available_from)}</span>
         </div>
       </div>
@@ -130,7 +131,7 @@ function ListingPreview({
           <div className="flex gap-2">
             <button
               onClick={handleViewDetails}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-ink text-paper-light px-3 py-2.5 sm:py-1.5 border border-ink font-mono text-[11px] sm:text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 bg-ink text-paper-light px-3 py-2.5 sm:py-1.5 border border-ink font-sans text-[11px] sm:text-[10px] uppercase tracking-[0.14em] font-semibold hover:bg-bridge-500 transition-colors"
             >
               Open <ArrowRight size={12} strokeWidth={2.5} />
             </button>

@@ -30,7 +30,7 @@ interface FormData {
 }
 
 const inputCls =
-  'w-full bg-paper-light border-2 border-ink px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade outline-none focus:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-shadow'
+  'system-field w-full px-3 py-2 font-sans text-[14px] text-ink placeholder:text-ink-fade'
 
 // Hidden internal token — never shown to users. The DB column is NOT NULL,
 // so we generate a unique value per submission. With open-edit (no edit
@@ -127,7 +127,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             <Check size={12} strokeWidth={2.5} /> Posted
           </span>
           <h2 className="font-display font-black text-5xl md:text-6xl text-ink leading-[0.95] mt-2 tracking-tight">
-            Event live<span className="serif-wonk text-bridge-500 italic font-normal">.</span>
+            Event live<span className="accent-punctuation text-bridge-500 italic font-normal">.</span>
           </h2>
           <p className="font-display text-[18px] leading-snug text-ink-soft mt-3">
             Your event is on the map. Anyone in the Bay Area can see it now — and anyone can update or take it down when it's done.
@@ -139,7 +139,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center justify-center gap-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-bridge-500 text-paper-light border border-ink shadow-stamp px-5 py-3 font-sans text-[12px] uppercase tracking-[0.14em] font-semibold    transition-all"
           >
             See it on the map <ArrowRight size={14} strokeWidth={2.5} />
           </button>
@@ -159,7 +159,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
                 edit_code: generateEditCode(), status: 'available',
               })
             }}
-            className="inline-flex items-center justify-center gap-2 bg-paper-light text-ink border border-ink shadow-stamp px-5 py-3 font-mono text-[12px] uppercase tracking-[0.14em] font-semibold hover:bg-paper hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)] transition-all"
+            className="inline-flex items-center justify-center gap-2 bg-paper-light text-ink border border-ink shadow-stamp px-5 py-3 font-sans text-[12px] uppercase tracking-[0.14em] font-semibold hover:bg-paper    transition-all"
           >
             <Plus size={14} strokeWidth={2.5} /> Post another
           </button>
@@ -193,7 +193,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             type="datetime-local"
             value={formData.available_from.slice(0, 16)}
             onChange={(e) => update('available_from', e.target.value)}
-            className={`mt-1.5 ${inputCls} font-mono`}
+            className={`mt-1.5 ${inputCls} font-sans`}
             required
           />
         </label>
@@ -203,7 +203,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
             type="datetime-local"
             value={formData.available_until?.slice(0, 16) || ''}
             onChange={(e) => update('available_until', e.target.value || null)}
-            className={`mt-1.5 ${inputCls} font-mono`}
+            className={`mt-1.5 ${inputCls} font-sans`}
           />
         </label>
       </div>
@@ -232,10 +232,10 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
           onClick={() => setMoreOpen(v => !v)}
           className="w-full flex items-center justify-between py-2 group"
         >
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink-mute group-hover:text-ink transition-colors">
+          <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-ink-mute group-hover:text-ink transition-colors">
             {moreOpen ? '— Hide details' : '+ Add description, photos, link, contact'}
           </span>
-          <span className="font-mono text-[10px] text-ink-fade">
+          <span className="font-sans text-[10px] text-ink-fade">
             {moreOpen ? 'optional' : 'all optional'}
           </span>
         </button>
@@ -277,7 +277,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
               )}
 
               <label className="block mt-2 cursor-pointer border-2 border-dashed border-ink/40 hover:border-ink py-4 px-3 text-center bg-paper-light transition-colors">
-                <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-ink inline-flex items-center gap-2">
+                <span className="font-sans text-[11px] uppercase tracking-[0.14em] text-ink inline-flex items-center gap-2">
                   <Plus size={14} strokeWidth={2.5} /> Drop or pick images
                 </span>
                 <input
@@ -322,7 +322,7 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
                   type="url"
                   value={formData.url}
                   onChange={(e) => update('url', e.target.value)}
-                  className={`mt-1.5 ${inputCls} font-mono`}
+                  className={`mt-1.5 ${inputCls} font-sans`}
                   placeholder="https://…"
                 />
               </label>
@@ -355,8 +355,8 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
 
       {error && (
         <div className="border-2 border-bridge-700 bg-bridge-50 p-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ </span>
-          <span className="font-mono text-[12px] text-bridge-700">{error}</span>
+          <span className="font-sans text-[10px] uppercase tracking-[0.14em] text-bridge-700">⚠ </span>
+          <span className="font-sans text-[12px] text-bridge-700">{error}</span>
         </div>
       )}
 
@@ -365,16 +365,16 @@ function SubmitForm({ initialData, editMode = false, onClose }: SubmitFormProps)
         <button
           type="submit"
           disabled={submitting}
-          className={`w-full bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp py-3.5 px-4 font-mono text-[13px] uppercase tracking-[0.14em] font-semibold transition-all ${
+          className={`w-full bg-bridge-500 text-paper-light border-2 border-ink shadow-stamp py-3.5 px-4 font-sans text-[13px] uppercase tracking-[0.14em] font-semibold transition-all ${
             submitting
               ? 'opacity-50 cursor-not-allowed'
-              : 'hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_rgba(24,22,19,1)]'
+              : '  '
           }`}
         >
           {submitting ? 'Posting…' : editMode ? 'Save changes' : 'Post event'}
         </button>
         {!editMode && (
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-fade text-center mt-2">
+          <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-ink-fade text-center mt-2">
             Posts are public · anyone can update or remove
           </p>
         )}
