@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: read
+  # claude-code-action exchanges a GitHub OIDC token for its app token.
+  id-token: write
 
 jobs:
   scrape:
